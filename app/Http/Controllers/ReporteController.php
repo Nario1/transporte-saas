@@ -1,0 +1,427 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Tributo;
+use App\Models\Vuelta;
+use App\Models\Sancion;
+use App\Models\Vehiculo;
+use App\Models\Conductor;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class ReporteController extends Controller
+{
+    public function index()
+    {
+        /** @var \App\Models\User $user */
+        $user      = Auth::user();
+        $empresaId = $user->empresa_id;
+        $hoy       = today();
+
+        // Resumen general para la página de reportes
+        $resumen = [
+            'tributos_mes'    => Tributo::where('empresa_id', $empresaId)
+                ->where('estado', 'pagado')
+                ->whereMonth('fecha', $hoy->month)
+                ->whereYear('fecha', $hoy->year)
+                ->sum('monto'),
+            'vueltas_mes'     => Vuelta::where('empresa_id', $empresaId)
+                ->whereMonth('fecha', $hoy->month)
+                ->whereYear('fecha', $hoy->year)
+                ->count(),
+            'sanciones_mes'   => Sancion::where('empresa_id', $empresaId)
+                ->whereMonth('fecha', $hoy->month)
+                ->whereYear('fecha', $hoy->year)
+                ->sum('monto'),
+            'deuda_total'     => Tributo::where('empresa_id', $empresaId)
+                ->where('estado', 'pendiente')
+                ->sum('monto'),
+        ];
+
+        return view('admin.reportes.index', compact('resumen'));
+    }
+
+    // ── Reporte de Tributos ───────────────────────────────────────
+    public function tributos(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        [$desde, $hasta] = $this->rango($request);
+
+        // Asegurar que los tributos estén generados para el rango consultado
+        $daysDiff = today()->diffInDays($desde) + 1;
+        Tributo::ensureGenerados($user->empresa_id, max(30, $daysDiff));
+
+        $flota = $request->input('flota');
+
+        // Resumen por día
+        $porDiaQuery = Tributo::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta]);
+
+        if ($flota) {
+            $porDiaQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $porDia = $porDiaQuery->selectRaw("
+                fecha,
+                COUNT(*) as total_autos,
+                SUM(CASE WHEN estado = 'pagado'    THEN 1 ELSE 0 END) as pagados,
+                SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+                SUM(CASE WHEN estado = 'exonerado' THEN 1 ELSE 0 END) as exonerados,
+                SUM(CASE WHEN estado = 'pagado'    THEN monto ELSE 0 END) as total_cobrado,
+                SUM(CASE WHEN estado = 'pendiente' THEN monto ELSE 0 END) as monto_pendiente
+            ")
+            ->groupBy('fecha')
+            ->orderByDesc('fecha')
+            ->get();
+
+        // Detalle de todos los registros en el rango (para la tabla detallada)
+        $detalle = Tributo::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->when($flota, function ($q) use ($flota) {
+                return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
+                    $vQ->where('numero_flota', $flota);
+                });
+            })
+            ->with(['vehiculo', 'conductor', 'cobrador.roles'])
+            ->orderByDesc('fecha')
+            ->orderByDesc('cobrado_at')
+            ->paginate(50)
+            ->withQueryString();
+
+        // Resumen por método de pago
+        $porMetodoQuery = Tributo::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->where('estado', 'pagado');
+
+        if ($flota) {
+            $porMetodoQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $porMetodo = $porMetodoQuery->selectRaw('metodo_pago, COUNT(*) as cantidad, SUM(monto) as total')
+            ->groupBy('metodo_pago')
+            ->get();
+
+        // Vehículos con más deuda
+        $conDeudaQuery = Tributo::where('empresa_id', $user->empresa_id)
+            ->where('estado', 'pendiente');
+
+        if ($flota) {
+            $conDeudaQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $conDeuda = $conDeudaQuery->with(['vehiculo', 'conductor'])
+            ->selectRaw('vehiculo_id, conductor_id, SUM(monto) as total_deuda, COUNT(*) as dias_deuda')
+            ->groupBy('vehiculo_id', 'conductor_id')
+            ->orderByDesc('total_deuda')
+            ->limit(10)
+            ->get();
+
+        $totales = [
+            'cobrado'    => $porDia->sum('total_cobrado'),
+            'pendiente'  => $porDia->sum('monto_pendiente'),
+            'exonerados' => $porDia->sum('exonerados'),
+            'dias'       => $porDia->count(),
+        ];
+
+        return view('admin.reportes.tributos', compact(
+            'porDia', 'porMetodo', 'conDeuda', 'detalle', 'totales', 'desde', 'hasta'
+        ));
+    }
+
+    // ── Reporte de Vueltas ────────────────────────────────────────
+    public function vueltas(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        [$desde, $hasta] = $this->rango($request);
+        $flota = $request->has('flota') ? $request->input('flota') : '1';
+
+        // Vueltas por día
+        $porDiaQuery = Vuelta::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta]);
+
+        if ($flota) {
+            $porDiaQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $porDia = $porDiaQuery->selectRaw('fecha, COUNT(*) as total_vueltas, COUNT(DISTINCT vehiculo_id) as vehiculos')
+            ->groupBy('fecha')
+            ->orderByDesc('fecha')
+            ->get();
+
+        // Todos los vehículos con conteo de vueltas (para listar todos los de la empresa e indicar si dieron o no vueltas)
+        $porVehiculo = Vehiculo::where('empresa_id', $user->empresa_id)
+            ->when($flota, function ($q) use ($flota) {
+                return $q->where('numero_flota', $flota);
+            })
+            ->withCount(['vueltas' => function ($q) use ($desde, $hasta) {
+                $q->whereBetween('fecha', [$desde, $hasta]);
+            }])
+            ->with(['conductor'])
+            ->orderByDesc('vueltas_count')
+            ->get();
+
+        // Vueltas por ruta
+        $porRutaQuery = Vuelta::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->whereNotNull('ruta_id');
+
+        if ($flota) {
+            $porRutaQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $porRuta = $porRutaQuery->with('ruta')
+            ->selectRaw('ruta_id, COUNT(*) as total_vueltas')
+            ->groupBy('ruta_id')
+            ->orderByDesc('total_vueltas')
+            ->get();
+
+        // Detalle individual de vueltas (con paginación para evitar sobrecarga)
+        $detalleQuery = Vuelta::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta]);
+
+        if ($flota) {
+            $detalleQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $detalle = $detalleQuery->with(['vehiculo', 'conductor', 'ruta'])
+            ->orderByDesc('fecha')
+            ->orderByDesc('hora_salida')
+            ->paginate(50)
+            ->withQueryString();
+
+        $totales = [
+            'vueltas'   => $porDia->sum('total_vueltas'),
+            'vehiculos' => $porVehiculo->count(),
+            'dias'      => $porDia->count(),
+        ];
+
+        return view('admin.reportes.vueltas', compact(
+            'porDia', 'porVehiculo', 'porRuta', 'detalle', 'totales', 'desde', 'hasta'
+        ));
+    }
+
+    // ── Reporte de Sanciones ──────────────────────────────────────
+    public function sanciones(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        [$desde, $hasta] = $this->rango($request);
+        $flota = $request->has('flota') ? $request->input('flota') : '1';
+
+        $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta]);
+
+        if ($flota) {
+            $sancionesQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $allSanciones = $sancionesQuery->with(['vehiculo', 'conductor', 'registrador'])
+            ->orderByDesc('fecha')
+            ->get();
+
+        // Resumen por estado
+        $porEstado = [
+            'pendiente' => $allSanciones->where('estado', 'pendiente')->sum('monto'),
+            'pagado'    => $allSanciones->where('estado', 'pagado')->sum('monto'),
+            'cantidad_pendiente' => $allSanciones->where('estado', 'pendiente')->count(),
+            'cantidad_pagada'    => $allSanciones->where('estado', 'pagado')->count(),
+        ];
+
+        // Conductores con más sanciones
+        $porConductor = $allSanciones->groupBy('conductor_id')->map(fn($s) => [
+            'conductor'  => $s->first()->conductor,
+            'cantidad'   => $s->count(),
+            'total'      => $s->sum('monto'),
+        ])->sortByDesc('cantidad')->take(10);
+
+        // Paginar para la tabla
+        $sanciones = $sancionesQuery->paginate(50)->withQueryString();
+
+        return view('admin.reportes.sanciones', compact(
+            'sanciones', 'porEstado', 'porConductor', 'desde', 'hasta'
+        ));
+    }
+
+    // ── Reporte de Documentos ─────────────────────────────────────
+    public function documentos(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $hoy = today();
+        
+        $flota = $request->has('flota') ? $request->input('flota') : '1';
+
+        // Query Base para Vehículos
+        $vQuery = Vehiculo::where('empresa_id', $user->empresa_id)->with('conductor');
+
+        if ($flota) {
+            $vQuery->where('numero_flota', $flota);
+        }
+
+        $vehiculos = $vQuery->get();
+        $alertas = collect();
+
+        foreach ($vehiculos as $v) {
+            if ($v->soat_vence) {
+                $alertas->push((object)[
+                    'placa'     => $v->placa,
+                    'conductor' => $v->conductor->nombre_completo ?? 'Sin Conductor',
+                    'documento' => 'SOAT',
+                    'fecha'     => \Carbon\Carbon::parse($v->soat_vence),
+                ]);
+            }
+            if ($v->rev_tecnica_vence) {
+                $alertas->push((object)[
+                    'placa'     => $v->placa,
+                    'conductor' => $v->conductor->nombre_completo ?? 'Sin Conductor',
+                    'documento' => 'Revisión Técnica',
+                    'fecha'     => \Carbon\Carbon::parse($v->rev_tecnica_vence),
+                ]);
+            }
+            if ($v->tarjeta_prop_vence) {
+                $alertas->push((object)[
+                    'placa'     => $v->placa,
+                    'conductor' => $v->conductor->nombre_completo ?? 'Sin Conductor',
+                    'documento' => 'Tarjeta de Propiedad',
+                    'fecha'     => \Carbon\Carbon::parse($v->tarjeta_prop_vence),
+                ]);
+            }
+            if ($v->conductor && $v->conductor->licencia_vence) {
+                $alertas->push((object)[
+                    'placa'     => $v->placa,
+                    'conductor' => $v->conductor->nombre_completo,
+                    'documento' => 'Licencia de Conducir',
+                    'fecha'     => \Carbon\Carbon::parse($v->conductor->licencia_vence),
+                ]);
+            }
+        }
+
+        $alertas = $alertas->sortBy('fecha')->values();
+
+        // Agrupación para resumen estadístico
+        $resumen = [
+            'criticos' => $alertas->filter(fn($a) => $hoy->diffInDays($a->fecha, false) <= 7 && $hoy->diffInDays($a->fecha, false) >= 0)->count(),
+            'mes_actual' => $alertas->filter(fn($a) => $a->fecha->isCurrentMonth())->count(),
+            'vencidos' => $alertas->filter(fn($a) => $a->fecha->isPast() && !$a->fecha->isToday())->count(),
+        ];
+
+        return view('admin.reportes.documentos', compact(
+            'alertas', 'hoy', 'flota', 'resumen'
+        ));
+    }
+
+    // ── Reporte de Deuda por Vehículo ─────────────────────────────
+    public function deudas(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        [$desde, $hasta] = $this->rango($request);
+
+        // Asegurar que los tributos estén generados para el rango consultado
+        $daysDiff = today()->diffInDays($desde) + 1;
+        Tributo::ensureGenerados($user->empresa_id, max(30, $daysDiff));
+
+        $flota = $request->has('flota') ? $request->input('flota') : '1';
+        $tipo = $request->input('tipo', 'todos');
+
+        $tributosQuery = Tributo::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta]);
+
+        $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
+            ->whereBetween('fecha', [$desde, $hasta]);
+
+        if ($flota) {
+            $tributosQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+            $sancionesQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
+                $vQ->where('numero_flota', $flota);
+            });
+        }
+
+        $items = collect();
+
+        if ($tipo === 'todos' || $tipo === 'tributo') {
+            $tributos = $tributosQuery->with(['vehiculo', 'conductor', 'cobrador'])->get()->map(function($t) {
+                $t->tipo_obligacion = 'TRIBUTO';
+                $t->concepto = 'Tributo Diario';
+                return $t;
+            });
+            $items = $items->concat($tributos);
+        }
+
+        if ($tipo === 'todos' || $tipo === 'sancion') {
+            $sanciones = $sancionesQuery->with(['vehiculo', 'conductor', 'cobrador'])->get()->map(function($s) {
+                $s->tipo_obligacion = 'SANCIÓN';
+                $s->concepto = $s->motivo . ($s->descripcion ? " - " . $s->descripcion : "");
+                return $s;
+            });
+            $items = $items->concat($sanciones);
+        }
+
+        // Ordenar por fecha desc, y cobrado_at desc
+        $itemsSorted = $items->sortByDesc(function($item) {
+            $timeStr = $item->cobrado_at ? $item->cobrado_at->format('H:i:s') : ($item->created_at ? $item->created_at->format('H:i:s') : '00:00:00');
+            return $item->fecha->format('Y-m-d') . '_' . $timeStr;
+        });
+
+        $totalDeuda = $itemsSorted->where('estado', 'pendiente')->sum('monto');
+        $totalCobrado = $itemsSorted->where('estado', 'pagado')->sum('monto');
+
+        // Paginación manual
+        $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 50;
+        $currentPageItems = $itemsSorted->slice(($page - 1) * $perPage, $perPage)->values();
+        $paginatedItems = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentPageItems,
+            $itemsSorted->count(),
+            $perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath()]
+        );
+        $paginatedItems->withQueryString();
+
+        return view('admin.reportes.deudas', compact('paginatedItems', 'totalDeuda', 'totalCobrado', 'desde', 'hasta'));
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────
+
+    private function rango(Request $request): array
+    {
+        $desde = $request->filled('desde')
+            ? \Carbon\Carbon::parse($request->input('desde'))->startOfDay()
+            : today()->startOfDay();
+
+        $hasta = $request->filled('hasta')
+            ? \Carbon\Carbon::parse($request->input('hasta'))->endOfDay()
+            : today()->endOfDay();
+
+        // Asegurar que desde no sea mayor que hasta
+        if ($desde->gt($hasta)) {
+            $desde = $hasta->copy()->startOfMonth();
+        }
+
+        return [$desde, $hasta];
+    }
+}
