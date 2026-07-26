@@ -12,7 +12,6 @@
         margin-bottom: 16px;
         text-align: center;
     }
-    .en-ruta-icon { font-size: 40px; margin-bottom: 6px; }
     .en-ruta-titulo { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
     .en-ruta-sub { font-size: 13px; opacity: .8; }
 
@@ -62,15 +61,15 @@
 @section('content')
 
 <div class="en-ruta-hero">
-    <div class="en-ruta-icon">🚌</div>
+    <div style="font-size: 36px; margin-bottom: 12px; color: white;"><i class="fa-solid fa-car"></i></div>
     <div class="en-ruta-titulo">¡En Ruta!</div>
     <div class="en-ruta-sub">Vuelta #{{ $vuelta->numero_vuelta }} — {{ $vuelta->hora_salida }}</div>
 </div>
 
 {{-- Cronómetro --}}
 <div class="card">
-    <div class="card-header">
-        <span class="card-title"><span class="pulse-dot"></span>Tiempo en ruta</span>
+    <div class="card-header" style="padding: 14px 16px; display: flex; align-items: center;">
+        <span class="card-title" style="display: flex; align-items: center;"><span class="pulse-dot"></span>Tiempo en ruta</span>
     </div>
     <div class="card-body" style="padding: 0 16px;">
         <div class="cronometro" id="cronometro">00:00:00</div>
@@ -79,34 +78,34 @@
 
 {{-- Info de vuelta --}}
 <div class="card">
-    <div class="card-body">
-        <div class="summary-row">
-            <span class="summary-label">Ruta</span>
-            <span class="summary-val">{{ $vuelta->ruta?->nombre ?? 'Sin ruta asignada' }}</span>
+    <div class="card-body" style="padding: 16px;">
+        <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f8fafc;">
+            <span class="summary-label" style="font-weight:500; color: var(--text2);">Ruta</span>
+            <span class="summary-val" style="font-weight: 600; color: var(--text);">{{ $vuelta->ruta?->nombre ?? 'Sin ruta asignada' }}</span>
         </div>
-        <div class="summary-row">
-            <span class="summary-label">Vehículo</span>
-            <span class="summary-val">{{ $vuelta->vehiculo?->placa ?? '—' }}</span>
+        <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f8fafc;">
+            <span class="summary-label" style="font-weight:500; color: var(--text2);">Vehículo</span>
+            <span class="summary-val" style="font-weight: 600; color: var(--text);">{{ $vuelta->vehiculo?->placa ?? '—' }}</span>
         </div>
-        <div class="summary-row">
-            <span class="summary-label">Salida</span>
-            <span class="summary-val">{{ $vuelta->hora_salida }}</span>
+        <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f8fafc;">
+            <span class="summary-label" style="font-weight:500; color: var(--text2);">Salida</span>
+            <span class="summary-val" style="font-weight: 600; color: var(--text);">{{ $vuelta->hora_salida }}</span>
         </div>
-        <div class="summary-row">
-            <span class="summary-label">Fecha</span>
-            <span class="summary-val">{{ $vuelta->fecha->format('d/m/Y') }}</span>
+        <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
+            <span class="summary-label" style="font-weight:500; color: var(--text2);">Fecha</span>
+            <span class="summary-val" style="font-weight: 600; color: var(--text);">{{ $vuelta->fecha->format('d/m/Y') }}</span>
         </div>
     </div>
 </div>
 
 {{-- Botón terminar --}}
 <button class="btn-terminar" id="btn-terminar" onclick="confirmarTerminar()">
-    🏁 Terminar Vuelta
+    <i class="fa-solid fa-flag-checkered"></i> Terminar Vuelta
 </button>
 
 <div id="terminando-msg" class="hidden"
      style="text-align:center;margin-top:12px;color:var(--red);font-weight:600;font-size:13px">
-    ⏳ Registrando llegada...
+    <i class="fa-solid fa-spinner fa-spin"></i> Registrando llegada...
 </div>
 
 <script>
@@ -198,66 +197,14 @@ async function terminarVuelta() {
             alert('❌ ' + (data.error || 'Error al terminar vuelta'));
             document.getElementById('btn-terminar').disabled = false;
             document.getElementById('terminando-msg').classList.add('hidden');
-            terminando = false; // Reanudar polling
+            terminando = false;
         }
     } catch (e) {
-        alert('Error de conexion');
+        alert('❌ Error de conexión al servidor.');
         document.getElementById('btn-terminar').disabled = false;
         document.getElementById('terminando-msg').classList.add('hidden');
-        terminando = false; // Reanudar polling
+        terminando = false;
     }
 }
-
-// Polling de estado de la vuelta (en vivo)
-const ESTADO_URL = '{{ route("conductor.vuelta.estado", [], false) }}';
-async function verificarEstadoVuelta() {
-    if (terminando) return;
-    try {
-        const resp = await fetch(ESTADO_URL);
-        const data = await resp.json();
-        if (!data.activa) {
-            terminando = true; // Prevenir múltiples alertas
-            if (cronometroIntervalId) clearInterval(cronometroIntervalId);
-            
-            Swal.fire({
-                title: '¡Vuelta Completada!',
-                text: 'La vuelta ha sido marcada como completada por el administrador.',
-                icon: 'success',
-                confirmButtonText: 'Aceptar',
-                allowOutsideClick: false,
-                confirmButtonColor: 'var(--accent)',
-                backdrop: `rgba(22, 163, 74, 0.1)`
-            }).then(() => {
-                window.location.href = '{{ route("conductor.vueltas") }}';
-            });
-        }
-    } catch (e) {
-        console.warn("Falla chequeo de estado de vuelta");
-    }
-}
-setInterval(verificarEstadoVuelta, 5000);
-
-// REPORTERO GPS EN TIEMPO REAL
-const UBICACION_URL = '{{ route("conductor.vuelta.ubicacion", [], false) }}';
-function reportarUbicacion() {
-    if (!navigator.geolocation) return;
-    
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        try {
-            await fetch(UBICACION_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({ latitud: pos.coords.latitude, longitud: pos.coords.longitude })
-            });
-            console.log("GPS reportado");
-        } catch (e) {
-            console.warn("Falla reporte GPS");
-        }
-    }, null, { enableHighAccuracy: true });
-}
-
-// Reportar cada 20 segundos
-setInterval(reportarUbicacion, 20000);
-reportarUbicacion(); // Primer reporte inmediato
 </script>
 @endsection

@@ -2,7 +2,7 @@
 
 @extends('layouts.conductor')
 
-@section('title', 'Estado de Unidad')
+@section('title', 'Estado de Flota')
 
 @section('content')
 
@@ -10,7 +10,7 @@
     @if (count($alertas) > 0)
         @foreach ($alertas as $alerta)
             <div class="alert warning mb16">
-                ⚠️ {{ $alerta }}
+                <i class="fa-solid fa-triangle-exclamation"></i> {{ $alerta }}
             </div>
         @endforeach
     @endif
@@ -18,10 +18,10 @@
     {{-- Bienvenida - Centrada en el Vehículo --}}
     <div class="conductor-hero" style="background: linear-gradient(135deg, var(--gold) 0%, #92400e 100%);">
         <div class="conductor-av">
-            <i class="fa-solid fa-bus"></i>
+            <i class="fa-solid fa-car"></i>
         </div>
         <div class="conductor-hero-info">
-            <div class="conductor-hero-name">Unidad {{ $conductor->vehiculos->first()?->numero_flota ?? 'S/N' }}</div>
+            <div class="conductor-hero-name">Flota {{ $conductor->vehiculos->first()?->numero_flota ?? 'S/N' }}</div>
             <div class="conductor-hero-sub">
                 @if($conductor->vehiculos->first())
                     <span style="color: #fff; font-weight: 800; font-size: 16px;">{{ $conductor->vehiculos->first()->placa_form }}</span>
@@ -34,38 +34,38 @@
     </div>
 
     {{-- Stats del día --}}
-    <div class="stats-row" style="grid-template-columns: repeat(2, 1fr);">
+    <div class="stats-row" style="grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
         <div class="stat {{ $tributoHoy?->estado === 'pagado' ? 'green' : ($tributoHoy?->estado === 'exonerado' ? 'blue' : 'red') }}">
-            <div class="stat-icon">💰</div>
+            <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
             <div class="stat-label">Tributo Hoy</div>
             <div class="stat-val">{{ $tributoHoy ? 'S/ ' . number_format($tributoHoy->monto, 2) : 'S/ 0' }}</div>
             <div class="stat-sub">
                 @if ($tributoHoy?->estado === 'pagado')
-                    ✅ Pagado
+                    <i class="fa-solid fa-circle-check"></i> Pagado
                 @elseif($tributoHoy?->estado === 'exonerado')
-                    🛡️ Exonerado
+                    <i class="fa-solid fa-shield-halved"></i> Exonerado
                 @elseif($tributoHoy)
-                    ⏳ Pendiente
+                    <i class="fa-solid fa-hourglass-half"></i> Pendiente
                 @else
                     Sin registro
                 @endif
             </div>
         </div>
         <div class="stat blue">
-            <div class="stat-icon">🔄</div>
-            <div class="stat-label">Vueltas de Unidad</div>
+            <div class="stat-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
+            <div class="stat-label">Vueltas de Flota</div>
             <div class="stat-val">{{ $vueltasHoy->count() }}</div>
             <div class="stat-sub">registradas hoy</div>
         </div>
         <div class="stat {{ $sancionesPendientes->count() > 0 ? 'orange' : 'green' }}">
-            <div class="stat-icon">⚠️</div>
+            <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <div class="stat-label">Sanciones</div>
             <div class="stat-val">{{ $sancionesPendientes->count() }}</div>
             <div class="stat-sub">pendientes</div>
         </div>
         <div class="stat {{ $deudaTributos > 0 ? 'red' : 'green' }}">
-            <div class="stat-icon">📋</div>
-            <div class="stat-label">Deuda de Unidad</div>
+            <div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+            <div class="stat-label">Deuda de Flota</div>
             <div class="stat-val">S/ {{ number_format($deudaTributos, 2) }}</div>
             <div class="stat-sub">tributos pendientes</div>
         </div>
@@ -74,7 +74,7 @@
     {{-- Tributo del día --}}
     <div class="card mb16 border-{{ $tributoHoy?->estado === 'pagado' ? 'green' : ($tributoHoy?->estado === 'exonerado' ? 'blue' : 'red') }}" style="border-left: 5px solid;">
         <div class="card-header">
-            <span class="card-title">💰 Tributo de la Unidad</span>
+            <span class="card-title"><i class="fa-solid fa-sack-dollar" style="color: var(--accent); margin-right: 5px;"></i> Tributo de la Flota</span>
             <span class="tb-date">{{ now()->locale('es')->isoFormat('dddd D MMM') }}</span>
         </div>
         <div class="card-body" style="padding: 20px;">
@@ -88,11 +88,11 @@
                         <div class="summary-col" style="text-align: right;">
                             <span class="summary-label">Estado</span>
                             @if($tributoHoy->estado === 'pagado')
-                                <span class="pill green">✅ Pagado</span>
+                                <span class="pill green"><i class="fa-solid fa-circle-check"></i> Pagado</span>
                             @elseif($tributoHoy->estado === 'exonerado')
-                                <span class="pill blue">🛡️ Exonerado</span>
+                                <span class="pill blue"><i class="fa-solid fa-shield"></i> Exonerado</span>
                             @else
-                                <span class="pill red">⏳ Pendiente</span>
+                                <span class="pill red"><i class="fa-solid fa-clock"></i> Pendiente</span>
                             @endif
                         </div>
                     </div>
@@ -111,7 +111,7 @@
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 10px;">
                                         <div style="font-weight: 800; color: #c53030; font-size: 14px;">S/ {{ number_format($deuda->monto, 2) }}</div>
-                                <form action="{{ route('conductor.tributos.pagar-mp', $deuda) }}" method="POST">
+                                        <form action="{{ route('conductor.tributos.pagar-mp', $deuda) }}" method="POST">
                                             @csrf
                                             <button type="submit" class="btn-mp" style="background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.15);">
                                                 <img src="https://http2.mlstatic.com/frontend-assets/billing/mpe-billing-v2/mercadopago/logo-mercadopago.svg" alt="MP" style="height: 10px; filter: brightness(0) invert(1);">
@@ -152,7 +152,7 @@
                 </div>
             @else
                 <div class="empty-state">
-                    <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
+                    <div style="font-size: 32px; margin-bottom: 8px; color: var(--text3);"><i class="fa-regular fa-clipboard"></i></div>
                     <div>Sin tributo registrado para hoy</div>
                 </div>
             @endif
@@ -161,9 +161,9 @@
 
     {{-- Vueltas del día --}}
     <div class="card mb16">
-        <div class="card-header">
-            <span class="card-title">🔄 Mis Vueltas de Hoy</span>
-            <a href="{{ route('conductor.vueltas') }}" class="btn btn-secondary btn-sm">Ver todas</a>
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="card-title"><i class="fa-solid fa-arrows-rotate" style="color: var(--accent); margin-right: 5px;"></i> Mis Vueltas de Hoy</span>
+            <a href="{{ route('conductor.vueltas') }}" class="btn btn-secondary btn-sm" style="text-decoration: none;">Ver todas</a>
         </div>
         <div class="card-body" style="padding: 16px;">
             @forelse($vueltasHoy as $vuelta)
@@ -183,7 +183,7 @@
                 </div>
             @empty
                 <div class="empty-state">
-                    <div style="font-size: 32px; margin-bottom: 8px;">🔄</div>
+                    <div style="font-size: 32px; margin-bottom: 8px; color: var(--text3);"><i class="fa-solid fa-arrows-rotate"></i></div>
                     <div>Sin vueltas registradas hoy</div>
                 </div>
             @endforelse
@@ -193,15 +193,15 @@
     {{-- Sanciones pendientes --}}
     @if ($sancionesPendientes->count() > 0)
         <div class="card mb16">
-            <div class="card-header">
-                <span class="card-title">⚠️ Sanciones Pendientes</span>
-                <a href="{{ route('conductor.sanciones') }}" class="btn btn-secondary btn-sm">Ver todas</a>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color: var(--orange); margin-right: 5px;"></i> Sanciones Pendientes</span>
+                <a href="{{ route('conductor.sanciones') }}" class="btn btn-secondary btn-sm" style="text-decoration: none;">Ver todas</a>
             </div>
-            <div class="card-body">
+            <div class="card-body" style="padding: 16px;">
                 @foreach ($sancionesPendientes as $sancion)
                     <div class="sancion-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border: 1px solid #fee2e2; border-radius: 12px; margin-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div class="sancion-icon" style="font-size: 20px;">⚠️</div>
+                            <div class="sancion-icon" style="font-size: 18px; color: var(--red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
                             <div class="sancion-info">
                                 <div class="sancion-title" style="font-weight: 700; color: #0f172a; font-size: 14px;">{{ $sancion->motivo }}</div>
                                 <div class="sancion-sub" style="font-size: 11px; color: #64748b;">{{ $sancion->fecha->format('d/m/Y') }} · {{ $sancion->vehiculo?->placa_form }}</div>

@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>@yield('title', 'TransJunín') — Mi Unidad</title>
+    <title>@yield('title', 'TransJunín') — Mi Flota</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
             --bg: #f0f2f7;
@@ -765,7 +766,7 @@
         </div>
         <div class="c-topbar-right">
             <a href="{{ route('conductor.perfil') }}" class="c-av" style="background: var(--gold);">
-                <i class="fa-solid fa-bus"></i>
+                <i class="fa-solid fa-car"></i>
             </a>
         </div>
     </header>
@@ -781,13 +782,13 @@
     <nav class="c-nav">
         <a href="{{ route('conductor.dashboard') }}"
             class="c-nav-item {{ request()->routeIs('conductor.dashboard') ? 'active' : '' }}">
-            <span class="c-nav-icon">🏠</span>
+            <span class="c-nav-icon"><i class="fa-solid fa-house"></i></span>
             <span>Inicio</span>
         </a>
 
         <a href="{{ route('conductor.tributos') }}"
             class="c-nav-item {{ request()->routeIs('conductor.tributos') ? 'active' : '' }}">
-            <span class="c-nav-icon">💰</span>
+            <span class="c-nav-icon"><i class="fa-solid fa-sack-dollar"></i></span>
             @php
                 $tribPendiente = Auth::user()?->conductor
                     ? \App\Models\Tributo::where('conductor_id', Auth::user()->conductor->id)
@@ -804,13 +805,13 @@
 
         <a href="{{ route('conductor.vueltas') }}"
             class="c-nav-item {{ request()->routeIs('conductor.vueltas') ? 'active' : '' }}">
-            <span class="c-nav-icon">🔄</span>
+            <span class="c-nav-icon"><i class="fa-solid fa-arrows-rotate"></i></span>
             <span>Vueltas</span>
         </a>
 
         <a href="{{ route('conductor.sanciones') }}"
             class="c-nav-item {{ request()->routeIs('conductor.sanciones') ? 'active' : '' }}">
-            <span class="c-nav-icon">⚠️</span>
+            <span class="c-nav-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
             @php
                 $sanPendientes = Auth::user()?->conductor
                     ? \App\Models\Sancion::where('conductor_id', Auth::user()->conductor->id)
@@ -826,8 +827,8 @@
 
         <a href="{{ route('conductor.perfil') }}"
             class="c-nav-item {{ request()->routeIs('conductor.perfil') ? 'active' : '' }}">
-            <span class="c-nav-icon">🚌</span>
-            <span>Mi Unidad</span>
+            <span class="c-nav-icon"><i class="fa-solid fa-car"></i></span>
+            <span>Mi Flota</span>
         </a>
     </nav>
 

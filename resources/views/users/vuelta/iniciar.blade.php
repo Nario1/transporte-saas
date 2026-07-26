@@ -96,13 +96,13 @@
 {{-- Sin rostro registrado --}}
 @if(!$tieneRostro)
     <div class="no-rostro-alert">
-        ALERTA: No tienes rostro registrado. Contacta a tu administrador para habilitarte.
+        <i class="fa-solid fa-triangle-exclamation"></i> ALERTA: No tienes rostro registrado. Contacta a tu administrador para habilitarte.
     </div>
 @endif
 
 {{-- Cabecera --}}
 <div class="conductor-hero" style="margin-bottom:18px">
-    <div class="conductor-av"><i class="fa-solid fa-bus"></i></div>
+    <div class="conductor-av"><i class="fa-solid fa-car"></i></div>
     <div>
         <div class="conductor-hero-name">Iniciar Vuelta #{{ $proximaVuelta }}</div>
         <div class="conductor-hero-sub">{{ today()->locale('es')->isoFormat('dddd D [de] MMM') }}</div>
@@ -127,12 +127,12 @@
 
         <div id="verificacion-resultado" style="margin-bottom:12px"></div>
     @elseif(!$requiereFacial)
-        <div class="alert success" style="background: var(--green-l); color: var(--green); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 14px 16px; font-weight: 600; font-size: 13px;">
-            ✅ Autenticación facial no requerida para tu cuenta.
+        <div class="alert success" style="background: var(--green-l); color: var(--green); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 14px 16px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-circle-check"></i> Autenticación facial no requerida para tu cuenta.
         </div>
     @else
-        <div class="alert warning">
-            AVISO: Sin rostro registrado y autenticacion requerida. Contacta a soporte.
+        <div class="alert warning" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-circle-xmark"></i> AVISO: Sin rostro registrado y autenticación requerida. Contacta a soporte.
         </div>
     @endif
 </div>

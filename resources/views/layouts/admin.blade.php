@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('body_content')
+    <div class="sb-backdrop" id="sbBackdrop" onclick="toggleSidebar()"></div>
     <aside class="sb sb-modern">
         <div class="sb-brand sb-brand-modern">
             <div class="brand-logo brand-logo-modern">
@@ -76,6 +77,10 @@
                     <a href="{{ route('superadmin.auditoria.index') }}"
                         class="nav-item nav-item-modern {{ request()->routeIs('superadmin.auditoria.*') ? 'active' : '' }}">
                         <span class="ni"><i class="fa-solid fa-clock-rotate-left"></i></span> Auditoría Global
+                    </a>
+                    <a href="{{ route('superadmin.permisos.index') }}"
+                        class="nav-item nav-item-modern {{ request()->routeIs('superadmin.permisos.*') ? 'active' : '' }}">
+                        <span class="ni"><i class="fa-solid fa-clock-rotate-left"></i></span> Permisos Globales
                     </a>
                 </div>
             @endrole
@@ -187,7 +192,10 @@
 
     <div class="main main-modern">
         <header class="topbar topbar-modern">
-            <div class="tb-left" style="display: flex; align-items: center; gap: 16px;">
+            <div class="tb-left" style="display: flex; align-items: center; gap: 12px;">
+                <button class="sb-toggle-btn" onclick="toggleSidebar()" type="button" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <div>
                     <div class="tb-title tb-title-modern" id="topTitle">
                         {{ $pageTitle ?? 'TransJunín' }}

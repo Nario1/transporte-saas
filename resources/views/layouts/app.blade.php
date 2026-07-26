@@ -1266,6 +1266,38 @@
         .g-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
         .g-2-1 { display: grid; grid-template-columns: 1fr 350px; gap: 24px; }
         
+        /* Toggle and Backdrop elements */
+        .sb-toggle-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text2);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .sb-toggle-btn:hover {
+            background: var(--border);
+        }
+        .sb-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 195;
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sb-backdrop.active {
+            display: block;
+            opacity: 1;
+        }
+
         @media (max-width: 1400px) {
             .g-2-1 { grid-template-columns: 1fr; }
             .g-4 { grid-template-columns: repeat(3, 1fr); }
@@ -1277,13 +1309,43 @@
             .stats-row { grid-template-columns: repeat(3, 1fr) !important; }
         }
 
+        @media (max-width: 992px) {
+            .card-body {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .tbl {
+                min-width: 650px;
+            }
+            .g-filters {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 12px !important;
+            }
+            .g-filters > * {
+                width: 100% !important;
+            }
+            .g-filters button {
+                width: 100% !important;
+                justify-content: center;
+            }
+        }
+
         @media (max-width: 768px) {
-            .main-modern { margin-left: 0; }
+            .main-modern { margin-left: 0 !important; }
             .sb-modern { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sb-modern.active { transform: translateX(0) !important; }
+            .sb-toggle-btn { display: flex !important; }
             .g-4, .g-3, .stats-row { grid-template-columns: 1fr !important; }
             .content-modern { padding: 15px; }
             .topbar-modern { padding: 0 15px; }
             .tb-title-modern { font-size: 18px; }
+        }
+
+        @media (max-width: 576px) {
+            .tb-date-modern { display: none !important; }
+            .tb-user-wrap { padding-left: 4px !important; background: transparent !important; border: none !important; }
+            .tb-user-wrap > div:first-child { display: none !important; }
         }
 
         .g-filters { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
@@ -1378,6 +1440,15 @@
             
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sb-modern');
+            const backdrop = document.getElementById('sbBackdrop');
+            if (sidebar && backdrop) {
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+            }
         }
     </script>
 </body>

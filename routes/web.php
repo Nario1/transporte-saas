@@ -116,6 +116,15 @@ Route::middleware(['auth', 'empresa.activa', 'role:SUPER_ADMIN'])
         Route::post('/backups', [App\Http\Controllers\Admin\BackupController::class, 'store'])->name('backups.store');
         Route::get('/backups/{backup}/download', [App\Http\Controllers\Admin\BackupController::class, 'download'])->name('backups.download');
         Route::delete('/backups/{backup}', [App\Http\Controllers\Admin\BackupController::class, 'destroy'])->name('backups.destroy');
+
+        // ── Permisos Globales (NUEVO) ──────────────────────────────────────────────
+        Route::get('/permisos', [App\Http\Controllers\PermisoController::class, 'index'])->name('permisos.index');
+        Route::get('/permisos/crear', [App\Http\Controllers\PermisoController::class, 'create'])->name('permisos.create');
+        Route::post('/permisos', [App\Http\Controllers\PermisoController::class, 'store'])->name('permisos.store');
+        Route::get('/permisos/{permiso}', [App\Http\Controllers\PermisoController::class, 'show'])->name('permisos.show');
+        Route::get('/permisos/{permiso}/edit', [App\Http\Controllers\PermisoController::class, 'edit'])->name('permisos.edit');
+        Route::put('/permisos/{permiso}', [App\Http\Controllers\PermisoController::class, 'update'])->name('permisos.update');
+        Route::delete('/permisos/{permiso}', [App\Http\Controllers\PermisoController::class, 'destroy'])->name('permisos.destroy');
     });
 
 // ── Panel Admin ───────────────────────────────────────────────────
