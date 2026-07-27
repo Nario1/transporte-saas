@@ -105,7 +105,7 @@
 <script src="{{ asset('js/face-api.min.js') }}"></script>
 
 <script>
-const MODELS_URL  = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights/';
+const MODELS_URL  = '/models/';
 const CSRF_TOKEN  = '{{ csrf_token() }}';
 const STORE_URL   = '{{ route("conductores.rostro.store", $conductor) }}';
 

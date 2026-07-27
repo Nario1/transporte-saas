@@ -183,7 +183,7 @@
 <script src="{{ asset('js/face-api.min.js') }}"></script>
 
 <script>
-const MODELS_URL      = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights/';
+const MODELS_URL      = '/models/';
 const STORED_EMBED    = @json($rostro?->embedding);
 const TIENE_ROSTRO    = {{ $tieneRostro ? 'true' : 'false' }};
 const REQUIERE_FACIAL = {{ $requiereFacial ? 'true' : 'false' }};

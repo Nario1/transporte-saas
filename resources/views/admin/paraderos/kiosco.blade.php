@@ -63,7 +63,7 @@
 <!-- Cargar Face API -->
 <script src="{{ asset('js/face-api.min.js') }}"></script>
 <script>
-    const MODELS_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights/';
+    const MODELS_URL = '/models/';
     const API_ROSTROS_URL = '{{ route("paraderos.api.rostros") }}';
     const API_CHECKIN_URL = '{{ route("paraderos.checkin", $paradero->id) }}';
 
