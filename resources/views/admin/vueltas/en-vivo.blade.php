@@ -479,6 +479,24 @@ document.addEventListener('DOMContentLoaded', function() {
             .listen('.vuelta.terminada', () => {
                 console.log("Push Reverb: Vuelta Terminada");
                 actualizarDatos();
+            })
+            .listen('.vuelta.ubicacion_actualizada', (e) => {
+                console.log("Push Reverb: Ubicación Actualizada", e);
+                const marker = markers[e.vuelta_id];
+                if (marker) {
+                    marker.setLatLng([e.latitud, e.longitud]);
+                    
+                    // Actualizar caché de coordenadas para que no se pierdan al filtrar
+                    const v = todasLasVueltas.find(item => item.id === e.vuelta_id);
+                    if (v) {
+                        v.lat_actual = e.latitud;
+                        v.lng_actual = e.longitud;
+                        v.latitud = e.latitud;
+                        v.longitud = e.longitud;
+                    }
+                } else {
+                    actualizarDatos();
+                }
             });
     }
 

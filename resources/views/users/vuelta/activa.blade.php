@@ -110,6 +110,7 @@
 
 <script>
 const TERMINAR_URL = '{{ route("conductor.vuelta.terminar", [], false) }}';
+const UBICACION_URL = '{{ route("conductor.vuelta.ubicacion", [], false) }}';
 const CSRF         = '{{ csrf_token() }}';
 const INICIO_MS    = {{ \Carbon\Carbon::parse($vuelta->fecha->format("Y-m-d") . ' ' . $vuelta->hora_salida)->timestamp * 1000 }};
 const SERVER_AHORA = {{ now()->timestamp * 1000 }};
@@ -206,5 +207,44 @@ async function terminarVuelta() {
         terminando = false;
     }
 }
+
+// --- GPS BACKGROUND POLLING ---
+async function enviarUbicacionBackground() {
+    if (terminando) return; // Si el conductor está terminando la vuelta, no enviamos más actualizaciones
+
+    if (!navigator.geolocation) {
+        console.warn("Geolocalización no soportada");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+
+            try {
+                const resp = await fetch(UBICACION_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                    body: JSON.stringify({ latitud: lat, longitud: lng })
+                });
+                const data = await resp.json();
+                if (data.ok) {
+                    console.log("GPS de ruta enviado:", lat, lng);
+                }
+            } catch (err) {
+                console.error("Error enviando ubicación en segundo plano:", err);
+            }
+        },
+        (err) => {
+            console.error("Error al capturar ubicación en segundo plano:", err);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
+
+// Ejecutar de inmediato y luego cada 30 segundos
+enviarUbicacionBackground();
+setInterval(enviarUbicacionBackground, 30000);
 </script>
 @endsection

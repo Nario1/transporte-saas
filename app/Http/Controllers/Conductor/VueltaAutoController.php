@@ -182,6 +182,13 @@ class VueltaAutoController extends Controller
             'lng_actual' => $request->longitud,
         ]);
 
+        // Transmitir la actualización por WebSockets/Reverb de inmediato
+        broadcast(new \App\Events\VueltaUbicacionActualizada(
+            $vuelta,
+            (float) $request->latitud,
+            (float) $request->longitud
+        ));
+
         return response()->json(['ok' => true]);
     }
 
