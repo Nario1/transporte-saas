@@ -168,15 +168,15 @@ async function terminarVuelta() {
     document.getElementById('btn-terminar').disabled = true;
     document.getElementById('terminando-msg').classList.remove('hidden');
 
-    // Captura de GPS rápida (máximo 3 segundos) para no colgar el proceso
+    // Capturar GPS con un margen de tiempo suficiente (hasta 15 segundos) para asegurar precisión
     let lat = null, lng = null;
     try {
         const pos = await new Promise((resolve) => {
-            const timeout = setTimeout(() => resolve(null), 3000);
+            const timeout = setTimeout(() => resolve(null), 15000);
             navigator.geolocation.getCurrentPosition(
                 p => { clearTimeout(timeout); resolve(p); },
                 e => { clearTimeout(timeout); resolve(null); },
-                { enableHighAccuracy: true, timeout: 2500 }
+                { enableHighAccuracy: true, timeout: 14000, maximumAge: 0 }
             );
         });
         if (pos) {
@@ -184,6 +184,15 @@ async function terminarVuelta() {
             lng = pos.coords.longitude;
         }
     } catch (_) {}
+
+    // Evitar finalizar la vuelta si no se pudo obtener el GPS final
+    if (lat === null || lng === null) {
+        alert('No se pudo verificar tu ubicación de llegada. Asegúrate de tener activado el GPS de tu celular y vuelve a intentarlo.');
+        document.getElementById('btn-terminar').disabled = false;
+        document.getElementById('terminando-msg').classList.add('hidden');
+        terminando = false;
+        return;
+    }
 
     try {
         const resp = await fetch(TERMINAR_URL, {
