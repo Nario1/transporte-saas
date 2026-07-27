@@ -1,5 +1,8 @@
 * text=auto eol=lf
 
+# Marcar modelos de face-api como binarios
+public/models/* binary
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html
