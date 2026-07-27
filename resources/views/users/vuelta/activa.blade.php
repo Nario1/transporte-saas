@@ -168,6 +168,9 @@ async function terminarVuelta() {
     document.getElementById('btn-terminar').disabled = true;
     document.getElementById('terminando-msg').classList.remove('hidden');
 
+    // Detener el rastreo activo para que no interfiera
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+
     // Capturar GPS con un margen de tiempo suficiente (hasta 15 segundos) para asegurar precisión
     let lat = null, lng = null;
     try {
@@ -217,19 +220,56 @@ async function terminarVuelta() {
     }
 }
 
-// --- GPS BACKGROUND POLLING ---
-async function enviarUbicacionBackground() {
-    if (terminando) return; // Si el conductor está terminando la vuelta, no enviamos más actualizaciones
+// --- GPS BACKGROUND WATCHING OPTIMIZADO ---
+let lastLat = null;
+let lastLng = null;
+let lastSendTime = 0;
+let watchId = null;
+
+function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Radio de la Tierra en metros
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function iniciarRastreoGPS() {
+    if (terminando) return;
 
     if (!navigator.geolocation) {
         console.warn("Geolocalización no soportada");
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+    watchId = navigator.geolocation.watchPosition(
         async (pos) => {
+            if (terminando) {
+                if (watchId) navigator.geolocation.clearWatch(watchId);
+                return;
+            }
+
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
+            const ahora = Date.now();
+
+            // Filtro inteligente para no saturar el servidor ni gastar batería:
+            if (lastLat !== null && lastLng !== null) {
+                const distancia = calcularDistanciaMetros(lastLat, lastLng, lat, lng);
+                const tiempoTranscurrido = (ahora - lastSendTime) / 1000;
+
+                // Solo enviar si se ha movido más de 10 metros, O si han pasado al menos 20 segundos
+                if (distancia < 10 && tiempoTranscurrido < 20) {
+                    return;
+                }
+            }
+
+            lastLat = lat;
+            lastLng = lng;
+            lastSendTime = ahora;
 
             try {
                 const resp = await fetch(UBICACION_URL, {
@@ -239,21 +279,20 @@ async function enviarUbicacionBackground() {
                 });
                 const data = await resp.json();
                 if (data.ok) {
-                    console.log("GPS de ruta enviado:", lat, lng);
+                    console.log("GPS en ruta enviado:", lat, lng);
                 }
             } catch (err) {
                 console.error("Error enviando ubicación en segundo plano:", err);
             }
         },
         (err) => {
-            console.error("Error al capturar ubicación en segundo plano:", err);
+            console.error("Error capturando GPS en segundo plano:", err);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 }
 
-// Ejecutar de inmediato y luego cada 30 segundos
-enviarUbicacionBackground();
-setInterval(enviarUbicacionBackground, 30000);
+// Iniciar rastreo dinámico al cargar la página
+iniciarRastreoGPS();
 </script>
 @endsection
