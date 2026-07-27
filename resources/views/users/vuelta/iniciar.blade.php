@@ -382,11 +382,18 @@ async function iniciarVuelta() {
     // Captura de GPS forzosa e inalterable justo antes de enviar
     const posFinal = await capturarGPSInterno();
 
+    if (!posFinal || posFinal.lat === null || posFinal.lng === null) {
+        alert('No se pudo detectar tu ubicación. Asegúrate de tener activado el GPS (Ubicación) de tu celular y vuelve a intentarlo.');
+        document.getElementById('btn-iniciar-vuelta').disabled = false;
+        document.getElementById('iniciando-msg').classList.add('hidden');
+        return;
+    }
+
     const body = {
         verificado_rostro: rostroVerificado,
         ruta_id:  rutaSelect,
-        latitud:  posFinal ? posFinal.lat : null,
-        longitud: posFinal ? posFinal.lng : null,
+        latitud:  posFinal.lat,
+        longitud: posFinal.lng,
     };
 
     try {

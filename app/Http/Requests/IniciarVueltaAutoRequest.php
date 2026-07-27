@@ -20,9 +20,9 @@ class IniciarVueltaAutoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ruta_id'          => ['nullable', 'exists:rutas,id'],
-            'latitud'          => ['nullable', 'numeric', 'between:-90,90'],
-            'longitud'         => ['nullable', 'numeric', 'between:-180,180'],
+            'ruta_id'          => ['required', 'exists:rutas,id'],
+            'latitud'          => ['required', 'numeric', 'between:-90,90'],
+            'longitud'         => ['required', 'numeric', 'between:-180,180'],
             'verificado_rostro' => ['required', 'boolean'],
         ];
     }
