@@ -81,6 +81,14 @@
     async function iniciarCamara() {
         setStatus('Cargando modelos faciales...');
         try {
+            const originalFetch = window.fetch;
+            faceapi.env.monkeyPatch({
+                fetch: (url, init) => {
+                    const separator = url.includes('?') ? '&' : '?';
+                    return originalFetch(`${url}${separator}v=1.0.3`, init);
+                }
+            });
+
             await Promise.all([
                 faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
                 faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
