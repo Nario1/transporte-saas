@@ -71,7 +71,7 @@
 
 <script src="{{ asset('js/face-api.min.js') }}"></script>
 <script>
-    const MODELS_URL = '/models/';
+    const MODELS_URL = '/models-v2/';
     const STORE_URL  = '{{ route("conductor.rostro.store") }}';
     const CSRF       = '{{ csrf_token() }}';
 

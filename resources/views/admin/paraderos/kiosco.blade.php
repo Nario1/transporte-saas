@@ -63,7 +63,7 @@
 <!-- Cargar Face API -->
 <script src="{{ asset('js/face-api.min.js') }}"></script>
 <script>
-    const MODELS_URL = '/models/';
+    const MODELS_URL = '/models-v2/';
     const API_ROSTROS_URL = '{{ route("paraderos.api.rostros") }}';
     const API_CHECKIN_URL = '{{ route("paraderos.checkin", $paradero->id) }}';
 
