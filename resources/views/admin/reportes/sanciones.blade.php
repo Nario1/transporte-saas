@@ -27,7 +27,7 @@
             </div>
             <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
                 <label>Día Específico:</label>
-                <input type="date" onchange="if(this.value){ document.getElementsByName('desde')[0].value=this.value; document.getElementsByName('hasta')[0].value=this.value; this.form.submit(); }">
+                <input type="date" value="{{ $desde->toDateString() === $hasta->toDateString() ? $desde->toDateString() : '' }}" onchange="if(this.value){ document.getElementsByName('desde')[0].value=this.value; document.getElementsByName('hasta')[0].value=this.value; this.form.submit(); }">
             </div>
             <div class="flex-h" style="gap: 10px; margin-top: auto;">
                 <button type="submit" class="btn-primary" style="height: 48px; padding: 0 25px;">📊 FILTRAR</button>
@@ -43,9 +43,6 @@
             <div style="width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 15px;">
                 <div style="background: #e0f2fe; color: #0369a1; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
                     Total Recaudado (en rango): S/ {{ number_format($porEstado['pagado'], 2) }}
-                </div>
-                <div style="background: #fee2e2; color: #b91c1c; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
-                    Deuda Pendiente (en rango): S/ {{ number_format($porEstado['pendiente'], 2) }}
                 </div>
             </div>
         </form>

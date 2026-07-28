@@ -27,7 +27,7 @@
             </div>
             <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
                 <label>Día Específico:</label>
-                <input type="date" onchange="if(this.value){ document.getElementsByName('desde')[0].value=this.value; document.getElementsByName('hasta')[0].value=this.value; this.form.submit(); }">
+                <input type="date" value="{{ $desde->toDateString() === $hasta->toDateString() ? $desde->toDateString() : '' }}" onchange="if(this.value){ document.getElementsByName('desde')[0].value=this.value; document.getElementsByName('hasta')[0].value=this.value; this.form.submit(); }">
             </div>
             <div class="flex-h" style="gap: 10px; margin-top: auto;">
                 <button type="submit" class="btn-primary" style="height: 48px; padding: 0 25px;">📊 ANALIZAR</button>

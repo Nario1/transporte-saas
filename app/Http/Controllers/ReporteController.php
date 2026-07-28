@@ -227,16 +227,11 @@ class ReporteController extends Controller
         $flota = $request->has('flota') ? $request->input('flota') : '1';
 
         $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
-            ->where(function ($q) use ($desde, $hasta) {
-                $q->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
-                  ->orWhere(function ($q2) use ($desde, $hasta) {
-                      $q2->where('estado', 'pagado')
-                         ->whereBetween('cobrado_at', [
-                             $desde->startOfDay()->toDateTimeString(),
-                             $hasta->endOfDay()->toDateTimeString()
-                         ]);
-                  });
-            });
+            ->where('estado', 'pagado')
+            ->whereBetween('cobrado_at', [
+                $desde->startOfDay()->toDateTimeString(),
+                $hasta->endOfDay()->toDateTimeString()
+            ]);
 
         if ($flota) {
             $sancionesQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -244,25 +239,16 @@ class ReporteController extends Controller
             });
         }
 
-        $sancionesQuery = $sancionesQuery->with(['vehiculo', 'conductor', 'registrador', 'pagoMp'])->orderByDesc('fecha');
+        $sancionesQuery = $sancionesQuery->with(['vehiculo', 'conductor', 'registrador', 'pagoMp'])->orderByDesc('cobrado_at');
 
         $allSanciones = $sancionesQuery->clone()->get();
 
         // Resumen por estado financiero correcto en el rango
         $porEstado = [
-            'pendiente' => $allSanciones->filter(function($s) use ($desde, $hasta) {
-                return $s->estado === 'pendiente' 
-                    && $s->fecha->between($desde->startOfDay(), $hasta->endOfDay());
-            })->sum('monto'),
-            
-            'pagado' => $allSanciones->filter(function($s) use ($desde, $hasta) {
-                return $s->estado === 'pagado' 
-                    && $s->cobrado_at 
-                    && $s->cobrado_at->between($desde->startOfDay(), $hasta->endOfDay());
-            })->sum('monto'),
-            
-            'cantidad_pendiente' => $allSanciones->where('estado', 'pendiente')->count(),
-            'cantidad_pagada'    => $allSanciones->where('estado', 'pagado')->count(),
+            'pendiente' => 0.00,
+            'pagado' => $allSanciones->sum('monto'),
+            'cantidad_pendiente' => 0,
+            'cantidad_pagada'    => $allSanciones->count(),
         ];
 
         // Conductores con más sanciones

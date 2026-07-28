@@ -25,6 +25,7 @@
                 <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
                     <label>Día Específico:</label>
                     <input type="date"
+                        value="{{ $desde->toDateString() === $hasta->toDateString() ? $desde->toDateString() : '' }}"
                         onchange="if(this.value){ document.getElementsByName('desde')[0].value=this.value; document.getElementsByName('hasta')[0].value=this.value; this.form.submit(); }">
                 </div>
 
