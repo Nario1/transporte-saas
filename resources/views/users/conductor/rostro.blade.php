@@ -98,12 +98,12 @@
                 await faceapi.tf.ready();
             }
 
-            // Carga en paralelo: los 3 modelos necesarios
-            setStatus('Cargando modelos (1/3)...');
-            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL);
-            setStatus('Cargando modelos (2/3)...');
-            await faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL);
-            setStatus('Cargando modelos (3/3)...');
+            // Tiny models: 30x más rápidos de cargar y procesar
+            setStatus('Cargando detector (1/3)...');
+            await faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL);
+            setStatus('Cargando landmarks (2/3)...');
+            await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODELS_URL);
+            setStatus('Cargando reconocimiento (3/3)...');
             await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL);
 
             const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -150,14 +150,12 @@
         const video  = document.getElementById('video');
         const canvas = document.getElementById('overlay');
         const ctx    = canvas.getContext('2d');
-        // minConfidence más bajo = detecta más fácil en gama baja
-        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.28 });
 
-        // Canvas diminuto 160x120 = 16x menos píxeles = 16x más rápido en CPU
-        const aux    = document.createElement('canvas');
-        aux.width    = 160;
-        aux.height   = 120;
-        const auxCtx = aux.getContext('2d');
+        // TinyFaceDetector: inputSize 224 = balance velocidad/precisión óptimo
+        // 10x más rápido que ssdMobilenetv1 en gama media
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.35 });
+
+        let detectadoFrames = 0;
 
         async function loopDeteccion() {
             if (rostroDetectado) {
@@ -165,9 +163,9 @@
                 return;
             }
 
-            // Esperar a que el video tenga dimensiones reales
+            // Esperar stream de video listo
             if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
-                detectionInterval = setTimeout(loopDeteccion, 150);
+                detectionInterval = setTimeout(loopDeteccion, 100);
                 return;
             }
 
@@ -176,46 +174,44 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             try {
-                // Paso 1: detección simple ultra-rápida (sin landmarks)
-                auxCtx.drawImage(video, 0, 0, 160, 120);
-                const simpleDetection = await faceapi.detectSingleFace(aux, options);
+                // Paso 1: detección rápida solo del rostro (sin landmarks ni descriptor)
+                const det1 = await faceapi.detectSingleFace(video, options);
 
-                if (!simpleDetection) {
+                if (!det1) {
                     detectadoFrames = 0;
-                    setStatus('Posiciona tu rostro frente a la cámara', 'info');
-                    detectionInterval = setTimeout(loopDeteccion, 80);
+                    setStatus('Centra tu rostro en la cámara...', 'info');
+                    detectionInterval = setTimeout(loopDeteccion, 100);
                     return;
                 }
 
-                // Rostro detectado - dibujar indicador azul mientras procesa
-                const scaledBox = faceapi.resizeResults(simpleDetection, { width: canvas.width, height: canvas.height }).box;
+                // Feedback visual: caja azul de rastreo
+                const box1 = det1.box;
                 ctx.strokeStyle = '#3b82f6';
                 ctx.lineWidth   = 4;
-                ctx.strokeRect(scaledBox.x, scaledBox.y, scaledBox.width, scaledBox.height);
-                setStatus('Rostro detectado... procesando...', 'info');
-
+                ctx.strokeRect(box1.x, box1.y, box1.width, box1.height);
                 detectadoFrames++;
+                setStatus(`Rostro detectado (${detectadoFrames}/2)...`, 'info');
 
-                // Paso 2: solo cuando hay suficientes frames = extracción de descriptor
-                if (detectadoFrames >= FRAMES_PARA_CAPTURA) {
-                    const detFull = await faceapi.detectSingleFace(aux, options)
-                        .withFaceLandmarks()
+                // Paso 2: tras 2 frames con rostro → extraer descriptor con tiny landmarks
+                if (detectadoFrames >= 2) {
+                    const detFull = await faceapi
+                        .detectSingleFace(video, options)
+                        .withFaceLandmarks(true)   // true = usar modelo tiny de landmarks
                         .withFaceDescriptor();
 
                     if (detFull) {
                         rostroDetectado = true;
                         if (watchdogTimer) clearTimeout(watchdogTimer);
-                        setStatus('✓ Rostro capturado. Guardando...', 'success');
-                        // Dibujar caja verde
-                        const box = faceapi.resizeResults(detFull, { width: canvas.width, height: canvas.height }).detection.box;
+                        // Feedback visual: caja verde
+                        const boxV = detFull.detection.box;
                         ctx.strokeStyle = '#22c55e';
-                        ctx.lineWidth   = 4;
-                        ctx.strokeRect(box.x, box.y, box.width, box.height);
+                        ctx.lineWidth   = 5;
+                        ctx.strokeRect(boxV.x, boxV.y, boxV.width, boxV.height);
+                        setStatus('✓ Rostro capturado. Guardando...', 'success');
                         capturarFoto();
-                        return; // Detener loop
+                        return;
                     } else {
-                        // No logró sacar descriptor - reset y reintentar
-                        detectadoFrames = 0;
+                        detectadoFrames = 0; // Reintentar si descriptor falló
                     }
                 }
             } catch (err) {
@@ -249,15 +245,11 @@
         canvas.getContext('2d').drawImage(video, 0, 0);
         const fotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
-        // Canvas pequeño para descriptor rápido
-        const sm = document.createElement('canvas');
-        sm.width  = 160;
-        sm.height = 120;
-        sm.getContext('2d').drawImage(video, 0, 0, 160, 120);
-
+        // Re-detectar con tiny models para extraer descriptor final
+        const captOpts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
         const det = await faceapi
-            .detectSingleFace(sm, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.25 }))
-            .withFaceLandmarks()
+            .detectSingleFace(video, captOpts)
+            .withFaceLandmarks(true)   // true = tiny landmarks
             .withFaceDescriptor();
 
         if (!det) {
