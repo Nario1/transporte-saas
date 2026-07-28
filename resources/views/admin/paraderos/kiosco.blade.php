@@ -190,7 +190,7 @@
     // 3. Detener la cámara
     btnDetener.addEventListener('click', () => {
         isScanning = false;
-        if (scanInterval) clearInterval(scanInterval);
+        if (scanInterval) clearTimeout(scanInterval);
         
         const stream = video.srcObject;
         if (stream) {
@@ -206,43 +206,52 @@
         setStatus('<i class="fa-solid fa-circle-pause"></i> Escáner pausado.', 'warning');
     });
 
-    // 4. Bucle principal de escaneo
     function startScanning(displaySize) {
         isScanning = true;
         
-        scanInterval = setInterval(async () => {
+        async function loopScanning() {
             if (!isScanning) return;
 
-            // Detectar todos los rostros en el frame actual
-            const detections = await faceapi.detectAllFaces(video)
-                .withFaceLandmarks()
-                .withFaceDescriptors();
+            try {
+                // Detectar todos los rostros en el frame actual
+                const detections = await faceapi.detectAllFaces(video)
+                    .withFaceLandmarks()
+                    .withFaceDescriptors();
 
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-            const ctx = overlay.getContext('2d');
-            ctx.clearRect(0, 0, overlay.width, overlay.height);
+                if (!isScanning) return;
 
-            if (detections.length === 0) return;
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-            // Dibujar las cajas y comparar
-            resizedDetections.forEach(detection => {
-                const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-                const box = detection.detection.box;
+                if (detections.length > 0) {
+                    // Dibujar las cajas y comparar
+                    resizedDetections.forEach(detection => {
+                        const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+                        const box = detection.detection.box;
 
-                let drawColor = bestMatch.label === 'unknown' ? 'red' : 'green';
-                const drawBox = new faceapi.draw.DrawBox(box, { 
-                    label: bestMatch.label === 'unknown' ? 'Desconocido' : bestMatch.label.split('|')[1], 
-                    boxColor: drawColor 
-                });
-                drawBox.draw(overlay);
+                        let drawColor = bestMatch.label === 'unknown' ? 'red' : 'green';
+                        const drawBox = new faceapi.draw.DrawBox(box, { 
+                            label: bestMatch.label === 'unknown' ? 'Desconocido' : bestMatch.label.split('|')[1], 
+                            boxColor: drawColor 
+                        });
+                        drawBox.draw(overlay);
 
-                // Si es un match válido procesarlo
-                if (bestMatch.label !== 'unknown') {
-                    processMatch(bestMatch);
+                        // Si es un match válido procesarlo
+                        if (bestMatch.label !== 'unknown') {
+                            processMatch(bestMatch);
+                        }
+                    });
                 }
-            });
+            } catch (err) {
+                console.error("Error en escaneo facial de kiosco:", err);
+            }
 
-        }, 500); // 2 fps para no saturar la CPU
+            // Volver a programar el escaneo solo tras haber terminado el actual
+            scanInterval = setTimeout(loopScanning, 250);
+        }
+
+        loopScanning();
     }
 
     // 5. Enviar comprobación al servidor

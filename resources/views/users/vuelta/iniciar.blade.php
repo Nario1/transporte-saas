@@ -192,7 +192,7 @@ const INICIAR_URL     = '{{ route("conductor.vuelta.iniciar.post", [], false) }}
 let rostroVerificado  = !REQUIERE_FACIAL; 
 if (!TIENE_ROSTRO && REQUIERE_FACIAL) rostroVerificado = false; 
 let embeddingCapturado = null;
-let detIntervalId     = null;
+let detTimeoutId      = null;
 
 let gpsActual = { lat: null, lng: null };
 
@@ -250,7 +250,13 @@ if (TIENE_ROSTRO && STORED_EMBED) {
                 faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
                 faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
             ]);
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                }
+            });
             const video = document.getElementById('video-vuelta');
             video.srcObject = stream;
             await video.play();
@@ -271,7 +277,7 @@ function detenerCamara() {
         video.srcObject.getTracks().forEach(t => t.stop());
         video.srcObject = null;
     }
-    if (detIntervalId) clearInterval(detIntervalId);
+    if (detTimeoutId) clearTimeout(detTimeoutId);
     
     const camWrap = document.querySelector('.cam-wrap');
     if (camWrap) camWrap.style.display = 'none';
@@ -286,63 +292,72 @@ function iniciarDeteccion() {
 
     let intentos = 0;
 
-    detIntervalId = setInterval(async () => {
+    async function loopDeteccion() {
         if (rostroVerificado) { detenerCamara(); return; }
 
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const det = await faceapi
-            .detectSingleFace(video, options)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        try {
+            const det = await faceapi
+                .detectSingleFace(video, options)
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-        if (!det) {
-            setCamStatus('Acerque su rostro...', 'info');
-            return;
-        }
-
-        intentos++;
-        const distancia = faceapi.euclideanDistance(det.descriptor, stored);
-        const UMBRAL    = 0.55; // Menos = más estricto
-
-        // Dibujar caja
-        const box = det.detection.box;
-        ctx.strokeStyle = distancia < UMBRAL ? '#22c55e' : '#ef4444';
-        ctx.lineWidth   = 3;
-        ctx.beginPath();
-        ctx.rect(box.x, box.y, box.width, box.height);
-        ctx.stroke();
-
-        if (distancia < UMBRAL) {
-            detenerCamara();
-            setCamStatus(`Identidad verificada (${(distancia*100).toFixed(0)}% coincidencia)`, 'success');
-            rostroVerificado = true;
-            habilitarBoton();
-            
-            // Verificar si hay ruta seleccionada para auto-iniciar
-            const rutaSel = document.getElementById('ruta-select').value;
-            if (rutaSel) {
-                mostrarResultado(true, 'Verificacion exitosa. Iniciando vuelta...');
-                setTimeout(() => {
-                    iniciarVuelta();
-                }, 1000);
+            if (!det) {
+                setCamStatus('Acerque su rostro...', 'info');
             } else {
-                mostrarResultado(true, 'Identidad verificada. Selecciona una ruta para empezar.');
+                intentos++;
+                const distancia = faceapi.euclideanDistance(det.descriptor, stored);
+                const UMBRAL    = 0.55; // Menos = más estricto
+
+                // Dibujar caja
+                const box = det.detection.box;
+                ctx.strokeStyle = distancia < UMBRAL ? '#22c55e' : '#ef4444';
+                ctx.lineWidth   = 3;
+                ctx.beginPath();
+                ctx.rect(box.x, box.y, box.width, box.height);
+                ctx.stroke();
+
+                if (distancia < UMBRAL) {
+                    detenerCamara();
+                    setCamStatus(`Identidad verificada (${(distancia*100).toFixed(0)}% coincidencia)`, 'success');
+                    rostroVerificado = true;
+                    habilitarBoton();
+                    
+                    // Verificar si hay ruta seleccionada para auto-iniciar
+                    const rutaSel = document.getElementById('ruta-select').value;
+                    if (rutaSel) {
+                        mostrarResultado(true, 'Verificacion exitosa. Iniciando vuelta...');
+                        setTimeout(() => {
+                            iniciarVuelta();
+                        }, 1000);
+                    } else {
+                        mostrarResultado(true, 'Identidad verificada. Selecciona una ruta para empezar.');
+                    }
+                    return; // Detener loop
+                } else if (intentos >= 8) {
+                    // Después de varios intentos fallidos, alerta pero permite iniciar
+                    detenerCamara();
+                    setCamStatus('No se pudo verificar', 'warn');
+                    mostrarResultado(false, 'Verificacion fallida. Notifica a tu supervisor.');
+                    rostroVerificado = true;
+                    habilitarBoton();
+                    return; // Detener loop
+                } else {
+                    setCamStatus(`Verificando... (intento ${intentos}/8)`, 'info');
+                }
             }
-        } else if (intentos >= 8) {
-            // Después de varios intentos fallidos, alerta pero permite iniciar (degraded mode)
-            detenerCamara();
-            setCamStatus('No se pudo verificar', 'warn');
-            mostrarResultado(false, 'Verificacion fallida. Notifica a tu supervisor.');
-            // Permitir continuar bajo advertencia si falla mucho o se queda pegado
-            rostroVerificado = true;
-            habilitarBoton();
-        } else {
-            setCamStatus(`Verificando... (intento ${intentos}/8)`, 'info');
+        } catch (err) {
+            console.error("Error en detección facial:", err);
         }
-    }, 600);
+
+        // Programar la siguiente detección solo después de que la actual haya terminado
+        detTimeoutId = setTimeout(loopDeteccion, 150);
+    }
+
+    loopDeteccion();
 }
 
 function habilitarBoton() {

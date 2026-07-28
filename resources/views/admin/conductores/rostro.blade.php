@@ -168,45 +168,57 @@ function iniciarDeteccion() {
     const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
 
     let detectadoSegundos = 0;
-    const intervalTime = 400; // ms
 
-    detectionInterval = setInterval(async () => {
+    async function loopDeteccion() {
         if (video.paused || video.ended) return;
+        if (rostroDetectado && detectadoSegundos >= 1500) {
+            if (detectionInterval) clearTimeout(detectionInterval);
+            return;
+        }
 
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const detection = await faceapi
-            .detectSingleFace(video, options)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        try {
+            const detection = await faceapi
+                .detectSingleFace(video, options)
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-        if (detection) {
-            // Dibujar caja del rostro
-            const box = detection.detection.box;
-            ctx.strokeStyle = '#22c55e';
-            ctx.lineWidth   = 3;
-            ctx.beginPath();
-            ctx.rect(box.x, box.y, box.width, box.height);
-            ctx.stroke();
+            if (detection) {
+                // Dibujar caja del rostro
+                const box = detection.detection.box;
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth   = 3;
+                ctx.beginPath();
+                ctx.rect(box.x, box.y, box.width, box.height);
+                ctx.stroke();
 
-            rostroDetectado = true;
-            detectadoSegundos += intervalTime;
+                rostroDetectado = true;
+                detectadoSegundos += 200; // tiempo aproximado de espera
 
-            if (detectadoSegundos >= 1500) {
-                clearInterval(detectionInterval);
-                setStatus('Capturando rostro...', 'success');
-                capturarFoto();
+                if (detectadoSegundos >= 1500) {
+                    setStatus('Capturando rostro...', 'success');
+                    capturarFoto();
+                    return; // Detener loop
+                } else {
+                    setStatus('Rostro detectado... mantente quieto', 'success');
+                }
             } else {
-                setStatus('Rostro detectado... mantente quieto', 'success');
+                rostroDetectado = false;
+                detectadoSegundos = 0;
+                setStatus('Acerque su rostro a la camara...', 'warn');
             }
-        } else {
-            rostroDetectado = false;
-            detectadoSegundos = 0;
-            setStatus('Acerque su rostro a la camara...', 'warn');
+        } catch (err) {
+            console.error("Error en detección facial:", err);
         }
-    }, intervalTime);
+
+        // Programar la siguiente detección solo después de que esta termine
+        detectionInterval = setTimeout(loopDeteccion, 200);
+    }
+
+    loopDeteccion();
 }
 
 // Ocultar botón ya que ahora es automático
