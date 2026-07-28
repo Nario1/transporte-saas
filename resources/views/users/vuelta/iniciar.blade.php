@@ -24,39 +24,55 @@
         color: var(--text2);
         margin-bottom: 14px;
     }
-    .cam-wrap {
-        position: relative;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #fff;
-        aspect-ratio: 4/3;
-        margin-bottom: 12px;
-        border: 8px solid #fff;
-        box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    .facial-overlay {
+        position: fixed;
+        inset: 0;
+        background: #ffffff;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
-    #video-vuelta {
+    .facial-container {
+        position: relative;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 8px solid #3b82f6;
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+        background: #fff;
+    }
+    .facial-video {
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
-    #overlay-vuelta {
+    .facial-canvas {
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
     }
-    .cam-status {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        right: 8px;
-        background: rgba(0,0,0,0.65);
-        color: #fff;
-        font-size: 11.5px;
-        font-weight: 600;
-        padding: 6px 10px;
-        border-radius: 8px;
+    .facial-instructions {
+        margin-top: 24px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
         text-align: center;
+        padding: 0 20px;
+    }
+    .facial-btn-cancel {
+        margin-top: 30px;
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
     }
     .check-badge {
         display: inline-flex;
@@ -120,13 +136,18 @@
     <div class="paso-sub">Tu cámara verificará tu identidad antes de iniciar.</div>
 
     @if($requiereFacial && $tieneRostro)
-        <div class="cam-wrap">
-            <video id="video-vuelta" autoplay muted playsinline></video>
-            <canvas id="overlay-vuelta"></canvas>
-            <div class="cam-status" id="cam-status-txt">Iniciando cámara...</div>
+        <div class="facial-overlay" id="facial-overlay-wrap">
+            <div style="font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 24px; text-align: center;">
+                Verificación de Identidad
+            </div>
+            <div class="facial-container">
+                <video id="video-vuelta" class="facial-video" autoplay muted playsinline></video>
+                <canvas id="overlay-vuelta" class="facial-canvas"></canvas>
+            </div>
+            <div class="facial-instructions" id="cam-status-txt">Cargando cámara...</div>
+            <button type="button" class="facial-btn-cancel" onclick="cancelarVerificacion()">Saltar / Cancelar</button>
         </div>
         <canvas id="cap-canvas" style="display:none"></canvas>
-
         <div id="verificacion-resultado" style="margin-bottom:12px"></div>
     @elseif(!$requiereFacial)
         <div class="alert success" style="background: var(--green-l); color: var(--green); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 14px 16px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px;">
@@ -298,8 +319,16 @@ function detenerCamara() {
     }
     if (detTimeoutId) clearTimeout(detTimeoutId);
     
-    const camWrap = document.querySelector('.cam-wrap');
-    if (camWrap) camWrap.style.display = 'none';
+    const overlayWrap = document.getElementById('facial-overlay-wrap');
+    if (overlayWrap) overlayWrap.style.display = 'none';
+}
+
+function cancelarVerificacion() {
+    detenerCamara();
+    setCamStatus('Verificación cancelada', 'warn');
+    mostrarResultado(false, 'Verificación cancelada por el usuario.');
+    rostroVerificado = true;
+    habilitarBoton();
 }
 
 function iniciarDeteccion() {
@@ -309,13 +338,14 @@ function iniciarDeteccion() {
     const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
     const stored  = new Float32Array(STORED_EMBED);
 
-    // Canvas auxiliar de baja resolución para acelerar detección en celulares de gama baja
+    // Canvas auxiliar de baja resolución (240x180) para acelerar detección en celulares de gama baja
     const auxCanvas = document.createElement('canvas');
-    auxCanvas.width = 320;
-    auxCanvas.height = 240;
+    auxCanvas.width = 240;
+    auxCanvas.height = 180;
     const auxCtx = auxCanvas.getContext('2d');
 
     let intentos = 0;
+    let frameCount = 0;
 
     async function loopDeteccion() {
         if (rostroVerificado) { detenerCamara(); return; }
@@ -326,65 +356,76 @@ function iniciarDeteccion() {
 
         try {
             // Dibujar frame en miniatura para procesar 4 veces más rápido
-            auxCtx.drawImage(video, 0, 0, 320, 240);
+            auxCtx.drawImage(video, 0, 0, 240, 180);
+            frameCount++;
 
-            const detMin = await faceapi
-                .detectSingleFace(auxCanvas, options)
-                .withFaceLandmarks()
-                .withFaceDescriptor();
+            // Detección simple (muy rápida)
+            const detection = await faceapi.detectSingleFace(auxCanvas, options);
 
-            if (!detMin) {
-                setCamStatus('Acerque su rostro...', 'info');
+            if (!detection) {
+                setCamStatus('Posiciona tu rostro frente a la cámara...', 'info');
             } else {
-                // Redimensionar las detecciones al tamaño visible
-                const det = faceapi.resizeResults(detMin, { width: canvas.width, height: canvas.height });
-                intentos++;
-                const distancia = faceapi.euclideanDistance(det.descriptor, stored);
-                const UMBRAL    = 0.58; // Umbral de 0.58 (más flexible en gama baja)
+                // Solo ejecutar landmarks y descriptor pesado cada 3 frames (ahorro de CPU del 66%)
+                if (frameCount % 3 === 0) {
+                    const detFull = await faceapi.detectSingleFace(auxCanvas, options)
+                        .withFaceLandmarks()
+                        .withFaceDescriptor();
 
-                // Dibujar caja
-                const box = det.detection.box;
-                ctx.strokeStyle = distancia < UMBRAL ? '#22c55e' : '#ef4444';
-                ctx.lineWidth   = 3;
-                ctx.beginPath();
-                ctx.rect(box.x, box.y, box.width, box.height);
-                ctx.stroke();
+                    if (detFull) {
+                        const det = faceapi.resizeResults(detFull, { width: canvas.width, height: canvas.height });
+                        intentos++;
+                        const distancia = faceapi.euclideanDistance(det.descriptor, stored);
+                        const UMBRAL    = 0.58; // Umbral de 0.58 (más flexible en gama baja)
 
-                if (distancia < UMBRAL) {
-                    detenerCamara();
-                    setCamStatus(`Identidad verificada (${(distancia*100).toFixed(0)}% coincidencia)`, 'success');
-                    rostroVerificado = true;
-                    habilitarBoton();
-                    
-                    // Verificar si hay ruta seleccionada para auto-iniciar
-                    const rutaSel = document.getElementById('ruta-select').value;
-                    if (rutaSel) {
-                        mostrarResultado(true, 'Verificacion exitosa. Iniciando vuelta...');
-                        setTimeout(() => {
-                            iniciarVuelta();
-                        }, 1000);
-                    } else {
-                        mostrarResultado(true, 'Identidad verificada. Selecciona una ruta para empezar.');
+                        // Dibujar caja verde/roja
+                        const box = det.detection.box;
+                        ctx.strokeStyle = distancia < UMBRAL ? '#22c55e' : '#ef4444';
+                        ctx.lineWidth   = 3;
+                        ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+                        if (distancia < UMBRAL) {
+                            detenerCamara();
+                            setCamStatus(`Identidad verificada (${(distancia*100).toFixed(0)}% coincidencia)`, 'success');
+                            rostroVerificado = true;
+                            habilitarBoton();
+                            
+                            // Verificar si hay ruta seleccionada para auto-iniciar
+                            const rutaSel = document.getElementById('ruta-select').value;
+                            if (rutaSel) {
+                                mostrarResultado(true, 'Verificacion exitosa. Iniciando vuelta...');
+                                setTimeout(() => {
+                                    iniciarVuelta();
+                                }, 1000);
+                            } else {
+                                mostrarResultado(true, 'Identidad verificada. Selecciona una ruta para empezar.');
+                            }
+                            return; // Detener loop
+                        } else if (intentos >= 8) {
+                            // Después de varios intentos fallidos, alerta pero permite iniciar
+                            detenerCamara();
+                            setCamStatus('No se pudo verificar', 'warn');
+                            mostrarResultado(false, 'Verificacion fallida. Notifica a tu supervisor.');
+                            rostroVerificado = true;
+                            habilitarBoton();
+                            return; // Detener loop
+                        } else {
+                            setCamStatus(`Verificando... (intento ${intentos}/8)`, 'info');
+                        }
                     }
-                    return; // Detener loop
-                } else if (intentos >= 8) {
-                    // Después de varios intentos fallidos, alerta pero permite iniciar
-                    detenerCamara();
-                    setCamStatus('No se pudo verificar', 'warn');
-                    mostrarResultado(false, 'Verificacion fallida. Notifica a tu supervisor.');
-                    rostroVerificado = true;
-                    habilitarBoton();
-                    return; // Detener loop
                 } else {
-                    setCamStatus(`Verificando... (intento ${intentos}/8)`, 'info');
+                    // Cajas de rastreo temporal (azul) para dar feedback fluido
+                    const box = faceapi.resizeResults(detection, { width: canvas.width, height: canvas.height }).box;
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(box.x, box.y, box.width, box.height);
                 }
             }
         } catch (err) {
             console.error("Error en detección facial:", err);
         }
 
-        // Programar la siguiente detección solo después de que la actual haya terminado
-        detTimeoutId = setTimeout(loopDeteccion, 60);
+        // Programar la siguiente detección en 40ms para una fluidez óptima
+        detTimeoutId = setTimeout(loopDeteccion, 40);
     }
 
     loopDeteccion();
