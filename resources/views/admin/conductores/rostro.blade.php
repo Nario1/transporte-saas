@@ -137,6 +137,14 @@ async function iniciarCamara() {
             }
         });
 
+        // Forzar backend CPU en iOS para evitar bugs de WebGL / perdida de contexto
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+            await faceapi.tf.setBackend('cpu');
+            await faceapi.tf.ready();
+            console.log('Forced CPU backend on iOS');
+        }
+
         await Promise.all([
             faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
             faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
