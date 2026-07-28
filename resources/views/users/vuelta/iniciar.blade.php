@@ -246,12 +246,13 @@ if (TIENE_ROSTRO && STORED_EMBED) {
         setCamStatus('Cargando modelos...');
         try {
             const originalFetch = window.fetch;
-            faceapi.env.monkeyPatch({
-                fetch: (url, init) => {
+            window.fetch = function(url, init) {
+                if (typeof url === 'string' && url.includes('models-v2')) {
                     const separator = url.includes('?') ? '&' : '?';
-                    return originalFetch(`${url}${separator}v=1.0.6`, init);
+                    return originalFetch(`${url}${separator}v=1.0.7`, init);
                 }
-            });
+                return originalFetch(url, init);
+            };
 
             // Forzar backend CPU en iOS para evitar bugs de WebGL / perdida de contexto
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
