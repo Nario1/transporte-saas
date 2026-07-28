@@ -59,7 +59,7 @@
                             @csrf
                             <button type="submit" class="btn-mp" style="width: 100%; justify-content: center; padding: 12px; font-size: 13px; cursor: pointer; border: none; background: #009ee3; color: white; border-radius: 10px; display: flex; align-items: center; gap: 8px;">
                                 <img src="https://http2.mlstatic.com/frontend-assets/billing/mpe-billing-v2/mercadopago/logo-mercadopago.svg" alt="Mercado Pago" style="height: 14px; filter: brightness(0) invert(1);">
-                                <span>Pagar Sanción Online</span>
+                                <span>Pagar Online</span>
                             </button>
                         </form>
                     </div>

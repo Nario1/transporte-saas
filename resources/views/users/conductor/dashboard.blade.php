@@ -115,7 +115,7 @@
                                             @csrf
                                             <button type="submit" class="btn-mp" style="background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.15);">
                                                 <img src="https://http2.mlstatic.com/frontend-assets/billing/mpe-billing-v2/mercadopago/logo-mercadopago.svg" alt="MP" style="height: 10px; filter: brightness(0) invert(1);">
-                                                <span>PAGAR</span>
+                                                <span>PAGAR ONLINE</span>
                                             </button>
                                         </form>
                                     </div>
@@ -214,7 +214,7 @@
                             <form action="{{ route('conductor.sanciones.pagar-mp', $sancion) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn-mp" style="background: #009ee3; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                    <i class="fa-solid fa-credit-card"></i> PAGAR
+                                    <i class="fa-solid fa-credit-card"></i> PAGAR ONLINE
                                 </button>
                             </form>
                         </div>
