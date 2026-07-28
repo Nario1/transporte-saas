@@ -76,8 +76,8 @@
                         <form action="{{ route('conductor.tributos.pagar-mp', $tributoHoy) }}" method="POST">
                             @csrf
                             <button type="submit" class="btn-mp" style="background:#009ee3; color:white; border:none; font-size:13px; padding:10px 20px; font-weight:bold; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 12px rgba(0,158,227,0.2); cursor: pointer;">
-                                <img src="https://http2.mlstatic.com/frontend-assets/billing/mpe-billing-v2/mercadopago/logo-mercadopago.svg" alt="Mercado Pago" style="height: 14px; filter: brightness(0) invert(1);">
-                                <span>PAGAR ONLINE</span>
+                                <i class="fa-solid fa-mobile-screen-button"></i>
+                                <span>PAGAR CON YAPE</span>
                             </button>
                         </form>
                     </div>
@@ -128,8 +128,8 @@
                             <form action="{{ route('conductor.tributos.pagar-mp', $tributeInHistory) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn-mp" style="padding: 6px 12px; font-size: 11px; height: 32px; min-width: 100px; justify-content: center; gap: 6px; cursor: pointer; border: none; background: #009ee3; color: white; border-radius: 8px;">
-                                    <img src="https://http2.mlstatic.com/frontend-assets/billing/mpe-billing-v2/mercadopago/logo-mercadopago.svg" alt="MP" style="height: 10px; filter: brightness(0) invert(1);">
-                                    <span>PAGAR ONLINE</span>
+                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                    <span>PAGAR CON YAPE</span>
                                 </button>
                             </form>
                         @endif
