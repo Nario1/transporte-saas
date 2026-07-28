@@ -17,7 +17,7 @@ class RostroController extends Controller
      */
     public function show(Conductor $conductor)
     {
-        $this->authorize('view', $conductor);
+        abort_if($conductor->empresa_id !== auth()->user()->empresa_id, 403);
 
         $rostro = ConductorRostro::where('conductor_id', $conductor->id)
             ->where('activo', true)
@@ -33,7 +33,7 @@ class RostroController extends Controller
      */
     public function store(StoreRostroRequest $request, Conductor $conductor)
     {
-        $this->authorize('update', $conductor);
+        abort_if($conductor->empresa_id !== auth()->user()->empresa_id, 403);
 
         $request->validated();
 
@@ -60,7 +60,7 @@ class RostroController extends Controller
      */
     public function destroy(Conductor $conductor)
     {
-        $this->authorize('update', $conductor);
+        abort_if($conductor->empresa_id !== auth()->user()->empresa_id, 403);
 
         $this->rostroService->eliminarPerfilFacial($conductor);
 

@@ -278,10 +278,10 @@
                             </div>
 
                             @if($conductor->rostro)
-                                <form action="{{ route('conductores.rostro.destroy', $conductor->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro que deseas reiniciar la biometría? Se borrará el rostro actual para que puedas registrar el de un conductor suplente o nuevo.');" style="margin-top: 10px; width: 100%;">
+                                <form id="form-reiniciar-biometria" action="{{ route('conductores.rostro.destroy', $conductor->id) }}" method="POST" style="margin-top: 10px; width: 100%;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px; background-color: var(--red-l); color: var(--red); border-color: rgba(220, 38, 38, 0.2);">
+                                    <button type="button" onclick="confirmarReiniciarBiometria()" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px; background-color: var(--red-l); color: var(--red); border-color: rgba(220, 38, 38, 0.2);">
                                         <i class="fa-solid fa-rotate"></i> Reiniciar Biometría
                                     </button>
                                 </form>
@@ -321,6 +321,27 @@
                 console.error('Error:', error);
                 alert('Error de conexión');
                 checkbox.checked = !status;
+            });
+        }
+
+        function confirmarReiniciarBiometria() {
+            Swal.fire({
+                title: '¿Reiniciar Biometría?',
+                text: "Se borrará físicamente el rostro registrado de este conductor para habilitar un nuevo registro.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--red)',
+                cancelButtonColor: 'var(--text3)',
+                confirmButtonText: 'Sí, reiniciar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true,
+                background: 'var(--card)',
+                color: 'var(--text)',
+                borderRadius: '16px'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('form-reiniciar-biometria').submit();
+                }
             });
         }
     </script>
