@@ -208,9 +208,9 @@
                                         </button>
                                     </form>
 
-                                    <form method="POST" action="{{ route('conductores.acceso.reset', $conductor->id) }}" onsubmit="return confirm('¿Desea reiniciar la contraseña del conductor? Se restablecerá a la PLACA del vehículo asignado y deberá registrar su rostro de nuevo.')">
+                                    <form id="form-reiniciar-password" method="POST" action="{{ route('conductores.acceso.reset', $conductor->id) }}">
                                         @csrf
-                                        <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px;">
+                                        <button type="button" onclick="confirmarReiniciarPassword()" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px;">
                                             <i class="fa-solid fa-key"></i> Reiniciar Contraseña
                                         </button>
                                     </form>
@@ -341,6 +341,27 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('form-reiniciar-biometria').submit();
+                }
+            });
+        }
+
+        function confirmarReiniciarPassword() {
+            Swal.fire({
+                title: '¿Reiniciar Contraseña?',
+                text: "Se restablecerá la contraseña del conductor a la PLACA del vehículo asignado.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--accent)',
+                cancelButtonColor: 'var(--text3)',
+                confirmButtonText: 'Sí, reiniciar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true,
+                background: 'var(--card)',
+                color: 'var(--text)',
+                borderRadius: '16px'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('form-reiniciar-password').submit();
                 }
             });
         }

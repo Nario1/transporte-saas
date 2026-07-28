@@ -115,16 +115,8 @@ class ConductorAccesoController extends Controller
             'password' => Hash::make($placa),
         ]);
 
-        // Resetear biometría: Eliminar registros faciales y sus fotos
-        foreach ($conductor->rostros as $r) {
-            if ($r->foto_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($r->foto_path)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($r->foto_path);
-            }
-            $r->delete();
-        }
-
         $conductor->update(['primer_ingreso' => true]);
 
-        return back()->with('success', "Acceso actualizado (Usuario: \"{$placa}\") y registro facial reiniciado.");
+        return back()->with('success', "Contraseña reiniciada correctamente. Nueva clave temporal: \"{$placa}\".");
     }
 }
