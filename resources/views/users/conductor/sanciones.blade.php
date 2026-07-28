@@ -57,7 +57,7 @@
                         {{-- Botón de Pago MP --}}
                         <form action="{{ route('conductor.sanciones.pagar-mp', $sancion) }}" method="POST" style="margin-top: 5px;">
                             @csrf
-                            <button type="submit" class="btn-mp" style="width: 100%; justify-content: center; padding: 12px; font-size: 13px; cursor: pointer; border: none; background: #009ee3; color: white; border-radius: 10px; display: flex; align-items: center; gap: 8px;">
+                            <button type="submit" class="btn-mp btn-block">
                                 <i class="fa-solid fa-mobile-screen-button"></i>
                                 <span>Pagar con Yape</span>
                             </button>

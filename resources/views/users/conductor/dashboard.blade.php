@@ -113,10 +113,10 @@
                                         <div style="font-weight: 800; color: #c53030; font-size: 14px;">S/ {{ number_format($deuda->monto, 2) }}</div>
                                         <form action="{{ route('conductor.tributos.pagar-mp', $deuda) }}" method="POST">
                                             @csrf
-                                            <button type="submit" class="btn-mp" style="background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.15);">
-                                                <i class="fa-solid fa-mobile-screen-button"></i>
-                                                <span>PAGAR CON YAPE</span>
-                                            </button>
+                                                <button type="submit" class="btn-mp btn-mp-sm btn-mp-danger">
+                                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                                    <span>PAGAR CON YAPE</span>
+                                                </button>
                                         </form>
                                     </div>
                                 </div>
@@ -132,14 +132,14 @@
                             </div>
                         @else
                             @if($conductor->vehiculos->count() > 0)
-                                <div style="display: flex; align-items: center; justify-content: space-between; background: #f0f7ff; padding: 12px 16px; border-radius: 14px; border: 1px solid #bae6fd;">
-                                    <div style="font-size: 13px; color: #0369a1; font-weight: 600;">Pagar tributo de hoy:</div>
+                                <div class="payment-box">
+                                    <div class="payment-label">Pagar tributo de hoy:</div>
                                     <form action="{{ route('conductor.tributos.pagar-mp', $tributoHoy) }}" method="POST">
                                         @csrf
-                                        <button type="submit" class="btn-mp" style="background: #009ee3; color: #fff; border: none; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,158,227,0.15);">
-                                            <i class="fa-solid fa-mobile-screen-button"></i>
-                                            <span>PAGAR CON YAPE</span>
-                                        </button>
+                                            <button type="submit" class="btn-mp">
+                                                <i class="fa-solid fa-mobile-screen-button"></i>
+                                                <span>PAGAR CON YAPE</span>
+                                            </button>
                                     </form>
                                 </div>
                             @else

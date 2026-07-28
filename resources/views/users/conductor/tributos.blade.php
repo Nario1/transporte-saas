@@ -71,11 +71,11 @@
                         <span class="summary-val" style="font-weight:600;">{{ $tributoHoy->observaciones }}</span>
                     </div>
                 @else
-                    <div style="margin-top: 18px; border-top: 1px dashed #eee; padding-top: 18px; display: flex; align-items: center; justify-content: space-between;">
-                        <span style="font-size: 13px; color: #666; font-weight: 600;">Pagar tributo del día:</span>
+                    <div class="payment-box" style="margin-top: 18px;">
+                        <div class="payment-label">Pagar tributo del día:</div>
                         <form action="{{ route('conductor.tributos.pagar-mp', $tributoHoy) }}" method="POST">
                             @csrf
-                            <button type="submit" class="btn-mp" style="background:#009ee3; color:white; border:none; font-size:13px; padding:10px 20px; font-weight:bold; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 12px rgba(0,158,227,0.2); cursor: pointer;">
+                            <button type="submit" class="btn-mp">
                                 <i class="fa-solid fa-mobile-screen-button"></i>
                                 <span>PAGAR CON YAPE</span>
                             </button>
@@ -127,7 +127,7 @@
                         @if($tributeInHistory->estado === 'pendiente')
                             <form action="{{ route('conductor.tributos.pagar-mp', $tributeInHistory) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="btn-mp" style="padding: 6px 12px; font-size: 11px; height: 32px; min-width: 100px; justify-content: center; gap: 6px; cursor: pointer; border: none; background: #009ee3; color: white; border-radius: 8px;">
+                                <button type="submit" class="btn-mp btn-mp-sm">
                                     <i class="fa-solid fa-mobile-screen-button"></i>
                                     <span>PAGAR CON YAPE</span>
                                 </button>

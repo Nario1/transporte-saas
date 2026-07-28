@@ -728,6 +728,63 @@
             border: 1px solid rgba(220, 38, 38, .2);
         }
 
+        /* Botón de pago MercadoPago / Yape */
+        .btn-mp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 13px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            background: #009ee3;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 158, 227, 0.2);
+        }
+        .btn-mp:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(0, 158, 227, 0.3);
+        }
+        .btn-mp:active {
+            transform: translateY(0);
+        }
+        .btn-mp.btn-mp-danger {
+            background: #ef4444;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+        }
+        .btn-mp.btn-mp-danger:hover {
+            box-shadow: 0 6px 14px rgba(239, 68, 68, 0.3);
+        }
+        .btn-mp.btn-mp-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 8px;
+        }
+
+        /* Cajón de pago */
+        .payment-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0f7ff;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid #bae6fd;
+            gap: 12px;
+        }
+        .payment-label {
+            font-size: 13px;
+            color: #0369a1;
+            font-weight: 600;
+        }
+
         @keyframes slideDown {
             from {
                 opacity: 0;
