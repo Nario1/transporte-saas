@@ -204,8 +204,15 @@
                                                 {{ $pag->cobrado_at ? $pag->cobrado_at->format('h:i A') : '---' }}</span>
                                         </td>
                                         <td>
-                                            <span class="pill blue"
-                                                style="font-size: 9px; padding: 2px 8px; font-weight: 800;">{{ strtoupper($pag->metodo_pago ?? '---') }}</span>
+                                            @if($pag->metodo_pago === 'mercadopago')
+                                                <span class="pill blue" style="font-size: 9px; padding: 2px 8px; font-weight: 800; background-color: #00bef0; color: #fff;">
+                                                    MERCADOPAGO ({{ strtoupper($pag->pagoMp?->metodo ?? 'WEB') }})
+                                                </span>
+                                            @else
+                                                <span class="pill blue" style="font-size: 9px; padding: 2px 8px; font-weight: 800;">
+                                                    {{ strtoupper($pag->metodo_pago ?? '---') }}
+                                                </span>
+                                            @endif
                                             <span class="text-sub" style="display:inline; margin-left: 5px;">Recibe:
                                                 {{ explode(' ', $pag->cobrador?->name)[0] }}</span>
                                         </td>

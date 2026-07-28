@@ -87,7 +87,7 @@ class ReporteController extends Controller
                     $vQ->where('numero_flota', $flota);
                 });
             })
-            ->with(['vehiculo', 'conductor', 'cobrador.roles'])
+            ->with(['vehiculo', 'conductor', 'cobrador.roles', 'pagoMp'])
             ->orderByDesc('fecha')
             ->orderByDesc('cobrado_at')
             ->paginate(50)
@@ -235,9 +235,9 @@ class ReporteController extends Controller
             });
         }
 
-        $allSanciones = $sancionesQuery->with(['vehiculo', 'conductor', 'registrador'])
-            ->orderByDesc('fecha')
-            ->get();
+        $sancionesQuery->with(['vehiculo', 'conductor', 'registrador', 'pagoMp'])->orderByDesc('fecha');
+
+        $allSanciones = $sancionesQuery->clone()->get();
 
         // Resumen por estado
         $porEstado = [
@@ -254,7 +254,7 @@ class ReporteController extends Controller
             'total'      => $s->sum('monto'),
         ])->sortByDesc('cantidad')->take(10);
 
-        // Paginar para la tabla
+        // Paginar para la tabla (ya ordenados y con relaciones cargadas en el query builder)
         $sanciones = $sancionesQuery->paginate(50)->withQueryString();
 
         return view('admin.reportes.sanciones', compact(
@@ -363,7 +363,7 @@ class ReporteController extends Controller
         $items = collect();
 
         if ($tipo === 'todos' || $tipo === 'tributo') {
-            $tributos = $tributosQuery->with(['vehiculo', 'conductor', 'cobrador'])->get()->map(function($t) {
+            $tributos = $tributosQuery->with(['vehiculo', 'conductor', 'cobrador', 'pagoMp'])->get()->map(function($t) {
                 $t->tipo_obligacion = 'TRIBUTO';
                 $t->concepto = 'Tributo Diario';
                 return $t;
@@ -372,7 +372,7 @@ class ReporteController extends Controller
         }
 
         if ($tipo === 'todos' || $tipo === 'sancion') {
-            $sanciones = $sancionesQuery->with(['vehiculo', 'conductor', 'cobrador'])->get()->map(function($s) {
+            $sanciones = $sancionesQuery->with(['vehiculo', 'conductor', 'cobrador', 'pagoMp'])->get()->map(function($s) {
                 $s->tipo_obligacion = 'SANCIÓN';
                 $s->concepto = $s->motivo . ($s->descripcion ? " - " . $s->descripcion : "");
                 return $s;

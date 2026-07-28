@@ -94,8 +94,15 @@
                                 <td style="font-size: 11.5px; max-width: 250px;">
                                     @if ($reg->estado === 'pagado')
                                         <div style="display:flex; flex-direction:column; gap:2px;">
-                                            <span class="pill blue"
-                                                style="font-size: 9px; align-self:flex-start;">{{ strtoupper($reg->metodo_pago ?? 'EFECTIVO') }}</span>
+                                             @if($reg->metodo_pago === 'mercadopago')
+                                                 <span class="pill blue" style="font-size: 9px; align-self:flex-start; background-color: #00bef0; color: #fff; font-weight: 800;">
+                                                     MERCADOPAGO ({{ strtoupper($reg->pagoMp?->metodo ?? 'WEB') }})
+                                                 </span>
+                                             @else
+                                                 <span class="pill blue" style="font-size: 9px; align-self:flex-start;">
+                                                     {{ strtoupper($reg->metodo_pago ?? 'EFECTIVO') }}
+                                                 </span>
+                                             @endif
                                             @if ($reg->pagoMp)
                                                 <span style="font-size:9.5px; color:#009ee3; font-weight:600;">ID:
                                                     {{ $reg->pagoMp->payment_id }}</span>

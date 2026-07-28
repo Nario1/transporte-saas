@@ -28,7 +28,7 @@ class TributoController extends Controller
         $pagados = Tributo::where('empresa_id', $user->empresa_id)
             ->whereDate('fecha', $fecha)
             ->where('estado', 'pagado')
-            ->with(['vehiculo', 'conductor', 'cobrador'])
+            ->with(['vehiculo', 'conductor', 'cobrador', 'pagoMp'])
             ->paginate(20, ['*'], 'pagados_page')
             ->withQueryString();
 

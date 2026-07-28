@@ -82,9 +82,22 @@
                                 @endif
                             </td>
                             <td style="text-align: center;">
-                                <span class="pill {{ $s->estado === 'pagado' ? 'green' : ($s->estado === 'exonerado' ? 'blue' : 'red') }}">
-                                    {{ strtoupper($s->estado) }}
-                                </span>
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                    <span class="pill {{ $s->estado === 'pagado' ? 'green' : ($s->estado === 'exonerado' ? 'blue' : 'red') }}" style="font-size:9px;">
+                                        {{ strtoupper($s->estado) }}
+                                    </span>
+                                    @if ($s->estado === 'pagado')
+                                        @if($s->metodo_pago === 'mercadopago')
+                                            <span class="pill blue" style="font-size: 8px; padding: 2px 4px; font-weight: 800; background-color: #00bef0; color: #fff;">
+                                                MP ({{ strtoupper($s->pagoMp?->metodo ?? 'WEB') }})
+                                            </span>
+                                        @else
+                                            <span style="font-size: 9px; color: var(--text3); font-weight: 600;">
+                                                Vía: {{ strtoupper($s->metodo_pago ?? 'EFECTIVO') }}
+                                            </span>
+                                        @endif
+                                    @endif
+                                </div>
                             </td>
                             <td style="text-align: right; font-weight: 900; color: {{ $s->estado === 'pagado' ? 'var(--green)' : 'var(--red)' }};">
                                 S/ {{ number_format($s->monto, 2) }}

@@ -160,7 +160,13 @@
                                         <td>
                                             <div style="font-weight: 800;">#{{ $pag->vehiculo?->numero_flota }}</div>
                                             <div style="font-size: 10px; color: var(--text3);">{{ $pag->motivo }}</div>
-                                            <span class="pill gray" style="font-size: 8px; padding: 1px 4px;">{{ strtoupper($pag->metodo_pago) }}</span>
+                                            @if($pag->metodo_pago === 'mercadopago')
+                                                <span class="pill blue" style="font-size: 8px; padding: 2px 6px; font-weight: 800; background-color: #00bef0; color: #fff; display: inline-block; margin-top: 4px;">
+                                                    MERCADOPAGO ({{ strtoupper($pag->pagoMp?->metodo ?? 'WEB') }})
+                                                </span>
+                                            @else
+                                                <span class="pill gray" style="font-size: 8px; padding: 1px 4px; display: inline-block; margin-top: 4px;">{{ strtoupper($pag->metodo_pago ?? '---') }}</span>
+                                            @endif
                                         </td>
                                         <td style="text-align: right; font-weight: 800; color: var(--green);">
                                             S/ {{ number_format($pag->monto, 2) }}

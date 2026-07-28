@@ -110,7 +110,11 @@
                                     @if($item->estado === 'pagado')
                                         <div style="font-size: 11px;">
                                             <div style="font-weight: 600; color: var(--green);"><i class="fa-regular fa-clock"></i> {{ $item->cobrado_at ? $item->cobrado_at->format('d/m/Y h:i A') : '---' }}</div>
-                                            <div style="font-size: 10px; color: var(--text3);">Vía: {{ strtoupper($item->metodo_pago ?? 'Efectivo') }}</div>
+                                             @if($item->metodo_pago === 'mercadopago')
+                                                 <div style="font-size: 10px; color: var(--text3);">Vía: <span style="color:#009ee3; font-weight:700;">MERCADOPAGO ({{ strtoupper($item->pagoMp?->metodo ?? 'WEB') }})</span></div>
+                                             @else
+                                                 <div style="font-size: 10px; color: var(--text3);">Vía: {{ strtoupper($item->metodo_pago ?? 'EFECTIVO') }}</div>
+                                             @endif
                                         </div>
                                     @elseif($item->estado === 'exonerado')
                                         <div style="font-size: 11px; color: var(--text3); font-style: italic;">
