@@ -19,7 +19,7 @@
 
                 <div class="field">
                     <label>N° Flota:</label>
-                    <input type="text" name="flota" value="{{ request('flota') }}" placeholder="Ej: 105" style="font-weight: 800; font-size: 15px;">
+                    <input type="text" name="flota" value="{{ request('flota', '1') }}" placeholder="Ej: 105" style="font-weight: 800; font-size: 15px;">
                 </div>
 
                 <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
@@ -30,7 +30,7 @@
 
                 <div class="flex-h" style="gap: 10px; margin-top: auto;">
                     <button type="submit" class="btn-primary" style="height: 48px; padding: 0 25px;">📊 FILTRAR</button>
-                    @if(request()->filled('flota'))
+                    @if(request()->filled('flota') || request('flota') === '0')
                         <a href="{{ route('reportes.tributos', ['desde' => $desde->toDateString(), 'hasta' => $hasta->toDateString()]) }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Limpiar filtro de flota">
                             <i class="fa-solid fa-xmark"></i>
                         </a>
@@ -39,6 +39,14 @@
                         style="height: 48px; border-radius: 12px; width: 48px; padding: 0; display: flex; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-print"></i>
                     </button>
+                </div>
+                <div style="width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 15px;">
+                    <div style="background: #e0f2fe; color: #0369a1; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
+                        Total Recaudado (en rango): S/ {{ number_format($totales['cobrado'], 2) }}
+                    </div>
+                    <div style="background: #fee2e2; color: #b91c1c; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
+                        Deuda Pendiente (en rango): S/ {{ number_format($totales['pendiente'], 2) }}
+                    </div>
                 </div>
             </form>
         </div>

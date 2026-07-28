@@ -8,7 +8,7 @@
 @endphp
 
 @section('content')
-<div style="display: grid; gap: 24px;">
+<div style="display: grid; gap: 20px;">
 
     {{-- 1. FILTROS --}}
     <div class="card no-print">
@@ -39,6 +39,14 @@
                 <button type="button" onclick="window.print()" class="btn-secondary" style="height: 48px; border-radius: 12px; width: 48px; padding: 0; display: flex; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-print"></i>
                 </button>
+            </div>
+            <div style="width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 15px;">
+                <div style="background: #e0f2fe; color: #0369a1; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
+                    Total Recaudado (en rango): S/ {{ number_format($porEstado['pagado'], 2) }}
+                </div>
+                <div style="background: #fee2e2; color: #b91c1c; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
+                    Deuda Pendiente (en rango): S/ {{ number_format($porEstado['pendiente'], 2) }}
+                </div>
             </div>
         </form>
     </div>

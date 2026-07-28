@@ -54,7 +54,7 @@ class ReporteController extends Controller
         $daysDiff = today()->diffInDays($desde) + 1;
         Tributo::ensureGenerados($user->empresa_id, max(30, $daysDiff));
 
-        $flota = $request->input('flota');
+        $flota = $request->has('flota') ? $request->input('flota') : '1';
 
         // Resumen por día
         $porDiaQuery = Tributo::where('empresa_id', $user->empresa_id)
