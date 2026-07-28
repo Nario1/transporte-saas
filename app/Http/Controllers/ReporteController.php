@@ -90,7 +90,7 @@ class ReporteController extends Controller
             ->with(['vehiculo', 'conductor', 'cobrador.roles', 'pagoMp'])
             ->orderByDesc('fecha')
             ->orderByDesc('cobrado_at')
-            ->paginate(50)
+            ->paginate(20)
             ->withQueryString();
 
         // Resumen por método de pago
@@ -203,7 +203,7 @@ class ReporteController extends Controller
         $detalle = $detalleQuery->with(['vehiculo', 'conductor', 'ruta'])
             ->orderByDesc('fecha')
             ->orderByDesc('hora_salida')
-            ->paginate(50)
+            ->paginate(20)
             ->withQueryString();
 
         $totales = [
@@ -273,7 +273,7 @@ class ReporteController extends Controller
         ])->sortByDesc('cantidad')->take(10);
 
         // Paginar para la tabla (ya ordenados y con relaciones cargadas en el query builder)
-        $sanciones = $sancionesQuery->paginate(50)->withQueryString();
+        $sanciones = $sancionesQuery->paginate(20)->withQueryString();
 
         return view('admin.reportes.sanciones', compact(
             'sanciones', 'porEstado', 'porConductor', 'desde', 'hasta'
@@ -343,8 +343,21 @@ class ReporteController extends Controller
             'vencidos' => $alertas->filter(fn($a) => $a->fecha->isPast() && !$a->fecha->isToday())->count(),
         ];
 
+        // Paginación manual de alertas (20 por página)
+        $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 20;
+        $currentPageItems = $alertas->slice(($page - 1) * $perPage, $perPage)->values();
+        $paginatedAlertas = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentPageItems,
+            $alertas->count(),
+            $perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath()]
+        );
+        $paginatedAlertas->withQueryString();
+
         return view('admin.reportes.documentos', compact(
-            'alertas', 'hoy', 'flota', 'resumen'
+            'paginatedAlertas', 'hoy', 'flota', 'resumen'
         ));
     }
 
@@ -435,7 +448,7 @@ class ReporteController extends Controller
 
         // Paginación manual
         $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
-        $perPage = 50;
+        $perPage = 20;
         $currentPageItems = $itemsSorted->slice(($page - 1) * $perPage, $perPage)->values();
         $paginatedItems = new \Illuminate\Pagination\LengthAwarePaginator(
             $currentPageItems,

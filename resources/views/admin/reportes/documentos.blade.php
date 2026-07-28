@@ -25,11 +25,11 @@
             <form action="{{ route('reportes.documentos') }}" method="GET" class="card-body g-filters">
                 <div class="field" style="max-width: 300px;">
                     <label>N° Flota:</label>
-                    <input type="text" name="flota" value="{{ request('flota', '1') }}" placeholder="Ej: 1" style="font-weight: 800; font-size: 15px;">
+                    <input type="text" name="flota" value="{{ request()->has('flota') ? request('flota') : '1' }}" placeholder="Ej: 1" style="font-weight: 800; font-size: 15px;">
                 </div>
                 <div class="flex-h" style="gap: 10px; margin-top: auto;">
                     <button type="submit" class="btn-primary" style="height: 48px; padding: 0 25px;">📊 FILTRAR</button>
-                    @if(request()->has('flota'))
+                    @if(request('flota') !== '')
                         <a href="{{ route('reportes.documentos', ['flota' => '']) }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Ver todas las flotas">
                             <i class="fa-solid fa-xmark"></i>
                         </a>
@@ -61,7 +61,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($alertas as $a)
+                        @forelse($paginatedAlertas as $a)
                             @php
                                 $dias = (int) $hoy->diffInDays($a->fecha, false);
                                 $colorClass = $dias < 0 ? 'red' : ($dias <= 15 ? 'orange' : 'gold');
@@ -101,6 +101,11 @@
                     </tbody>
                 </table>
             </div>
+            @if ($paginatedAlertas->hasPages())
+                <div style="padding:20px; border-top:1px solid var(--border);" class="no-print">
+                    {{ $paginatedAlertas->links('partials.pagination') }}
+                </div>
+            @endif
         </div>
     </div>
 @endsection

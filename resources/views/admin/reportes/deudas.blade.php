@@ -17,7 +17,7 @@
                 </div>
                 <div class="field">
                     <label>N° Flota:</label>
-                    <input type="text" name="flota" value="{{ request('flota', '1') }}" placeholder="Ej: 1" style="font-weight: 800; font-size: 15px;">
+                    <input type="text" name="flota" value="{{ request()->has('flota') ? request('flota') : '1' }}" placeholder="Ej: 1" style="font-weight: 800; font-size: 15px;">
                 </div>
                 <div class="field">
                     <label>Tipo de Obligación:</label>
@@ -33,7 +33,7 @@
                 </div>
                 <div class="flex-h" style="gap: 10px; margin-top: auto;">
                     <button type="submit" class="btn-primary" style="height: 48px; padding: 0 25px;">📊 FILTRAR</button>
-                    @if(request()->has('flota'))
+                    @if(request('flota') !== '')
                         <a href="{{ route('reportes.deudas', ['desde' => $desde->toDateString(), 'hasta' => $hasta->toDateString(), 'flota' => '', 'tipo' => request('tipo', 'todos')]) }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Ver todas las deudas">
                             <i class="fa-solid fa-xmark"></i>
                         </a>
@@ -133,7 +133,7 @@
             </div>
             @if ($paginatedItems->hasPages())
                 <div style="padding:20px; border-top:1px solid var(--border);" class="no-print">
-                    {{ $paginatedItems->links() }}
+                    {{ $paginatedItems->links('partials.pagination') }}
                 </div>
             @endif
         </div>

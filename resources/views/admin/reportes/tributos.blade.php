@@ -19,7 +19,7 @@
 
                 <div class="field">
                     <label>N° Flota:</label>
-                    <input type="text" name="flota" value="{{ request('flota', '1') }}" placeholder="Ej: 105" style="font-weight: 800; font-size: 15px;">
+                    <input type="text" name="flota" value="{{ request()->has('flota') ? request('flota') : '1' }}" placeholder="Ej: 105" style="font-weight: 800; font-size: 15px;">
                 </div>
 
                 <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
@@ -30,8 +30,8 @@
 
                 <div class="flex-h" style="gap: 10px; margin-top: auto;">
                     <button type="submit" class="btn-primary" style="height: 48px; padding: 0 25px;">📊 FILTRAR</button>
-                    @if(request()->filled('flota') || request('flota') === '0')
-                        <a href="{{ route('reportes.tributos', ['desde' => $desde->toDateString(), 'hasta' => $hasta->toDateString()]) }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Limpiar filtro de flota">
+                    @if(request('flota') !== '')
+                        <a href="{{ route('reportes.tributos', ['desde' => $desde->toDateString(), 'hasta' => $hasta->toDateString(), 'flota' => '']) }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Ver todos">
                             <i class="fa-solid fa-xmark"></i>
                         </a>
                     @endif
@@ -149,7 +149,7 @@
             </div>
             @if ($detalle->hasPages())
                 <div style="padding:20px; border-top:1px solid var(--border);" class="no-print">
-                    {{ $detalle->links() }}
+                    {{ $detalle->links('partials.pagination') }}
                 </div>
             @endif
         </div>
