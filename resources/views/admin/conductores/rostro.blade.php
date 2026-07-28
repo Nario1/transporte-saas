@@ -133,7 +133,7 @@ async function iniciarCamara() {
         faceapi.env.monkeyPatch({
             fetch: (url, init) => {
                 const separator = url.includes('?') ? '&' : '?';
-                return originalFetch(`${url}${separator}v=1.0.5`, init);
+                return originalFetch(`${url}${separator}v=1.0.6`, init);
             }
         });
 
