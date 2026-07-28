@@ -30,9 +30,21 @@ class ConductorAccesoController extends Controller
 
         $placa = strtoupper($vehiculo->placa);
 
-        // Verificar si la placa ya está en uso por otro usuario
-        if (User::where('email', $placa)->exists()) {
-            return back()->with('error', "La placa {$placa} ya está registrada como usuario en el sistema.");
+        // Verificar si la placa ya está en uso por otro usuario (incluyendo eliminados por soft-delete)
+        $existingUser = User::withTrashed()->where('email', $placa)->first();
+        if ($existingUser) {
+            if ($existingUser->conductor_id === $conductor->id) {
+                // Si el usuario eliminado pertenece al mismo conductor, lo restauramos
+                $existingUser->restore();
+                $existingUser->update([
+                    'activo'   => true,
+                    'password' => Hash::make($placa),
+                ]);
+                $conductor->update(['primer_ingreso' => true]);
+                return back()->with('success', "Acceso restaurado. Usuario: \"{$placa}\" y la contraseña lo mismo");
+            } else {
+                return back()->with('error', "La placa {$placa} ya está registrada como usuario en el sistema por otro conductor.");
+            }
         }
 
         $nuevoUser = User::create([
@@ -70,14 +82,15 @@ class ConductorAccesoController extends Controller
         return back()->with('success', "Acceso {$estado} correctamente.");
     }
 
-    // Eliminar acceso (Borra el usuario de la DB)
     public function destroy(Conductor $conductor)
     {
         $user = Auth::user();
         abort_if($conductor->empresa_id !== $user->empresa_id, 403);
 
-        if ($conductor->user) {
-            $conductor->user->delete();
+        // Buscar el usuario del conductor (incluso si ya fue soft-deletado previamente)
+        $usuario = User::withTrashed()->where('conductor_id', $conductor->id)->first();
+        if ($usuario) {
+            $usuario->forceDelete(); // Eliminar de forma permanente para evitar conflictos de llave única
             $conductor->update(['primer_ingreso' => false]);
         }
 
