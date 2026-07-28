@@ -58,7 +58,7 @@ class ReporteController extends Controller
 
         // Resumen por día
         $porDiaQuery = Tributo::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta]);
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
         if ($flota) {
             $porDiaQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -81,7 +81,7 @@ class ReporteController extends Controller
 
         // Detalle de todos los registros en el rango (para la tabla detallada)
         $detalle = Tributo::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta])
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->when($flota, function ($q) use ($flota) {
                 return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
                     $vQ->where('numero_flota', $flota);
@@ -95,7 +95,7 @@ class ReporteController extends Controller
 
         // Resumen por método de pago
         $porMetodoQuery = Tributo::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta])
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->where('estado', 'pagado');
 
         if ($flota) {
@@ -148,7 +148,7 @@ class ReporteController extends Controller
 
         // Vueltas por día
         $porDiaQuery = Vuelta::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta]);
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
         if ($flota) {
             $porDiaQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -175,7 +175,7 @@ class ReporteController extends Controller
 
         // Vueltas por ruta
         $porRutaQuery = Vuelta::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta])
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->whereNotNull('ruta_id');
 
         if ($flota) {
@@ -192,7 +192,7 @@ class ReporteController extends Controller
 
         // Detalle individual de vueltas (con paginación para evitar sobrecarga)
         $detalleQuery = Vuelta::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta]);
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
         if ($flota) {
             $detalleQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -227,7 +227,7 @@ class ReporteController extends Controller
         $flota = $request->has('flota') ? $request->input('flota') : '1';
 
         $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta]);
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
         if ($flota) {
             $sancionesQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -235,7 +235,7 @@ class ReporteController extends Controller
             });
         }
 
-        $sancionesQuery->with(['vehiculo', 'conductor', 'registrador', 'pagoMp'])->orderByDesc('fecha');
+        $sancionesQuery = $sancionesQuery->with(['vehiculo', 'conductor', 'registrador', 'pagoMp'])->orderByDesc('fecha');
 
         $allSanciones = $sancionesQuery->clone()->get();
 
@@ -346,10 +346,10 @@ class ReporteController extends Controller
         $tipo = $request->input('tipo', 'todos');
 
         $tributosQuery = Tributo::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta]);
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
         $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde, $hasta]);
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
         if ($flota) {
             $tributosQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
