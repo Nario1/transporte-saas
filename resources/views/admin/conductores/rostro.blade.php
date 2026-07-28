@@ -188,7 +188,7 @@ function iniciarDeteccion() {
 
     async function loopDeteccion() {
         if (video.paused || video.ended) return;
-        if (rostroDetectado && detectadoSegundos >= 1500) {
+        if (rostroDetectado && detectadoSegundos >= 400) {
             if (detectionInterval) clearTimeout(detectionInterval);
             return;
         }
@@ -215,7 +215,7 @@ function iniciarDeteccion() {
                 rostroDetectado = true;
                 detectadoSegundos += 200; // tiempo aproximado de espera
 
-                if (detectadoSegundos >= 1500) {
+                if (detectadoSegundos >= 400) {
                     setStatus('Capturando rostro...', 'success');
                     capturarFoto();
                     return; // Detener loop

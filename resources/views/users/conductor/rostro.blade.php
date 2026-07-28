@@ -141,7 +141,7 @@
         const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
 
         async function loopDeteccion() {
-            if (rostroDetectado && detectadoSegundos >= 1500) {
+            if (rostroDetectado && detectadoSegundos >= 400) {
                 if (detectionInterval) clearTimeout(detectionInterval);
                 return;
             }
@@ -164,7 +164,7 @@
                     rostroDetectado = true;
                     detectadoSegundos += 200; // sumamos el tiempo aproximado de espera
 
-                    if (detectadoSegundos >= 1500) {
+                    if (detectadoSegundos >= 400) {
                         setStatus('Procesando registro...', 'success');
                         capturarFoto();
                         return; // Salir de la recurrencia
