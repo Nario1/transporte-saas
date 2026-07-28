@@ -271,40 +271,53 @@ if (TIENE_ROSTRO && STORED_EMBED) {
             const originalFetch = window.fetch;
             window.fetch = function(url, init) {
                 if (typeof url === 'string' && url.includes('models-v2')) {
-                    const separator = url.includes('?') ? '&' : '?';
-                    return originalFetch(`${url}${separator}v=1.0.7`, init);
+                    const sep = url.includes('?') ? '&' : '?';
+                    return originalFetch(`${url}${sep}v=1.0.7`, init);
                 }
                 return originalFetch(url, init);
             };
 
-            // Forzar backend CPU en iOS para evitar bugs de WebGL / perdida de contexto
+            // iOS: forzar CPU para evitar pérdida de contexto WebGL
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             if (isIOS) {
                 await faceapi.tf.setBackend('cpu');
                 await faceapi.tf.ready();
-                console.log('Forced CPU backend on iOS');
             }
 
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
-            ]);
+            // Carga secuencial con progreso visible en pantalla
+            setCamStatus('Modelos (1/3)...');
+            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL);
+            setCamStatus('Modelos (2/3)...');
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL);
+            setCamStatus('Modelos (3/3)...');
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL);
+
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'user',
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    width:  { ideal: 320, max: 640 },
+                    height: { ideal: 240, max: 480 }
                 }
             });
             const video = document.getElementById('video-vuelta');
             video.srcObject = stream;
             await video.play();
-            setCamStatus('Buscando rostro...');
+            setCamStatus('Posiciona tu rostro frente a la cámara...');
             iniciarDeteccion();
+
+            // WATCHDOG: si en 30s no verifica, permitir continuar
+            setTimeout(() => {
+                if (!rostroVerificado) {
+                    detenerCamara();
+                    setCamStatus('Tiempo agotado — acceso permitido', 'warn');
+                    mostrarResultado(false, 'No se pudo verificar biometría. Notifica a tu supervisor.');
+                    rostroVerificado = true;
+                    habilitarBoton();
+                }
+            }, 30000);
+
         } catch (e) {
-            setCamStatus('Error de camara: ' + e.message, 'error');
-            // Si falla la cámara, permitir iniciar igual
+            setCamStatus('Error de cámara: ' + e.message, 'error');
             rostroVerificado = true;
             habilitarBoton();
         }
@@ -335,97 +348,101 @@ function iniciarDeteccion() {
     const video   = document.getElementById('video-vuelta');
     const canvas  = document.getElementById('overlay-vuelta');
     const ctx     = canvas.getContext('2d');
-    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
+    // minConfidence bajo = más tolerante en gama baja
+    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.28 });
     const stored  = new Float32Array(STORED_EMBED);
 
-    // Canvas auxiliar de baja resolución (240x180) para acelerar detección en celulares de gama baja
-    const auxCanvas = document.createElement('canvas');
-    auxCanvas.width = 240;
-    auxCanvas.height = 180;
-    const auxCtx = auxCanvas.getContext('2d');
+    // Canvas 160x120 = 16x menos píxeles que 640x480 → enorme mejora en gama baja
+    const aux    = document.createElement('canvas');
+    aux.width    = 160;
+    aux.height   = 120;
+    const auxCtx = aux.getContext('2d');
 
-    let intentos = 0;
+    let intentos   = 0;
     let frameCount = 0;
 
     async function loopDeteccion() {
         if (rostroVerificado) { detenerCamara(); return; }
+
+        // Esperar a que el video tenga dimensiones válidas
+        if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
+            detTimeoutId = setTimeout(loopDeteccion, 150);
+            return;
+        }
 
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         try {
-            // Dibujar frame en miniatura para procesar 4 veces más rápido
-            auxCtx.drawImage(video, 0, 0, 240, 180);
+            // Paso 1: detección simple ultra-rápida (sin landmarks) en miniatura
+            auxCtx.drawImage(video, 0, 0, 160, 120);
             frameCount++;
 
-            // Detección simple (muy rápida)
-            const detection = await faceapi.detectSingleFace(auxCanvas, options);
+            const detection = await faceapi.detectSingleFace(aux, options);
 
             if (!detection) {
                 setCamStatus('Posiciona tu rostro frente a la cámara...', 'info');
-            } else {
-                // Solo ejecutar landmarks y descriptor pesado cada 3 frames (ahorro de CPU del 66%)
-                if (frameCount % 3 === 0) {
-                    const detFull = await faceapi.detectSingleFace(auxCanvas, options)
-                        .withFaceLandmarks()
-                        .withFaceDescriptor();
+                detTimeoutId = setTimeout(loopDeteccion, 80);
+                return;
+            }
 
-                    if (detFull) {
-                        const det = faceapi.resizeResults(detFull, { width: canvas.width, height: canvas.height });
-                        intentos++;
-                        const distancia = faceapi.euclideanDistance(det.descriptor, stored);
-                        const UMBRAL    = 0.62; // Umbral de 0.62 para compatibilidad WebGL/CPU y gama baja
+            // Rostro simple encontrado — dibujar caja azul de rastreo
+            const scaledBox = faceapi.resizeResults(detection, { width: canvas.width, height: canvas.height }).box;
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth   = 3;
+            ctx.strokeRect(scaledBox.x, scaledBox.y, scaledBox.width, scaledBox.height);
+            setCamStatus('Rostro detectado... verificando identidad...', 'info');
 
-                        // Dibujar caja verde/roja
-                        const box = det.detection.box;
-                        ctx.strokeStyle = distancia < UMBRAL ? '#22c55e' : '#ef4444';
-                        ctx.lineWidth   = 3;
-                        ctx.strokeRect(box.x, box.y, box.width, box.height);
+            // Paso 2: descriptor pesado, cada 2 frames para ahorrar CPU
+            if (frameCount % 2 === 0) {
+                const detFull = await faceapi.detectSingleFace(aux, options)
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
 
-                        if (distancia < UMBRAL) {
-                            detenerCamara();
-                            setCamStatus(`Identidad verificada (${(distancia*100).toFixed(0)}% coincidencia)`, 'success');
-                            rostroVerificado = true;
-                            habilitarBoton();
-                            
-                            // Verificar si hay ruta seleccionada para auto-iniciar
-                            const rutaSel = document.getElementById('ruta-select').value;
-                            if (rutaSel) {
-                                mostrarResultado(true, 'Verificacion exitosa. Iniciando vuelta...');
-                                setTimeout(() => {
-                                    iniciarVuelta();
-                                }, 1000);
-                            } else {
-                                mostrarResultado(true, 'Identidad verificada. Selecciona una ruta para empezar.');
-                            }
-                            return; // Detener loop
-                        } else if (intentos >= 8) {
-                            // Después de varios intentos fallidos, alerta pero permite iniciar
-                            detenerCamara();
-                            setCamStatus('No se pudo verificar', 'warn');
-                            mostrarResultado(false, 'Verificacion fallida. Notifica a tu supervisor.');
-                            rostroVerificado = true;
-                            habilitarBoton();
-                            return; // Detener loop
-                        } else {
-                            setCamStatus(`Verificando... (intento ${intentos}/8)`, 'info');
-                        }
-                    }
-                } else {
-                    // Cajas de rastreo temporal (azul) para dar feedback fluido
-                    const box = faceapi.resizeResults(detection, { width: canvas.width, height: canvas.height }).box;
-                    ctx.strokeStyle = '#3b82f6';
-                    ctx.lineWidth = 3;
+                if (detFull) {
+                    const det       = faceapi.resizeResults(detFull, { width: canvas.width, height: canvas.height });
+                    intentos++;
+                    const distancia = faceapi.euclideanDistance(det.descriptor, stored);
+                    const UMBRAL    = 0.65; // Más tolerante para gama baja / distintas condiciones de luz
+
+                    // Dibujar caja verde/roja según resultado
+                    const box = det.detection.box;
+                    ctx.strokeStyle = distancia < UMBRAL ? '#22c55e' : '#ef4444';
+                    ctx.lineWidth   = 3;
                     ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+                    if (distancia < UMBRAL) {
+                        detenerCamara();
+                        setCamStatus(`✓ Identidad verificada`, 'success');
+                        rostroVerificado = true;
+                        habilitarBoton();
+                        const rutaSel = document.getElementById('ruta-select').value;
+                        if (rutaSel) {
+                            mostrarResultado(true, 'Verificacion exitosa. Iniciando vuelta...');
+                            setTimeout(() => { iniciarVuelta(); }, 1000);
+                        } else {
+                            mostrarResultado(true, 'Identidad verificada. Selecciona una ruta para empezar.');
+                        }
+                        return;
+                    } else if (intentos >= 10) {
+                        // Tras 10 intentos fallidos — permitir continuar
+                        detenerCamara();
+                        setCamStatus('No se pudo verificar', 'warn');
+                        mostrarResultado(false, 'Verificacion fallida. Notifica a tu supervisor.');
+                        rostroVerificado = true;
+                        habilitarBoton();
+                        return;
+                    } else {
+                        setCamStatus(`Verificando... intento ${intentos}/10`, 'info');
+                    }
                 }
             }
         } catch (err) {
-            console.error("Error en detección facial:", err);
+            console.error('Error en detección facial:', err);
         }
 
-        // Programar la siguiente detección en 40ms para una fluidez óptima
-        detTimeoutId = setTimeout(loopDeteccion, 40);
+        detTimeoutId = setTimeout(loopDeteccion, 60);
     }
 
     loopDeteccion();

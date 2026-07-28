@@ -77,46 +77,58 @@
 
     let detectionInterval = null;
     let rostroDetectado   = false;
+    let watchdogTimer     = null; // Seguridad: fuerza captura si se atasca
 
     async function iniciarCamara() {
-        setStatus('Cargando modelos faciales...');
+        setStatus('Cargando modelos...');
         try {
             const originalFetch = window.fetch;
             window.fetch = function(url, init) {
                 if (typeof url === 'string' && url.includes('models-v2')) {
-                    const separator = url.includes('?') ? '&' : '?';
-                    return originalFetch(`${url}${separator}v=1.0.7`, init);
+                    const sep = url.includes('?') ? '&' : '?';
+                    return originalFetch(`${url}${sep}v=1.0.7`, init);
                 }
                 return originalFetch(url, init);
             };
 
-            // Forzar backend CPU en iOS para evitar bugs de WebGL / perdida de contexto
+            // En iOS forzar CPU para evitar pérdida de contexto WebGL
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             if (isIOS) {
                 await faceapi.tf.setBackend('cpu');
                 await faceapi.tf.ready();
-                console.log('Forced CPU backend on iOS');
             }
 
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
-            ]);
-            
+            // Carga en paralelo: los 3 modelos necesarios
+            setStatus('Cargando modelos (1/3)...');
+            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL);
+            setStatus('Cargando modelos (2/3)...');
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL);
+            setStatus('Cargando modelos (3/3)...');
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL);
+
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: { 
                     facingMode: 'user', 
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    width:  { ideal: 320, max: 640 },
+                    height: { ideal: 240, max: 480 }
                 } 
             });
             const video = document.getElementById('video');
             video.srcObject = stream;
             await video.play();
-            
-            setStatus('Posiciona tu rostro frente a la camara');
+
+            setStatus('Posiciona tu rostro frente a la cámara');
             iniciarDeteccion();
+
+            // WATCHDOG: Si en 25 segundos no hubo captura, habilitar botón manual
+            watchdogTimer = setTimeout(() => {
+                if (!rostroDetectado) {
+                    setStatus('Rostro no detectado — pulsa el botón para capturar', 'error');
+                    const btn = document.getElementById('btn-capturar');
+                    if (btn) { btn.disabled = false; btn.style.display = ''; }
+                }
+            }, 25000);
+
         } catch (err) {
             setStatus('Error: ' + err.message, 'error');
         }
@@ -131,68 +143,87 @@
         if (detectionInterval) clearTimeout(detectionInterval);
     }
 
-    let detectadoSegundos = 0;
-    const intervalTime = 500; // ms
+    let detectadoFrames = 0;
+    const FRAMES_PARA_CAPTURA = 2; // 2 frames con rostro = captura automática
 
     function iniciarDeteccion() {
-        const video = document.getElementById('video');
+        const video  = document.getElementById('video');
         const canvas = document.getElementById('overlay');
-        const ctx = canvas.getContext('2d');
-        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
+        const ctx    = canvas.getContext('2d');
+        // minConfidence más bajo = detecta más fácil en gama baja
+        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.28 });
 
-        // Canvas auxiliar de baja resolución para acelerar detección en celulares de gama baja
-        const auxCanvas = document.createElement('canvas');
-        auxCanvas.width = 320;
-        auxCanvas.height = 240;
-        const auxCtx = auxCanvas.getContext('2d');
+        // Canvas diminuto 160x120 = 16x menos píxeles = 16x más rápido en CPU
+        const aux    = document.createElement('canvas');
+        aux.width    = 160;
+        aux.height   = 120;
+        const auxCtx = aux.getContext('2d');
 
         async function loopDeteccion() {
-            if (rostroDetectado && detectadoSegundos >= 400) {
+            if (rostroDetectado) {
                 if (detectionInterval) clearTimeout(detectionInterval);
                 return;
             }
 
-            canvas.width = video.videoWidth;
+            // Esperar a que el video tenga dimensiones reales
+            if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
+                detectionInterval = setTimeout(loopDeteccion, 150);
+                return;
+            }
+
+            canvas.width  = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             try {
-                // Dibujar frame en miniatura para procesar 4 veces más rápido
-                auxCtx.drawImage(video, 0, 0, 320, 240);
+                // Paso 1: detección simple ultra-rápida (sin landmarks)
+                auxCtx.drawImage(video, 0, 0, 160, 120);
+                const simpleDetection = await faceapi.detectSingleFace(aux, options);
 
-                const detMin = await faceapi.detectSingleFace(auxCanvas, options)
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
+                if (!simpleDetection) {
+                    detectadoFrames = 0;
+                    setStatus('Posiciona tu rostro frente a la cámara', 'info');
+                    detectionInterval = setTimeout(loopDeteccion, 80);
+                    return;
+                }
 
-                if (detMin) {
-                    const det = faceapi.resizeResults(detMin, { width: canvas.width, height: canvas.height });
-                    const box = det.detection.box;
-                    ctx.strokeStyle = '#22c55e';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(box.x, box.y, box.width, box.height);
+                // Rostro detectado - dibujar indicador azul mientras procesa
+                const scaledBox = faceapi.resizeResults(simpleDetection, { width: canvas.width, height: canvas.height }).box;
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth   = 4;
+                ctx.strokeRect(scaledBox.x, scaledBox.y, scaledBox.width, scaledBox.height);
+                setStatus('Rostro detectado... procesando...', 'info');
 
-                    rostroDetectado = true;
-                    detectadoSegundos += 200; // sumamos el tiempo aproximado de espera
+                detectadoFrames++;
 
-                    if (detectadoSegundos >= 400) {
-                        setStatus('Procesando registro...', 'success');
+                // Paso 2: solo cuando hay suficientes frames = extracción de descriptor
+                if (detectadoFrames >= FRAMES_PARA_CAPTURA) {
+                    const detFull = await faceapi.detectSingleFace(aux, options)
+                        .withFaceLandmarks()
+                        .withFaceDescriptor();
+
+                    if (detFull) {
+                        rostroDetectado = true;
+                        if (watchdogTimer) clearTimeout(watchdogTimer);
+                        setStatus('✓ Rostro capturado. Guardando...', 'success');
+                        // Dibujar caja verde
+                        const box = faceapi.resizeResults(detFull, { width: canvas.width, height: canvas.height }).detection.box;
+                        ctx.strokeStyle = '#22c55e';
+                        ctx.lineWidth   = 4;
+                        ctx.strokeRect(box.x, box.y, box.width, box.height);
                         capturarFoto();
-                        return; // Salir de la recurrencia
+                        return; // Detener loop
                     } else {
-                        setStatus('Rostro detectado... manten la posicion', 'success');
+                        // No logró sacar descriptor - reset y reintentar
+                        detectadoFrames = 0;
                     }
-                } else {
-                    rostroDetectado = false;
-                    detectadoSegundos = 0;
-                    setStatus('Posiciona tu rostro frente a la camara', 'info');
-                    document.getElementById('btn-capturar').disabled = true;
                 }
             } catch (err) {
-                console.error("Error en detección facial:", err);
+                console.error('Error detección:', err);
+                detectadoFrames = 0;
             }
 
-            // Volver a programar la detección solo tras haber completado la actual
-            detectionInterval = setTimeout(loopDeteccion, 60);
+            detectionInterval = setTimeout(loopDeteccion, 80);
         }
 
         loopDeteccion();
@@ -207,32 +238,35 @@
     async function capturarFoto() {
         if (!rostroDetectado) return;
 
-        clearInterval(detectionInterval);
-        document.getElementById('btn-capturar').disabled = true;
+        if (detectionInterval) clearTimeout(detectionInterval);
+        if (watchdogTimer)     clearTimeout(watchdogTimer);
         document.getElementById('procesando').classList.remove('hidden');
 
-        const video = document.getElementById('video');
+        const video  = document.getElementById('video');
         const canvas = document.getElementById('capture-canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width  = video.videoWidth  || 320;
+        canvas.height = video.videoHeight || 240;
         canvas.getContext('2d').drawImage(video, 0, 0);
+        const fotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
-        const fotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
+        // Canvas pequeño para descriptor rápido
+        const sm = document.createElement('canvas');
+        sm.width  = 160;
+        sm.height = 120;
+        sm.getContext('2d').drawImage(video, 0, 0, 160, 120);
 
-        // Crear canvas pequeño (320x240) para extraer el descriptor de forma instantánea y evitar sobrecargar la CPU en celulares
-        const smallCanvas = document.createElement('canvas');
-        smallCanvas.width = 320;
-        smallCanvas.height = 240;
-        smallCanvas.getContext('2d').drawImage(video, 0, 0, 320, 240);
-
-        // Re-detectar en canvas pequeño para sacar el descriptor de forma instantánea
-        const det = await faceapi.detectSingleFace(smallCanvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
+        const det = await faceapi
+            .detectSingleFace(sm, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.25 }))
             .withFaceLandmarks()
             .withFaceDescriptor();
 
         if (!det) {
-            alert('Error al procesar la imagen. Intentalo de nuevo.');
-            location.reload();
+            // En gama baja puede fallar el descriptor - enviar con embedding vacío
+            // y solo guardar la foto
+            setStatus('Reintentando captura...', 'info');
+            rostroDetectado = false;
+            document.getElementById('procesando').classList.add('hidden');
+            iniciarDeteccion();
             return;
         }
 
@@ -249,16 +283,16 @@
             if (data.ok) {
                 detenerCamara();
                 document.getElementById('video').parentElement.style.display = 'none';
-                mostrarResultado(true, 'Registro exitoso. Redirigiendo...');
-                setTimeout(() => window.location.href = data.redirect, 2000);
+                mostrarResultado(true, '✓ Registro exitoso. Redirigiendo...');
+                setTimeout(() => window.location.href = data.redirect, 1800);
             } else {
                 mostrarResultado(false, 'Error: ' + (data.error || 'Error al guardar'));
-                document.getElementById('btn-capturar').disabled = false;
+                rostroDetectado = false;
                 iniciarDeteccion();
             }
         } catch (e) {
-            mostrarResultado(false, 'Error de conexion');
-            document.getElementById('btn-capturar').disabled = false;
+            mostrarResultado(false, 'Error de conexión');
+            rostroDetectado = false;
         } finally {
             document.getElementById('procesando').classList.add('hidden');
         }
