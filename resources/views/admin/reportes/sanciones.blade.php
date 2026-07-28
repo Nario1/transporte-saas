@@ -77,7 +77,11 @@
                         <tr>
                             <td>
                                 <div style="font-weight: 700;">{{ $s->fecha->format('d/m/Y') }}</div>
-                                <div style="font-size: 10px; color: var(--text3);">Reg: {{ $s->registrador?->name ?? 'Sistema' }}</div>
+                                <div style="font-size: 10px; color: var(--text3); font-family: monospace; display: flex; align-items: center; gap: 4px;">
+                                    <i class="fa-regular fa-clock"></i>
+                                    {{ $s->created_at->format('h:i A') }}
+                                </div>
+                                <div style="font-size: 10px; color: var(--text3); margin-top: 2px;">Reg: {{ explode(' ', $s->registrador?->name ?? 'Sistema')[0] }}</div>
                             </td>
                             <td>
                                 @if($s->estado === 'pagado' && $s->cobrado_at)
