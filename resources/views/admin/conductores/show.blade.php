@@ -277,9 +277,19 @@
                                 </div>
                             </div>
 
-                            <a href="{{ route('conductores.rostro.show', $conductor->id) }}" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px;">
-                                <i class="fa-solid fa-camera"></i> {{ $conductor->rostro ? 'Actualizar Rostro' : 'Registrar Rostro Ahora' }}
-                            </a>
+                            @if($conductor->rostro)
+                                <form action="{{ route('conductores.rostro.destroy', $conductor->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro que deseas reiniciar la biometría? Se borrará el rostro actual para que puedas registrar el de un conductor suplente o nuevo.');" style="margin-top: 10px; width: 100%;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px; background-color: var(--red-l); color: var(--red); border-color: rgba(220, 38, 38, 0.2);">
+                                        <i class="fa-solid fa-rotate"></i> Reiniciar Biometría
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('conductores.rostro.show', $conductor->id) }}" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px; margin-top: 10px;">
+                                    <i class="fa-solid fa-camera"></i> Registrar Rostro Ahora
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>

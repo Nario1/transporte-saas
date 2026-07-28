@@ -28,14 +28,16 @@ class ReconocimientoFacialService
         ]);
     }
 
-    /**
-     * Desactiva el perfil facial activo de un conductor.
-     */
     public function eliminarPerfilFacial(Conductor $conductor): void
     {
-        ConductorRostro::where('conductor_id', $conductor->id)
-            ->where('activo', true)
-            ->update(['activo' => false]);
+        $rostros = ConductorRostro::where('conductor_id', $conductor->id)->get();
+        foreach ($rostros as $r) {
+            if ($r->foto_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($r->foto_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($r->foto_path);
+            }
+            $r->delete();
+        }
+        $conductor->update(['primer_ingreso' => true]);
     }
 
     private function guardarFoto(string $base64, int $conductorId): string
