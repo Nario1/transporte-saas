@@ -37,7 +37,7 @@
         <div class="card-body" style="padding: 16px;">
             
             {{-- Video --}}
-            <div style="position: relative; border-radius: 14px; overflow: hidden; background: #111; aspect-ratio: 4/3; margin-bottom: 15px;">
+            <div style="position: relative; border-radius: 14px; overflow: hidden; background: #fff; aspect-ratio: 4/3; margin-bottom: 15px; border: 8px solid #fff; box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);">
                 <video id="video" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
                 <canvas id="overlay" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
                 
@@ -140,6 +140,12 @@
         const ctx = canvas.getContext('2d');
         const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
 
+        // Canvas auxiliar de baja resolución para acelerar detección en celulares de gama baja
+        const auxCanvas = document.createElement('canvas');
+        auxCanvas.width = 320;
+        auxCanvas.height = 240;
+        const auxCtx = auxCanvas.getContext('2d');
+
         async function loopDeteccion() {
             if (rostroDetectado && detectadoSegundos >= 400) {
                 if (detectionInterval) clearTimeout(detectionInterval);
@@ -151,11 +157,15 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             try {
-                const det = await faceapi.detectSingleFace(video, options)
+                // Dibujar frame en miniatura para procesar 4 veces más rápido
+                auxCtx.drawImage(video, 0, 0, 320, 240);
+
+                const detMin = await faceapi.detectSingleFace(auxCanvas, options)
                     .withFaceLandmarks()
                     .withFaceDescriptor();
 
-                if (det) {
+                if (detMin) {
+                    const det = faceapi.resizeResults(detMin, { width: canvas.width, height: canvas.height });
                     const box = det.detection.box;
                     ctx.strokeStyle = '#22c55e';
                     ctx.lineWidth = 3;

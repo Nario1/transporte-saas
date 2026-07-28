@@ -28,9 +28,11 @@
         position: relative;
         border-radius: 12px;
         overflow: hidden;
-        background: #111;
+        background: #fff;
         aspect-ratio: 4/3;
         margin-bottom: 12px;
+        border: 8px solid #fff;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
     }
     #video-vuelta {
         width: 100%;
@@ -307,6 +309,12 @@ function iniciarDeteccion() {
     const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
     const stored  = new Float32Array(STORED_EMBED);
 
+    // Canvas auxiliar de baja resolución para acelerar detección en celulares de gama baja
+    const auxCanvas = document.createElement('canvas');
+    auxCanvas.width = 320;
+    auxCanvas.height = 240;
+    const auxCtx = auxCanvas.getContext('2d');
+
     let intentos = 0;
 
     async function loopDeteccion() {
@@ -317,17 +325,22 @@ function iniciarDeteccion() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         try {
-            const det = await faceapi
-                .detectSingleFace(video, options)
+            // Dibujar frame en miniatura para procesar 4 veces más rápido
+            auxCtx.drawImage(video, 0, 0, 320, 240);
+
+            const detMin = await faceapi
+                .detectSingleFace(auxCanvas, options)
                 .withFaceLandmarks()
                 .withFaceDescriptor();
 
-            if (!det) {
+            if (!detMin) {
                 setCamStatus('Acerque su rostro...', 'info');
             } else {
+                // Redimensionar las detecciones al tamaño visible
+                const det = faceapi.resizeResults(detMin, { width: canvas.width, height: canvas.height });
                 intentos++;
                 const distancia = faceapi.euclideanDistance(det.descriptor, stored);
-                const UMBRAL    = 0.55; // Menos = más estricto
+                const UMBRAL    = 0.58; // Umbral de 0.58 (más flexible en gama baja)
 
                 // Dibujar caja
                 const box = det.detection.box;

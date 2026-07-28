@@ -57,7 +57,7 @@
             <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-camera"></i> Captura de Rostro</h2>
 
             {{-- Video webcam --}}
-            <div class="relative rounded-xl overflow-hidden bg-gray-900 mb-4" style="aspect-ratio: 4/3;">
+            <div class="relative rounded-xl overflow-hidden bg-white mb-4" style="aspect-ratio: 4/3; border: 8px solid #fff; box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);">
                 <video id="video" autoplay muted playsinline
                        class="w-full h-full object-cover"></video>
                 <canvas id="overlay" class="absolute inset-0 w-full h-full"></canvas>
@@ -184,6 +184,12 @@ function iniciarDeteccion() {
     const ctx     = canvas.getContext('2d');
     const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
 
+    // Canvas auxiliar de baja resolución para acelerar detección en celulares de gama baja
+    const auxCanvas = document.createElement('canvas');
+    auxCanvas.width = 320;
+    auxCanvas.height = 240;
+    const auxCtx = auxCanvas.getContext('2d');
+
     let detectadoSegundos = 0;
 
     async function loopDeteccion() {
@@ -198,12 +204,17 @@ function iniciarDeteccion() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         try {
-            const detection = await faceapi
-                .detectSingleFace(video, options)
+            // Dibujar frame en miniatura para procesar 4 veces más rápido
+            auxCtx.drawImage(video, 0, 0, 320, 240);
+
+            const detMin = await faceapi
+                .detectSingleFace(auxCanvas, options)
                 .withFaceLandmarks()
                 .withFaceDescriptor();
 
-            if (detection) {
+            if (detMin) {
+                // Redimensionar las detecciones al tamaño visible
+                const detection = faceapi.resizeResults(detMin, { width: canvas.width, height: canvas.height });
                 // Dibujar caja del rostro
                 const box = detection.detection.box;
                 ctx.strokeStyle = '#22c55e';
