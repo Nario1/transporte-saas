@@ -227,7 +227,16 @@ class ReporteController extends Controller
         $flota = $request->has('flota') ? $request->input('flota') : '1';
 
         $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
+            ->where(function ($q) use ($desde, $hasta) {
+                $q->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+                  ->orWhere(function ($q2) use ($desde, $hasta) {
+                      $q2->where('estado', 'pagado')
+                         ->whereBetween('cobrado_at', [
+                             $desde->startOfDay()->toDateTimeString(),
+                             $hasta->endOfDay()->toDateTimeString()
+                         ]);
+                  });
+            });
 
         if ($flota) {
             $sancionesQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -239,10 +248,19 @@ class ReporteController extends Controller
 
         $allSanciones = $sancionesQuery->clone()->get();
 
-        // Resumen por estado
+        // Resumen por estado financiero correcto en el rango
         $porEstado = [
-            'pendiente' => $allSanciones->where('estado', 'pendiente')->sum('monto'),
-            'pagado'    => $allSanciones->where('estado', 'pagado')->sum('monto'),
+            'pendiente' => $allSanciones->filter(function($s) use ($desde, $hasta) {
+                return $s->estado === 'pendiente' 
+                    && $s->fecha->between($desde->startOfDay(), $hasta->endOfDay());
+            })->sum('monto'),
+            
+            'pagado' => $allSanciones->filter(function($s) use ($desde, $hasta) {
+                return $s->estado === 'pagado' 
+                    && $s->cobrado_at 
+                    && $s->cobrado_at->between($desde->startOfDay(), $hasta->endOfDay());
+            })->sum('monto'),
+            
             'cantidad_pendiente' => $allSanciones->where('estado', 'pendiente')->count(),
             'cantidad_pagada'    => $allSanciones->where('estado', 'pagado')->count(),
         ];
@@ -346,10 +364,28 @@ class ReporteController extends Controller
         $tipo = $request->input('tipo', 'todos');
 
         $tributosQuery = Tributo::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
+            ->where(function ($q) use ($desde, $hasta) {
+                $q->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+                  ->orWhere(function ($q2) use ($desde, $hasta) {
+                      $q2->where('estado', 'pagado')
+                         ->whereBetween('cobrado_at', [
+                             $desde->startOfDay()->toDateTimeString(),
+                             $hasta->endOfDay()->toDateTimeString()
+                         ]);
+                  });
+            });
 
         $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
-            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
+            ->where(function ($q) use ($desde, $hasta) {
+                $q->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+                  ->orWhere(function ($q2) use ($desde, $hasta) {
+                      $q2->where('estado', 'pagado')
+                         ->whereBetween('cobrado_at', [
+                             $desde->startOfDay()->toDateTimeString(),
+                             $hasta->endOfDay()->toDateTimeString()
+                         ]);
+                  });
+            });
 
         if ($flota) {
             $tributosQuery->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -386,8 +422,16 @@ class ReporteController extends Controller
             return $item->fecha->format('Y-m-d') . '_' . $timeStr;
         });
 
-        $totalDeuda = $itemsSorted->where('estado', 'pendiente')->sum('monto');
-        $totalCobrado = $itemsSorted->where('estado', 'pagado')->sum('monto');
+        $totalDeuda = $itemsSorted->filter(function($item) use ($desde, $hasta) {
+            return $item->estado === 'pendiente' 
+                && $item->fecha->between($desde->startOfDay(), $hasta->endOfDay());
+        })->sum('monto');
+
+        $totalCobrado = $itemsSorted->filter(function($item) use ($desde, $hasta) {
+            return $item->estado === 'pagado' 
+                && $item->cobrado_at 
+                && $item->cobrado_at->between($desde->startOfDay(), $hasta->endOfDay());
+        })->sum('monto');
 
         // Paginación manual
         $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();

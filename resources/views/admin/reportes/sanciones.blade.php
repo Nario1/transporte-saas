@@ -63,7 +63,8 @@
             <table class="tbl tbl-modern">
                 <thead>
                     <tr>
-                        <th>Fecha</th>
+                        <th>F. Emisión</th>
+                        <th>F. Pago</th>
                         <th>Unidad</th>
                         <th>Conductor</th>
                         <th>Motivo / Infracción</th>
@@ -77,6 +78,17 @@
                             <td>
                                 <div style="font-weight: 700;">{{ $s->fecha->format('d/m/Y') }}</div>
                                 <div style="font-size: 10px; color: var(--text3);">Reg: {{ $s->registrador?->name ?? 'Sistema' }}</div>
+                            </td>
+                            <td>
+                                @if($s->estado === 'pagado' && $s->cobrado_at)
+                                    <div style="font-weight: 700; color: var(--green);">{{ $s->cobrado_at->format('d/m/Y') }}</div>
+                                    <div style="font-size: 10px; color: var(--text3);">{{ $s->cobrado_at->format('h:i A') }}</div>
+                                @elseif($s->estado === 'exonerado' && $s->exonerado_at)
+                                    <div style="font-weight: 700; color: var(--text2);">{{ $s->exonerado_at->format('d/m/Y') }}</div>
+                                    <div style="font-size: 10px; color: var(--text3);">Exonerado</div>
+                                @else
+                                    <span style="color: var(--text3); font-style: italic;">Pendiente</span>
+                                @endif
                             </td>
                             <td>
                                 <div style="font-weight: 800; color: var(--accent);">#{{ $s->vehiculo?->numero_flota }}</div>
