@@ -213,8 +213,10 @@
                                                     {{ strtoupper($pag->metodo_pago ?? '---') }}
                                                 </span>
                                             @endif
-                                            <span class="text-sub" style="display:inline; margin-left: 5px;">Recibe:
-                                                {{ explode(' ', $pag->cobrador?->name)[0] }}</span>
+                                            @if($pag->cobrador)
+                                                <span class="text-sub" style="display:inline; margin-left: 5px;">Recibe:
+                                                    {{ explode(' ', $pag->cobrador->name)[0] }}</span>
+                                            @endif
                                         </td>
                                         <td class="col-actions">
                                             <span class="text-main" style="color: var(--green); font-size: 16px;">S/
