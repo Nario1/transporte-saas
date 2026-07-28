@@ -208,10 +208,10 @@
                                         </button>
                                     </form>
 
-                                    <form method="POST" action="{{ route('conductores.acceso.reset', $conductor->id) }}" onsubmit="return confirm('¿Sincronizar acceso y clave con la PLACA actual del vehículo?')">
+                                    <form method="POST" action="{{ route('conductores.acceso.reset', $conductor->id) }}" onsubmit="return confirm('¿Desea reiniciar la contraseña del conductor? Se restablecerá a la PLACA del vehículo asignado y deberá registrar su rostro de nuevo.')">
                                         @csrf
                                         <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px;">
-                                            <i class="fa-solid fa-rotate"></i> Reset / Sinc.
+                                            <i class="fa-solid fa-key"></i> Reiniciar Contraseña
                                         </button>
                                     </form>
                                 </div>
