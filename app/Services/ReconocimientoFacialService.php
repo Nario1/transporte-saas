@@ -37,7 +37,6 @@ class ReconocimientoFacialService
             }
             $r->delete();
         }
-        $conductor->update(['primer_ingreso' => true]);
     }
 
     private function guardarFoto(string $base64, int $conductorId): string
