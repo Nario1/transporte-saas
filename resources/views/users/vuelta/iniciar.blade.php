@@ -304,7 +304,7 @@ function iniciarDeteccion() {
     const video   = document.getElementById('video-vuelta');
     const canvas  = document.getElementById('overlay-vuelta');
     const ctx     = canvas.getContext('2d');
-    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
     const stored  = new Float32Array(STORED_EMBED);
 
     let intentos = 0;
@@ -371,7 +371,7 @@ function iniciarDeteccion() {
         }
 
         // Programar la siguiente detección solo después de que la actual haya terminado
-        detTimeoutId = setTimeout(loopDeteccion, 150);
+        detTimeoutId = setTimeout(loopDeteccion, 60);
     }
 
     loopDeteccion();

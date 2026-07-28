@@ -182,7 +182,7 @@ function iniciarDeteccion() {
     const video   = document.getElementById('video');
     const canvas  = document.getElementById('overlay');
     const ctx     = canvas.getContext('2d');
-    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
 
     let detectadoSegundos = 0;
 
@@ -232,7 +232,7 @@ function iniciarDeteccion() {
         }
 
         // Programar la siguiente detección solo después de que esta termine
-        detectionInterval = setTimeout(loopDeteccion, 200);
+        detectionInterval = setTimeout(loopDeteccion, 60);
     }
 
     loopDeteccion();
@@ -264,7 +264,7 @@ async function capturarFoto() {
     const fotoBase64 = canvas.toDataURL('image/jpeg', 0.92);
 
     try {
-        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
         const detection = await faceapi
             .detectSingleFace(canvas, options)
             .withFaceLandmarks()

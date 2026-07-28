@@ -138,7 +138,7 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('overlay');
         const ctx = canvas.getContext('2d');
-        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
 
         async function loopDeteccion() {
             if (rostroDetectado && detectadoSegundos >= 1500) {
@@ -182,7 +182,7 @@
             }
 
             // Volver a programar la detección solo tras haber completado la actual
-            detectionInterval = setTimeout(loopDeteccion, 200);
+            detectionInterval = setTimeout(loopDeteccion, 60);
         }
 
         loopDeteccion();
@@ -210,7 +210,7 @@
         const fotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
 
         // Re-detectar en canvas para sacar el descriptor final
-        const det = await faceapi.detectSingleFace(canvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        const det = await faceapi.detectSingleFace(canvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
             .withFaceLandmarks()
             .withFaceDescriptor();
 
