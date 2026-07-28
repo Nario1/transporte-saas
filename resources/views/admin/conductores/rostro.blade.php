@@ -275,9 +275,15 @@ async function capturarFoto() {
     const fotoBase64 = canvas.toDataURL('image/jpeg', 0.92);
 
     try {
+        // Crear canvas pequeño (320x240) para extraer el descriptor de forma instantánea y evitar sobrecargar la CPU en celulares
+        const smallCanvas = document.createElement('canvas');
+        smallCanvas.width = 320;
+        smallCanvas.height = 240;
+        smallCanvas.getContext('2d').drawImage(video, 0, 0, 320, 240);
+
         const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
         const detection = await faceapi
-            .detectSingleFace(canvas, options)
+            .detectSingleFace(smallCanvas, options)
             .withFaceLandmarks()
             .withFaceDescriptor();
 

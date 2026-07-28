@@ -375,7 +375,7 @@ function iniciarDeteccion() {
                         const det = faceapi.resizeResults(detFull, { width: canvas.width, height: canvas.height });
                         intentos++;
                         const distancia = faceapi.euclideanDistance(det.descriptor, stored);
-                        const UMBRAL    = 0.58; // Umbral de 0.58 (más flexible en gama baja)
+                        const UMBRAL    = 0.62; // Umbral de 0.62 para compatibilidad WebGL/CPU y gama baja
 
                         // Dibujar caja verde/roja
                         const box = det.detection.box;

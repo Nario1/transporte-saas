@@ -134,8 +134,8 @@
                 );
             });
 
-            // Umbral de 0.55 para mayor estrictez
-            faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.55);
+            // Umbral de 0.62 para compatibilidad y rapidez
+            faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.62);
             setStatus(`<i class="fa-solid fa-circle-check"></i> Base de datos cargada. ${labeledFaceDescriptors.length} rostros listos.`, 'success');
             return true;
 

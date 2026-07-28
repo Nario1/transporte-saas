@@ -219,8 +219,14 @@
 
         const fotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
 
-        // Re-detectar en canvas para sacar el descriptor final
-        const det = await faceapi.detectSingleFace(canvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
+        // Crear canvas pequeño (320x240) para extraer el descriptor de forma instantánea y evitar sobrecargar la CPU en celulares
+        const smallCanvas = document.createElement('canvas');
+        smallCanvas.width = 320;
+        smallCanvas.height = 240;
+        smallCanvas.getContext('2d').drawImage(video, 0, 0, 320, 240);
+
+        // Re-detectar en canvas pequeño para sacar el descriptor de forma instantánea
+        const det = await faceapi.detectSingleFace(smallCanvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
             .withFaceLandmarks()
             .withFaceDescriptor();
 
