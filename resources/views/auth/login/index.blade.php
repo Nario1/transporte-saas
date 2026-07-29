@@ -41,10 +41,6 @@
             Entrar al Sistema
         </button>
 
-        {{-- Link de Registro --}}
-        <p style="text-align:center; margin-top:24px; font-size:13px; color:var(--text3);">
-            ¿No tienes cuenta? <a href="{{ route('register') }}"
-                style="color:var(--accent); font-weight:700; text-decoration:none;">Regístrate aquí</a>
-        </p>
+        
     </form>
 @endsection
