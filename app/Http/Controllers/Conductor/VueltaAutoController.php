@@ -51,11 +51,30 @@ class VueltaAutoController extends Controller
             ->max('numero_vuelta') ?? 0;
         $proximaVuelta = $ultimaVuelta + 1;
 
-        // Rutas disponibles para la empresa
-        $rutas = \App\Models\Ruta::where('empresa_id', $conductor->empresa_id)
-            ->where('estado', 'activa')
-            ->orderBy('nombre')
-            ->get();
+        // Rutas autorizadas: solo las que el vehículo del conductor tiene marcadas como activas
+        // en la tabla vehiculo_rutas. Si no tiene vehículo, se muestran todas las rutas.
+        $vehiculo = $conductor->vehiculos()->first();
+
+        if ($vehiculo) {
+            $rutas = $vehiculo->rutas()
+                ->where('vehiculo_rutas.activo', true)
+                ->where('rutas.estado', 'activa')
+                ->orderBy('rutas.nombre')
+                ->get();
+
+            // Si el vehículo no tiene ninguna ruta autorizada, mostrar todas como fallback
+            if ($rutas->isEmpty()) {
+                $rutas = \App\Models\Ruta::where('empresa_id', $conductor->empresa_id)
+                    ->where('estado', 'activa')
+                    ->orderBy('nombre')
+                    ->get();
+            }
+        } else {
+            $rutas = \App\Models\Ruta::where('empresa_id', $conductor->empresa_id)
+                ->where('estado', 'activa')
+                ->orderBy('nombre')
+                ->get();
+        }
 
         return view('users.vuelta.iniciar', compact(
             'conductor', 'tieneRostro', 'rostro', 'proximaVuelta', 'rutas', 'requiereFacial'

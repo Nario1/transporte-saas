@@ -143,7 +143,8 @@
                             <div
                                 style="display: flex; flex-wrap: wrap; gap: 12px; background: var(--bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border2);">
                                 @php
-                                    $rutasActuales = old('rutas', $vehiculo->rutas->pluck('id')->toArray());
+                                    // $rutasAsignadas viene del controlador filtrado con activo=true
+                                    $rutasActuales = old('rutas', $rutasAsignadas);
                                 @endphp
                                 @foreach ($rutas as $ruta)
                                     <label
