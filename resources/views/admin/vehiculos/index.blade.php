@@ -99,8 +99,6 @@
             </div>
             <div class="tbl-wrap">
                 <table class="tbl tbl-modern">
-            <div class="tbl-wrap">
-                <table class="tbl tbl-modern">
                     <thead>
                         <tr>
                             <th>PLACA / N° FLOTA</th>
@@ -115,24 +113,22 @@
                     </thead>
                     <tbody>
                         @forelse($vehiculos as $v)
-                            @php 
-                                $hoy = now();
+                            @php
+                                $hoy      = now();
                                 $soatVence = $v->soat_vence;
-                                $revVence = $v->rev_tecnica_vence;
-                                $tarVence = $v->tarjeta_prop_vence;
-                                $licVence = $v->conductor ? $v->conductor->licencia_vence : null;
-                                
+                                $revVence  = $v->rev_tecnica_vence;
+                                $tarVence  = $v->tarjeta_prop_vence;
+                                $licVence  = $v->conductor ? $v->conductor->licencia_vence : null;
+
                                 $soatDiff = $soatVence ? $hoy->diffInDays($soatVence, false) : null;
-                                $revDiff = $revVence ? $hoy->diffInDays($revVence, false) : null;
-                                $tarDiff = $tarVence ? $hoy->diffInDays($tarVence, false) : null;
-                                $licDiff = $licVence ? $hoy->diffInDays($licVence, false) : null;
-                                
+                                $revDiff  = $revVence  ? $hoy->diffInDays($revVence,  false) : null;
+                                $tarDiff  = $tarVence  ? $hoy->diffInDays($tarVence,  false) : null;
+                                $licDiff  = $licVence  ? $hoy->diffInDays($licVence,  false) : null;
+
                                 $soatColor = $soatVence ? ($soatDiff < 0 ? 'var(--red)' : ($soatDiff < 30 ? 'var(--orange)' : 'var(--green)')) : 'var(--text3)';
-                                $revColor = $revVence ? ($revDiff < 0 ? 'var(--red)' : ($revDiff < 30 ? 'var(--orange)' : 'var(--green)')) : 'var(--text3)';
-                                $tarColor = $tarVence ? ($tarDiff < 0 ? 'var(--red)' : ($tarDiff < 30 ? 'var(--orange)' : 'var(--green)')) : 'var(--text3)';
-                                $licColor = $licVence ? ($licDiff < 0 ? 'var(--red)' : ($licDiff < 30 ? 'var(--orange)' : 'var(--green)')) : 'var(--text3)';
-                                
-                                $ruta = $v->rutas->where('pivot.activo', true)->first();
+                                $revColor  = $revVence  ? ($revDiff  < 0 ? 'var(--red)' : ($revDiff  < 30 ? 'var(--orange)' : 'var(--green)')) : 'var(--text3)';
+                                $tarColor  = $tarVence  ? ($tarDiff  < 0 ? 'var(--red)' : ($tarDiff  < 30 ? 'var(--orange)' : 'var(--green)')) : 'var(--text3)';
+                                $licColor  = $licVence  ? ($licDiff  < 0 ? 'var(--red)' : ($licDiff  < 30 ? 'var(--orange)' : 'var(--green)')) : 'var(--text3)';
                             @endphp
                             <tr>
                                 <td>
@@ -165,7 +161,20 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="text-main">{{ $ruta->nombre ?? '---' }}</span>
+                                    @php
+                                        $rutasActivas = $v->rutas->where('pivot.activo', true);
+                                    @endphp
+                                    @if($rutasActivas->isNotEmpty())
+                                        <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                                            @foreach($rutasActivas as $rt)
+                                                <span style="display:inline-block; background:var(--accent-l); color:var(--accent); font-size:10px; font-weight:700; padding:2px 8px; border-radius:99px; white-space:nowrap;">
+                                                    {{ $rt->nombre }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-sub">---</span>
+                                    @endif
                                 </td>
                                 <td style="text-align: center;">
                                     <div class="flex-v" style="align-items: center; gap: 6px;">
