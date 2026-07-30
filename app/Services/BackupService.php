@@ -28,8 +28,19 @@ class BackupService
         $diskPath = "{$folder}/{$filename}";
         $filePath = Storage::disk('local')->path($diskPath);
 
-        $mysqldump = '"C:\xampp\mysql\bin\mysqldump.exe"'; 
-        
+        // Detectar ruta de mysqldump según el sistema operativo
+        if (PHP_OS_FAMILY === 'Windows') {
+            $mysqldump = '"C:\xampp\mysql\bin\mysqldump.exe"';
+        } else {
+            // Linux/Ubuntu VPS — mysqldump está en el PATH
+            $mysqldump = 'mysqldump';
+        }
+
+        // En Linux usamos MYSQL_PWD para evitar el warning de contraseña en CLI
+        $envPrefix = PHP_OS_FAMILY !== 'Windows' && $dbPass
+            ? 'MYSQL_PWD=' . escapeshellarg($dbPass) . ' '
+            : '';
+
         if ($empresa_id) {
             // BACKUP FILTRADO POR EMPRESA
             $tenantTables = ['ajustes', 'backups', 'conductores', 'paradero_checkins', 'propietarios', 'rutas', 'sanciones', 'tributos', 'users', 'vehiculos', 'vueltas'];
@@ -37,19 +48,33 @@ class BackupService
 
             // 1. Volcar solo estructura de toda la base de datos
             $cmdSchema = sprintf(
-                '%s --user=%s --password=%s --host=%s --no-data %s > %s',
-                $mysqldump, escapeshellarg($dbUser), escapeshellarg($dbPass), escapeshellarg($dbHost), escapeshellarg($dbName), escapeshellarg($filePath)
+                '%s%s --user=%s --host=%s --no-data %s > %s 2>/dev/null',
+                $envPrefix,
+                $mysqldump,
+                escapeshellarg($dbUser),
+                escapeshellarg($dbHost),
+                escapeshellarg($dbName),
+                escapeshellarg($filePath)
             );
-            
+
             // 2. Volcar solo datos de las tablas del tenant con filtro WHERE
             $cmdData = sprintf(
-                '%s --user=%s --password=%s --host=%s --no-create-info --where=%s %s %s >> %s',
-                $mysqldump, escapeshellarg($dbUser), escapeshellarg($dbPass), escapeshellarg($dbHost),
+                '%s%s --user=%s --host=%s --no-create-info --where=%s %s %s >> %s 2>/dev/null',
+                $envPrefix,
+                $mysqldump,
+                escapeshellarg($dbUser),
+                escapeshellarg($dbHost),
                 escapeshellarg("empresa_id = $empresa_id"),
                 escapeshellarg($dbName),
                 $tablesStr,
                 escapeshellarg($filePath)
             );
+
+            // En Windows agregar contraseña al comando
+            if (PHP_OS_FAMILY === 'Windows' && $dbPass) {
+                $cmdSchema = str_replace('--user=', '--password=' . escapeshellarg($dbPass) . ' --user=', $cmdSchema);
+                $cmdData   = str_replace('--user=', '--password=' . escapeshellarg($dbPass) . ' --user=', $cmdData);
+            }
 
             exec($cmdSchema, $out1, $ret1);
             exec($cmdData, $out2, $ret2);
@@ -57,9 +82,19 @@ class BackupService
         } else {
             // BACKUP GLOBAL (SUPER ADMIN)
             $command = sprintf(
-                '%s --user=%s --password=%s --host=%s %s > %s',
-                $mysqldump, escapeshellarg($dbUser), escapeshellarg($dbPass), escapeshellarg($dbHost), escapeshellarg($dbName), escapeshellarg($filePath)
+                '%s%s --user=%s --host=%s %s > %s 2>/dev/null',
+                $envPrefix,
+                $mysqldump,
+                escapeshellarg($dbUser),
+                escapeshellarg($dbHost),
+                escapeshellarg($dbName),
+                escapeshellarg($filePath)
             );
+
+            if (PHP_OS_FAMILY === 'Windows' && $dbPass) {
+                $command = str_replace('--user=', '--password=' . escapeshellarg($dbPass) . ' --user=', $command);
+            }
+
             exec($command, $output, $returnVar);
         }
 
