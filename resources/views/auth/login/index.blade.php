@@ -41,4 +41,4 @@
             Entrar al Sistema
         </button>
     </form>
-@endsectiongit 
+@endsection
