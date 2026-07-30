@@ -40,7 +40,5 @@
         <button type="submit" class="btn-primary" style="width:100%; padding:14px; font-weight:800; border-radius:10px;">
             Entrar al Sistema
         </button>
-
-        
     </form>
 @endsection
