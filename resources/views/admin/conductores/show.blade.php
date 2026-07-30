@@ -233,7 +233,7 @@
                                 <div style="background: var(--bg); padding: 15px; border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 15px;">
                                     <div style="font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 5px;">Configuración Automática</div>
                                     <div style="font-size: 11px; color: var(--text3); line-height: 1.4;">
-                                        Se utilizará la <strong>PLACA</strong> del vehículo asignado como nombre de usuario y contraseña inicial.
+                                        Se utilizará la <strong>PLACA</strong> del vehículo asignado (sin guiones, ej. <strong>ABC123</strong>) como nombre de usuario y contraseña inicial.
                                     </div>
                                 </div>
 

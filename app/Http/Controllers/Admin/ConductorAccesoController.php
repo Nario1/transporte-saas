@@ -28,7 +28,7 @@ class ConductorAccesoController extends Controller
             return back()->with('error', 'No se puede crear el acceso: El conductor no tiene un vehículo asignado.');
         }
 
-        $placa = strtoupper($vehiculo->placa);
+        $placa = str_replace('-', '', strtoupper($vehiculo->placa));
 
         // Verificar si la placa ya está en uso por otro usuario (incluyendo eliminados por soft-delete)
         $existingUser = User::withTrashed()->where('email', $placa)->first();
@@ -37,6 +37,7 @@ class ConductorAccesoController extends Controller
                 // Si el usuario eliminado pertenece al mismo conductor, lo restauramos
                 $existingUser->restore();
                 $existingUser->update([
+                    'email'    => $placa,
                     'activo'   => true,
                     'password' => Hash::make($placa),
                 ]);
@@ -108,7 +109,7 @@ class ConductorAccesoController extends Controller
             return back()->with('error', 'No se puede resetear: El conductor no tiene un vehículo asignado.');
         }
 
-        $placa = strtoupper($vehiculo->placa);
+        $placa = str_replace('-', '', strtoupper($vehiculo->placa));
 
         $conductor->user->update([
             'email'    => $placa, // Sincronizamos el usuario a la placa actual

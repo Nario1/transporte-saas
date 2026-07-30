@@ -26,7 +26,38 @@ class LoginController extends Controller
             'email.required'    => 'El Usuario o Placa es obligatorio.',
             'password.required' => 'La contraseña es obligatoria.',
         ]);
- 
+
+        $email = trim($credentials['email']);
+        $password = $credentials['password'];
+
+        // Si no tiene '@', asumimos que es una placa de vehículo
+        if (!str_contains($email, '@')) {
+            // Estandarizar la placa: sin guión ni espacios, en mayúsculas
+            $normalizedPlaca = str_replace(['-', ' '], '', strtoupper($email));
+
+            // Intentamos buscar si existe el usuario con la placa limpia sin guión
+            $userExists = \App\Models\User::where('email', $normalizedPlaca)->exists();
+
+            if (!$userExists) {
+                // Si no existe, buscamos en la base de datos removiendo los guiones del email guardado
+                $userByNormalized = \App\Models\User::whereRaw("REPLACE(email, '-', '') = ?", [$normalizedPlaca])->first();
+                if ($userByNormalized) {
+                    $credentials['email'] = $userByNormalized->email; // Usamos la placa con el formato exacto en BD (ej: ABC-123)
+                } else {
+                    $credentials['email'] = $normalizedPlaca;
+                }
+            } else {
+                $credentials['email'] = $normalizedPlaca;
+            }
+
+            // Normalización de la contraseña temporal:
+            // Si al limpiar y pasar a mayúsculas coincide con la placa, usamos la placa en el formato en el que está el email en la BD.
+            $normalizedPassword = str_replace(['-', ' '], '', strtoupper($password));
+            if ($normalizedPassword === $normalizedPlaca) {
+                $credentials['password'] = $credentials['email'];
+            }
+        }
+
         if (!Auth::attempt($credentials, $request->filled('remember'))) {
             return back()->withErrors([
                 'email' => 'Las credenciales no coinciden con nuestros registros.',
