@@ -82,8 +82,8 @@
                 <div class="dashboard-tributo-summary">
                     <div class="summary-main">
                         <div class="summary-col">
-                            <span class="summary-label">Monto del D├¡a</span>
-                            <span class="summary-val" style="font-size: 24px; font-weight: 800;">S/ {{ number_format($tributoHoy->monto, 2) }}</span>
+                            <span class="summary-label">Monto del Día</span>
+                            <span class="summary-val" style="font-size: 24px; font-weight: 690;">S/ {{ number_format($tributoHoy->monto, 2) }}</span>
                         </div>
                         <div class="summary-col" style="text-align: right;">
                             <span class="summary-label">Estado</span>
