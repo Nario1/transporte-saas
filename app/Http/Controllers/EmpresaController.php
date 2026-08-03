@@ -106,7 +106,10 @@ class EmpresaController extends Controller
      */
     public function edit(Empresa $empresa)
     {
-        return view('superadmin.empresas.edit', compact('empresa'));
+        $prefijo = 'e' . $empresa->id . '_';
+        $admin = \App\Models\User::role($prefijo . 'ADMIN')->first();
+
+        return view('superadmin.empresas.edit', compact('empresa', 'admin'));
     }
 
     /**
@@ -124,10 +127,50 @@ class EmpresaController extends Controller
             $data['logo_path'] = $request->file('logo')->store('logos', 'public');
         }
 
+        // Convertir 'activa' a boolean si está presente
+        if (isset($data['activa'])) {
+            $data['activa'] = (bool) $data['activa'];
+        }
+
         $empresa->update($data);
 
+        // Actualizar el administrador principal de la empresa
+        $request->validate([
+            'admin_name'     => 'nullable|string|max:255',
+            'admin_email'    => 'nullable|email',
+            'admin_password' => 'nullable|string|min:6|confirmed',
+        ]);
+
+        $prefijo = 'e' . $empresa->id . '_';
+        $admin = \App\Models\User::role($prefijo . 'ADMIN')->first();
+
+        if ($admin) {
+            $adminData = [];
+            if ($request->filled('admin_name')) {
+                $adminData['name'] = $request->admin_name;
+            }
+            if ($request->filled('admin_email')) {
+                // Verificar si el email cambió y no está en uso por otro
+                if ($request->admin_email !== $admin->email) {
+                    $request->validate([
+                        'admin_email' => 'unique:users,email,' . $admin->id,
+                    ], [
+                        'admin_email.unique' => 'El correo electrónico ya está registrado en el sistema.',
+                    ]);
+                    $adminData['email'] = $request->admin_email;
+                }
+            }
+            if ($request->filled('admin_password')) {
+                $adminData['password'] = \Illuminate\Support\Facades\Hash::make($request->admin_password);
+            }
+            
+            if (!empty($adminData)) {
+                $admin->update($adminData);
+            }
+        }
+
         return redirect()->route('superadmin.empresas.index')
-            ->with('success', 'Información de la empresa actualizada.');
+            ->with('success', 'Información de la empresa y su administrador actualizada.');
     }
 
     /**
