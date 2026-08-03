@@ -17,20 +17,18 @@ class VueltaController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $fecha = request('fecha'); // Cambiado a opcional
+        $fecha = request('fecha', today()->toDateString()); // Por defecto fecha de hoy
         $flota = request('flota');
 
         $vueltasQuery = Vuelta::where('empresa_id', $user->empresa_id)
-            ->when($fecha, function ($q) use ($fecha) {
-                return $q->whereDate('fecha', $fecha);
-            })
+            ->whereDate('fecha', $fecha)
             ->when($flota, function ($q) use ($flota) {
                 return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
                     $vQ->where('numero_flota', $flota);
                 });
             })
             ->with(['vehiculo', 'conductor', 'ruta'])
-            ->orderBy('fecha', 'desc') // Mostrar más recientes primero
+            ->orderBy('fecha', 'desc')
             ->orderBy('numero_vuelta')
             ->orderBy('created_at');
 
@@ -38,9 +36,7 @@ class VueltaController extends Controller
 
         // Resumen
         $resumenQuery = Vuelta::where('empresa_id', $user->empresa_id)
-            ->when($fecha, function ($q) use ($fecha) {
-                return $q->whereDate('fecha', $fecha);
-            })
+            ->whereDate('fecha', $fecha)
             ->when($flota, function ($q) use ($flota) {
                 return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
                     $vQ->where('numero_flota', $flota);
