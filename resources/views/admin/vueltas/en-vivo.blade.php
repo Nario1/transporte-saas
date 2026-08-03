@@ -52,11 +52,17 @@
             </div>
         </div>
         
-        <div style="display: flex; gap: 10px; align-items: center;" class="no-print">
-            <div class="field" style="margin: 0; width: 220px;">
-                <input type="text" id="filtro-flota" placeholder="🔍 Filtrar por N° Flota..." style="font-weight: 800; font-size: 14px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); width: 100%;">
+        <form method="GET" action="{{ route('vueltas.en-vivo') }}" style="display: flex; gap: 8px; align-items: center;" class="no-print">
+            <div class="field" style="margin: 0; width: 200px;">
+                <input type="text" id="filtro-flota" name="flota" value="{{ request('flota') }}" placeholder="🔍 Filtrar por N° Flota..." style="font-weight: 800; font-size: 14px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); width: 100%;">
             </div>
-        </div>
+            <button type="submit" class="btn-primary" style="height: 40px; padding: 0 16px; font-size: 12px; font-weight: 700; border-radius: 10px;">Filtrar</button>
+            @if(request()->filled('flota'))
+                <a href="{{ route('vueltas.en-vivo') }}" class="btn-secondary" style="height: 40px; display: flex; align-items: center; justify-content: center; padding: 0 14px; text-decoration: none; border-radius: 10px;" title="Limpiar filtro">
+                    <i class="fa-solid fa-xmark"></i>
+                </a>
+            @endif
+        </form>
 
         <div style="text-align: right;">
             <span id="ultima-actualizacion" style="font-size:12px;color:var(--text3); display: block;">
@@ -233,7 +239,11 @@
             </table>
 
         </div>
-
+        @if($vueltasActivas->hasPages())
+            <div style="padding:20px; border-top:1px solid var(--border);">
+                {{ $vueltasActivas->links('partials.pagination') }}
+            </div>
+        @endif
     </div>
 
 </div>
@@ -265,7 +275,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- CONFIGURACIÓN ---
     const empresaId = {{ auth()->user()->empresa_id }};
-    const API_URL   = '{{ route("vueltas.api.activas") }}';
+    const flotaParam = '{{ request("flota") }}';
+    const API_URL   = '{{ route("vueltas.api.activas") }}' + (flotaParam ? '?flota=' + encodeURIComponent(flotaParam) : '');
     const CSRF      = '{{ csrf_token() }}';
     
     // --- ELEMENTOS UI ---

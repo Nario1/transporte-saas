@@ -15,15 +15,21 @@ class VueltasEnVivoController extends Controller
     public function index()
     {
         $empresaId = auth()->user()->empresa_id;
+        $flota = request('flota');
 
-        $vueltasActivas = Vuelta::with(['conductor', 'vehiculo', 'ruta'])
+        $vueltasActivasQuery = Vuelta::with(['conductor', 'vehiculo', 'ruta'])
             ->where('empresa_id', $empresaId)
             ->where('estado', 'activa')
             ->whereDate('fecha', today())
-            ->orderBy('hora_salida')
-            ->get();
+            ->when($flota, function ($q) use ($flota) {
+                return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
+                    $vQ->where('numero_flota', $flota);
+                });
+            })
+            ->orderBy('hora_salida');
 
-        $totalConductoresActivos = $vueltasActivas->count();
+        $vueltasActivas = $vueltasActivasQuery->paginate(15)->withQueryString();
+        $totalConductoresActivos = $vueltasActivas->total();
 
         return view('admin.vueltas.en-vivo', compact('vueltasActivas', 'totalConductoresActivos'));
     }
@@ -34,12 +40,18 @@ class VueltasEnVivoController extends Controller
     public function activas()
     {
         $empresaId = auth()->user()->empresa_id;
+        $flota = request('flota');
 
         // Vueltas Activas
         $activas = Vuelta::with(['conductor', 'vehiculo', 'ruta'])
             ->where('empresa_id', $empresaId)
             ->where('estado', 'activa')
             ->whereDate('fecha', today())
+            ->when($flota, function ($q) use ($flota) {
+                return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
+                    $vQ->where('numero_flota', $flota);
+                });
+            })
             ->get();
 
         // Vueltas Terminadas Recientemente (últimos 30 min)
@@ -48,6 +60,11 @@ class VueltasEnVivoController extends Controller
             ->where('estado', 'completada')
             ->whereDate('fecha', today())
             ->where('updated_at', '>=', now()->subMinutes(30))
+            ->when($flota, function ($q) use ($flota) {
+                return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
+                    $vQ->where('numero_flota', $flota);
+                });
+            })
             ->get();
 
         $data = $activas->map(function (Vuelta $v) {

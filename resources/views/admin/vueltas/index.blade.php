@@ -13,21 +13,39 @@
             <div class="stat blue">
                 <div class="stat-label">Vueltas Totales</div>
                 <div class="stat-val">{{ $resumen['total'] }}</div>
-                <div class="stat-sub">Servicios registrados para el {{ \Carbon\Carbon::parse($fecha)->format('d/m') }}</div>
+                <div class="stat-sub">
+                    @if($fecha)
+                        Servicios registrados para el {{ \Carbon\Carbon::parse($fecha)->format('d/m') }}
+                    @else
+                        Servicios registrados en total
+                    @endif
+                </div>
                 <span class="stat-icon"><i class="fa-solid fa-arrows-rotate"></i></span>
             </div>
             
             <div class="stat green">
                 <div class="stat-label">Unidades en Ruta</div>
                 <div class="stat-val">{{ $resumen['vehiculos'] }}</div>
-                <div class="stat-sub">Vehículos con actividad hoy</div>
+                <div class="stat-sub">
+                    @if($fecha)
+                        Vehículos con actividad hoy
+                    @else
+                        Vehículos con actividad histórica
+                    @endif
+                </div>
                 <span class="stat-icon"><i class="fa-solid fa-bus"></i></span>
             </div>
 
             <div class="stat gold">
                 <div class="stat-label">Fuerza Laboral</div>
                 <div class="stat-val">{{ $resumen['conductores'] }}</div>
-                <div class="stat-sub">Conductores en operación</div>
+                <div class="stat-sub">
+                    @if($fecha)
+                        Conductores en operación
+                    @else
+                        Conductores registrados en vueltas
+                    @endif
+                </div>
                 <span class="stat-icon"><i class="fa-solid fa-user-tie"></i></span>
             </div>
         </div>
@@ -48,8 +66,8 @@
                         <button type="submit" class="btn-primary" style="height: 48px; width: 48px; justify-content: center; padding: 0; display: flex; align-items: center;">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
-                        @if(request()->filled('flota'))
-                            <a href="{{ route('vueltas.index', ['fecha' => $fecha]) }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Limpiar filtro">
+                        @if(request()->filled('flota') || request()->filled('fecha'))
+                            <a href="{{ route('vueltas.index') }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Limpiar todos los filtros">
                                 <i class="fa-solid fa-xmark"></i>
                             </a>
                         @endif
@@ -184,7 +202,7 @@
             </div>
             @if($vueltas->hasPages())
                 <div style="padding:20px; border-top:1px solid var(--border);">
-                    {{ $vueltas->appends(['fecha' => $fecha])->links() }}
+                    {{ $vueltas->links('partials.pagination') }}
                 </div>
             @endif
         </div>

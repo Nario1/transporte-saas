@@ -17,27 +17,40 @@ class VueltaController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $fecha = request('fecha', today()->toDateString());
+        $fecha = request('fecha'); // Cambiado a opcional
         $flota = request('flota');
 
-        $vueltas = Vuelta::where('empresa_id', $user->empresa_id)
-            ->whereDate('fecha', $fecha)
+        $vueltasQuery = Vuelta::where('empresa_id', $user->empresa_id)
+            ->when($fecha, function ($q) use ($fecha) {
+                return $q->whereDate('fecha', $fecha);
+            })
             ->when($flota, function ($q) use ($flota) {
                 return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
                     $vQ->where('numero_flota', $flota);
                 });
             })
             ->with(['vehiculo', 'conductor', 'ruta'])
+            ->orderBy('fecha', 'desc') // Mostrar más recientes primero
             ->orderBy('numero_vuelta')
-            ->orderBy('created_at')
-            ->paginate(20)
-            ->withQueryString();
+            ->orderBy('created_at');
 
-        // Resumen del día
+        $vueltas = $vueltasQuery->paginate(20)->withQueryString();
+
+        // Resumen
+        $resumenQuery = Vuelta::where('empresa_id', $user->empresa_id)
+            ->when($fecha, function ($q) use ($fecha) {
+                return $q->whereDate('fecha', $fecha);
+            })
+            ->when($flota, function ($q) use ($flota) {
+                return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
+                    $vQ->where('numero_flota', $flota);
+                });
+            });
+
         $resumen = [
             'total'      => $vueltas->total(),
-            'vehiculos'  => Vuelta::where('empresa_id', $user->empresa_id)->whereDate('fecha', $fecha)->distinct('vehiculo_id')->count(),
-            'conductores'=> Vuelta::where('empresa_id', $user->empresa_id)->whereDate('fecha', $fecha)->distinct('conductor_id')->count(),
+            'vehiculos'  => (clone $resumenQuery)->distinct('vehiculo_id')->count(),
+            'conductores'=> (clone $resumenQuery)->distinct('conductor_id')->count(),
         ];
 
         return view('admin.vueltas.index', compact('vueltas', 'fecha', 'resumen'));
