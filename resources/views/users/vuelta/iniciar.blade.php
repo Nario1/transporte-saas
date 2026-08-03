@@ -136,7 +136,7 @@
     <div class="paso-sub">Tu cámara verificará tu identidad antes de iniciar.</div>
 
     @if($requiereFacial && $tieneRostro)
-        <div class="facial-overlay" id="facial-overlay-wrap">
+        <div class="facial-overlay" id="facial-overlay-wrap" style="display:none">
             <div style="font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 24px; text-align: center;">
                 Verificación de Identidad
             </div>
@@ -145,19 +145,28 @@
                 <canvas id="overlay-vuelta" class="facial-canvas"></canvas>
             </div>
             <div class="facial-instructions" id="cam-status-txt">Cargando cámara...</div>
-            <button type="button" class="facial-btn-cancel" onclick="cancelarVerificacion()">Saltar / Cancelar</button>
+            <button type="button" class="facial-btn-cancel" onclick="cancelarVerificacion()">Cerrar / Cancelar</button>
         </div>
         <canvas id="cap-canvas" style="display:none"></canvas>
-        <div id="verificacion-resultado" style="margin-bottom:12px"></div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div id="verificacion-resultado" style="margin: 0;">
+                <span class="check-badge wait"><i class="fa-solid fa-hourglass-half"></i> Esperando verificación...</span>
+            </div>
+            <button type="button" id="btn-abrir-camara" class="btn btn-secondary btn-sm" onclick="abrirCamaraVerificacion()" style="font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 8px;">
+                <i class="fa-solid fa-camera"></i> Iniciar Cámara
+            </button>
+        </div>
     @elseif(!$requiereFacial)
-        <div class="alert success" style="background: var(--green-l); color: var(--green); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 14px 16px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+        <div class="alert success" style="background: var(--green-l); color: var(--green); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 14px 16px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
             <i class="fa-solid fa-circle-check"></i> Autenticación facial no requerida para tu cuenta.
         </div>
     @else
-        <div class="alert warning" style="display: flex; align-items: center; gap: 8px;">
+        <div class="alert warning" style="display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
             <i class="fa-solid fa-circle-xmark"></i> AVISO: Sin rostro registrado y autenticación requerida. Contacta a soporte.
         </div>
     @endif
+</div>
 </div>
 
 {{-- PASO 2: Datos de la Vuelta --}}
@@ -212,17 +221,14 @@ const TIENE_ROSTRO    = {{ $tieneRostro ? 'true' : 'false' }};
 const REQUIERE_FACIAL = {{ $requiereFacial ? 'true' : 'false' }};
 const CSRF            = '{{ csrf_token() }}';
 const INICIAR_URL     = '{{ route("conductor.vuelta.iniciar.post", [], false) }}';
-let rostroVerificado  = !REQUIERE_FACIAL; 
-if (!TIENE_ROSTRO && REQUIERE_FACIAL) rostroVerificado = false; 
-let embeddingCapturado = null;
-let detTimeoutId      = null;
 
+let rostroVerificado  = !REQUIERE_FACIAL; 
+let detTimeoutId      = null;
 let gpsActual = { lat: null, lng: null };
 
-// Función interna para capturar GPS limpio
 function capturarGPSInterno() {
     const display = document.getElementById('gps-display-text');
-    if (display) display.textContent = 'Buscando satelites...';
+    if (display) display.textContent = 'Buscando satélites...';
 
     return new Promise((resolve) => {
         if (!navigator.geolocation) {
@@ -231,107 +237,92 @@ function capturarGPSInterno() {
             return;
         }
 
-        const options = { 
-            enableHighAccuracy: true, 
-            timeout: 15000, // Aumentar a 15 segundos
-            maximumAge: 0 
-        };
+        const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
         navigator.geolocation.getCurrentPosition(
             pos => {
                 gpsActual.lat = pos.coords.latitude;
                 gpsActual.lng = pos.coords.longitude;
-                if (display) {
-                    display.innerHTML = `<span style="color:var(--green)">${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}</span>`;
-                }
+                if (display) display.innerHTML = `<span style="color:var(--green)">${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}</span>`;
+                actualizarEstadoBotonIniciar();
                 resolve(gpsActual);
             },
             err => {
                 console.error("GPS Error:", err);
-                let msg = 'Error de ubicacion';
+                let msg = 'Error de ubicación';
                 if (err.code === 1) msg = 'Permiso de GPS denegado';
                 else if (err.code === 3) msg = 'Tiempo agotado (reintente)';
-                
-                if (display) {
-                    display.innerHTML = `<span style="color:var(--red)">${msg}</span> <a href="#" onclick="capturarGPSInterno(); return false;" style="margin-left:10px; text-decoration:underline;">Reintentar</a>`;
-                }
+                if (display) display.innerHTML = `<span style="color:var(--red)">${msg}</span> <a href="#" onclick="capturarGPSInterno(); return false;" style="margin-left:10px; text-decoration:underline;">Reintentar</a>`;
+                actualizarEstadoBotonIniciar();
                 resolve(null);
             },
             options
         );
     });
 }
-capturarGPSInterno(); // Inicio
 
-// Iniciar reconocimiento facial
-if (TIENE_ROSTRO && STORED_EMBED) {
-    (async () => {
-        setCamStatus('Cargando modelos...');
-        try {
-            const originalFetch = window.fetch;
-            window.fetch = function(url, init) {
-                if (typeof url === 'string' && url.includes('models-v2')) {
-                    const sep = url.includes('?') ? '&' : '?';
-                    return originalFetch(`${url}${sep}v=1.0.7`, init);
-                }
-                return originalFetch(url, init);
-            };
+function actualizarEstadoBotonIniciar() {
+    const rutaSelect = document.getElementById('ruta-select').value;
+    const btn = document.getElementById('btn-iniciar-vuelta');
+    if (!btn) return;
+    const tieneRuta = !!rutaSelect;
+    const tieneGps = gpsActual.lat !== null && gpsActual.lng !== null;
+    const tieneFacial = rostroVerificado;
+    btn.disabled = !(tieneRuta && tieneGps && tieneFacial);
+}
 
-            // iOS: forzar CPU para evitar pérdida de contexto WebGL
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if (isIOS) {
-                await faceapi.tf.setBackend('cpu');
-                await faceapi.tf.ready();
+async function abrirCamaraVerificacion() {
+    const overlayWrap = document.getElementById('facial-overlay-wrap');
+    if (overlayWrap) overlayWrap.style.display = 'flex';
+    setCamStatus('Cargando modelos...');
+    try {
+        const originalFetch = window.fetch;
+        window.fetch = function(url, init) {
+            if (typeof url === 'string' && url.includes('models-v2')) {
+                const sep = url.includes('?') ? '&' : '?';
+                return originalFetch(`${url}${sep}v=1.0.7`, init);
             }
+            return originalFetch(url, init);
+        };
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); }
 
-            // Tiny models: 30x más rápidos de cargar y procesar
-            setCamStatus('Detector (1/3)...');
-            await faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL);
-            setCamStatus('Landmarks (2/3)...');
-            await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODELS_URL);
-            setCamStatus('Reconocimiento (3/3)...');
-            await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL);
+        setCamStatus('Detector (1/3)...');
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL);
+        setCamStatus('Landmarks (2/3)...');
+        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODELS_URL);
+        setCamStatus('Reconocimiento (3/3)...');
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL);
 
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'user',
-                    width:  { ideal: 320, max: 640 },
-                    height: { ideal: 240, max: 480 }
-                }
-            });
-            const video = document.getElementById('video-vuelta');
-            video.srcObject = stream;
-            await video.play();
-            setCamStatus('Posiciona tu rostro frente a la cámara...');
-            iniciarDeteccion();
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 320, max: 640 }, height: { ideal: 240, max: 480 } }
+        });
+        const video = document.getElementById('video-vuelta');
+        video.srcObject = stream;
+        await video.play();
+        setCamStatus('Posiciona tu rostro frente a la cámara...');
+        iniciarDeteccion();
 
-            // WATCHDOG: si en 30s no verifica, permitir continuar
-            setTimeout(() => {
-                if (!rostroVerificado) {
-                    detenerCamara();
-                    setCamStatus('Tiempo agotado — acceso permitido', 'warn');
-                    mostrarResultado(false, 'No se pudo verificar biometría. Notifica a tu supervisor.');
-                    rostroVerificado = true;
-                    habilitarBoton();
-                }
-            }, 30000);
-
-        } catch (e) {
-            setCamStatus('Error de cámara: ' + e.message, 'error');
-            rostroVerificado = true;
-            habilitarBoton();
-        }
-    })();
+        if (detTimeoutId) clearTimeout(detTimeoutId);
+        detTimeoutId = setTimeout(() => {
+            if (!rostroVerificado) {
+                detenerCamara();
+                setCamStatus('Tiempo de espera agotado', 'warn');
+                mostrarResultado(false, '<i class="fa-solid fa-circle-xmark"></i> Tiempo de espera agotado. Vuelve a intentarlo.');
+                actualizarEstadoBotonIniciar();
+            }
+        }, 35000);
+    } catch (e) {
+        setCamStatus('Error de cámara: ' + e.message, 'error');
+        mostrarResultado(false, '<i class="fa-solid fa-circle-xmark"></i> Error de cámara: ' + e.message);
+        actualizarEstadoBotonIniciar();
+    }
 }
 
 function detenerCamara() {
     const video = document.getElementById('video-vuelta');
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(t => t.stop());
-        video.srcObject = null;
-    }
+    if (video && video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
     if (detTimeoutId) clearTimeout(detTimeoutId);
-    
     const overlayWrap = document.getElementById('facial-overlay-wrap');
     if (overlayWrap) overlayWrap.style.display = 'none';
 }
@@ -339,160 +330,100 @@ function detenerCamara() {
 function cancelarVerificacion() {
     detenerCamara();
     setCamStatus('Verificación cancelada', 'warn');
-    mostrarResultado(false, 'Verificación cancelada por el usuario.');
-    rostroVerificado = true;
-    habilitarBoton();
+    mostrarResultado(false, '<i class="fa-solid fa-circle-xmark"></i> Verificación facial cancelada.');
+    rostroVerificado = false;
+    actualizarEstadoBotonIniciar();
 }
 
 function iniciarDeteccion() {
-    const video   = document.getElementById('video-vuelta');
-    const canvas  = document.getElementById('overlay-vuelta');
-    const ctx     = canvas.getContext('2d');
-
-    // TinyFaceDetector: 10x más rápido que ssdMobilenetv1
-    // inputSize 224 = balance velocidad/precisión óptimo para gama media y alta
+    const video = document.getElementById('video-vuelta');
+    const canvas = document.getElementById('overlay-vuelta');
+    const ctx = canvas.getContext('2d');
     const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.35 });
-    const stored  = new Float32Array(STORED_EMBED);
-    const UMBRAL  = 0.6; // Umbral de similitud (menor = más estricto)
-
-    let intentos   = 0;
+    const stored = new Float32Array(STORED_EMBED);
+    const UMBRAL = 0.6;
     let frameCount = 0;
 
     async function loopDeteccion() {
         if (rostroVerificado) { detenerCamara(); return; }
-
-        // Esperar stream de video listo
         if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
             detTimeoutId = setTimeout(loopDeteccion, 100);
             return;
         }
-
-        canvas.width  = video.videoWidth;
+        canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         try {
             frameCount++;
-
-            // Paso 1: detección rápida solo del rostro (muy liviana)
             const det1 = await faceapi.detectSingleFace(video, options);
-
             if (!det1) {
                 setCamStatus('Centra tu rostro en la cámara...', 'info');
                 detTimeoutId = setTimeout(loopDeteccion, 100);
                 return;
             }
-
-            // Caja azul de rastreo (feedback inmediato)
             const box1 = det1.box;
             ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth   = 3;
+            ctx.lineWidth = 3;
             ctx.strokeRect(box1.x, box1.y, box1.width, box1.height);
-            setCamStatus('Rostro detectado... verificando...', 'info');
-
-            // Paso 2: descriptor completo cada 2 frames para ahorrar CPU
+            setCamStatus('Rostro detectado... analizando...', 'info');
             if (frameCount % 2 === 0) {
-                const detFull = await faceapi
-                    .detectSingleFace(video, options)
-                    .withFaceLandmarks(true)   // true = tiny landmarks (más rápido)
-                    .withFaceDescriptor();
-
+                const detFull = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
                 if (detFull) {
-                    intentos++;
                     const distancia = faceapi.euclideanDistance(detFull.descriptor, stored);
-
-                    // Feedback: verde si coincide, rojo si no
                     const box2 = detFull.detection.box;
                     ctx.strokeStyle = distancia < UMBRAL ? '#22c55e' : '#ef4444';
-                    ctx.lineWidth   = 3;
+                    ctx.lineWidth = 3;
                     ctx.strokeRect(box2.x, box2.y, box2.width, box2.height);
-
                     if (distancia < UMBRAL) {
                         detenerCamara();
                         setCamStatus('✓ Identidad verificada', 'success');
                         rostroVerificado = true;
-                        habilitarBoton();
+                        mostrarResultado(true, '<i class="fa-solid fa-circle-check"></i> Verificación exitosa.');
+                        actualizarEstadoBotonIniciar();
                         const rutaSel = document.getElementById('ruta-select').value;
-                        if (rutaSel) {
-                            mostrarResultado(true, 'Verificacion exitosa. Iniciando vuelta...');
-                            setTimeout(() => { iniciarVuelta(); }, 1000);
-                        } else {
-                            mostrarResultado(true, 'Identidad verificada. Selecciona una ruta.');
-                        }
-                        return;
-                    } else if (intentos >= 12) {
-                        detenerCamara();
-                        setCamStatus('No se pudo verificar', 'warn');
-                        mostrarResultado(false, 'Verificacion fallida. Notifica a tu supervisor.');
-                        rostroVerificado = true;
-                        habilitarBoton();
+                        if (rutaSel) setTimeout(() => { iniciarVuelta(); }, 800);
                         return;
                     } else {
-                        setCamStatus(`Verificando... intento ${intentos}/12`, 'info');
+                        setCamStatus('Rostro no coincide. Intenta de nuevo...', 'error');
                     }
                 }
             }
-        } catch (err) {
-            console.error('Error en detección facial:', err);
-        }
-
+        } catch (err) { console.error('Error en detección facial:', err); }
         detTimeoutId = setTimeout(loopDeteccion, 60);
     }
-
     loopDeteccion();
-}
-
-function habilitarBoton() {
-    document.getElementById('btn-iniciar-vuelta').disabled = false;
 }
 
 function setCamStatus(msg, tipo = 'info') {
     const el = document.getElementById('cam-status-txt');
     if (!el) return;
     el.textContent = msg;
-    el.style.background = tipo === 'success' ? 'rgba(22,163,74,0.8)'
-                        : tipo === 'error'   ? 'rgba(220,38,38,0.8)'
-                        : tipo === 'warn'    ? 'rgba(234,88,12,0.8)'
-                        :                      'rgba(0,0,0,0.65)';
+    el.style.background = tipo === 'success' ? 'rgba(22,163,74,0.8)' : tipo === 'error' ? 'rgba(220,38,38,0.8)' : tipo === 'warn' ? 'rgba(234,88,12,0.8)' : 'rgba(0,0,0,0.65)';
 }
 
 function mostrarResultado(ok, msg) {
     const el = document.getElementById('verificacion-resultado');
-    el.innerHTML = `<span class="check-badge ${ok ? 'ok' : 'fail'}" style="emoji-free">${msg}</span>`;
+    if (!el) return;
+    el.innerHTML = `<span class="check-badge ${ok ? 'ok' : 'fail'}">${msg}</span>`;
 }
 
 async function iniciarVuelta() {
-    if (!rostroVerificado) {
-        alert('Espera a que se complete la verificación facial.');
+    if (REQUIERE_FACIAL && !rostroVerificado) {
+        alert('Espera a que se complete la verificación facial con éxito.');
         return;
     }
-
     const rutaSelect = document.getElementById('ruta-select').value;
-    if (!rutaSelect) {
-        alert('Debes seleccionar una ruta antes de iniciar la vuelta.');
-        return;
-    }
-
+    if (!rutaSelect) { alert('Debes seleccionar una ruta antes de iniciar la vuelta.'); return; }
     document.getElementById('btn-iniciar-vuelta').disabled = true;
     document.getElementById('iniciando-msg').classList.remove('hidden');
-
-    // Captura de GPS forzosa e inalterable justo antes de enviar
     const posFinal = await capturarGPSInterno();
-
     if (!posFinal || posFinal.lat === null || posFinal.lng === null) {
         alert('No se pudo detectar tu ubicación. Asegúrate de tener activado el GPS (Ubicación) de tu celular y vuelve a intentarlo.');
         document.getElementById('btn-iniciar-vuelta').disabled = false;
         document.getElementById('iniciando-msg').classList.add('hidden');
         return;
     }
-
-    const body = {
-        verificado_rostro: rostroVerificado,
-        ruta_id:  rutaSelect,
-        latitud:  posFinal.lat,
-        longitud: posFinal.lng,
-    };
-
+    const body = { verificado_rostro: rostroVerificado, ruta_id: rutaSelect, latitud: posFinal.lat, longitud: posFinal.lng };
     try {
         const resp = await fetch(INICIAR_URL, {
             method: 'POST',
@@ -500,19 +431,17 @@ async function iniciarVuelta() {
             body: JSON.stringify(body)
         });
         const data = await resp.json();
-
-        if (data.ok) {
-            window.location.href = data.redirect;
-        } else {
-            alert('Error: ' + (data.error || 'Error al iniciar vuelta'));
-            document.getElementById('btn-iniciar-vuelta').disabled = false;
-            document.getElementById('iniciando-msg').classList.add('hidden');
-        }
+        if (data.ok) { window.location.href = data.redirect; } 
+        else { alert('Error: ' + (data.error || 'Error al iniciar vuelta')); document.getElementById('btn-iniciar-vuelta').disabled = false; document.getElementById('iniciando-msg').classList.add('hidden'); }
     } catch (e) {
         alert('Error de conexión: ' + e.message);
         document.getElementById('btn-iniciar-vuelta').disabled = false;
         document.getElementById('iniciando-msg').classList.add('hidden');
     }
 }
+
+capturarGPSInterno();
+document.getElementById('ruta-select').addEventListener('change', actualizarEstadoBotonIniciar);
+if (TIENE_ROSTRO && STORED_EMBED && REQUIERE_FACIAL) { abrirCamaraVerificacion(); } else { actualizarEstadoBotonIniciar(); }
 </script>
 @endsection

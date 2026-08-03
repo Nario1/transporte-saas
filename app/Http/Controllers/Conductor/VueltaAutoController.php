@@ -91,6 +91,10 @@ class VueltaAutoController extends Controller
 
         $request->validated();
 
+        if ($conductor->requiere_facial && !$request->verificado_rostro) {
+            return response()->json(['ok' => false, 'error' => 'La verificación facial es requerida para poder iniciar la vuelta.'], 422);
+        }
+
         $yaActiva = Vuelta::where('conductor_id', $conductor->id)
             ->where('estado', 'activa')
             ->exists();
