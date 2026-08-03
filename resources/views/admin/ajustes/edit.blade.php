@@ -80,6 +80,47 @@
                 </div>
             </div>
 
+            {{-- ── Sección 3: Datos del Administrador ── --}}
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-user-gear"></i> Credenciales del Administrador Principal</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label>Nombre del Administrador *</label>
+                            <input type="text" name="admin_name" value="{{ old('admin_name', $admin?->name) }}" required>
+                            @error('admin_name')
+                                <small style="color: var(--red); font-weight: 700; margin-top: 4px; display: block;">{{ $message }}</small>
+                            @enderror
+                        </div>
+                        <div class="field">
+                            <label>Correo del Administrador *</label>
+                            <input type="email" name="admin_email" value="{{ old('admin_email', $admin?->email) }}" required>
+                            @error('admin_email')
+                                <small style="color: var(--red); font-weight: 700; margin-top: 4px; display: block;">{{ $message }}</small>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="form-grid" style="margin-top:14px;">
+                        <div class="field">
+                            <label>Nueva Contraseña (Opcional)</label>
+                            <input type="password" name="admin_password" placeholder="Mínimo 6 caracteres">
+                            <small style="color:var(--text3); font-size:11px; margin-top:4px; display:block;">
+                                Dejar en blanco para conservar la contraseña actual.
+                            </small>
+                            @error('admin_password')
+                                <small style="color: var(--red); font-weight: 700; margin-top: 4px; display: block;">{{ $message }}</small>
+                            @enderror
+                        </div>
+                        <div class="field">
+                            <label>Confirmar Nueva Contraseña</label>
+                            <input type="password" name="admin_password_confirmation" placeholder="Repite la contraseña">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── Acciones ── --}}
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <a href="{{ route('ajustes.index') }}" class="btn-secondary" style="text-decoration:none;">

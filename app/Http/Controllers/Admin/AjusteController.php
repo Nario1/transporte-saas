@@ -30,8 +30,9 @@ class AjusteController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $empresa = $user->empresa;
+        $admin = $user;
 
-        return view('admin.ajustes.edit', compact('empresa'));
+        return view('admin.ajustes.edit', compact('empresa', 'admin'));
     }
 
     /**
@@ -51,6 +52,11 @@ class AjusteController extends Controller
             'direccion'      => 'nullable|string|max:255',
             'tributo_diario' => 'required|numeric|min:0',
             'logo'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            
+            // Validaciones del Administrador
+            'admin_name'     => 'required|string|max:255',
+            'admin_email'    => 'required|email',
+            'admin_password' => 'nullable|string|min:6|confirmed',
         ]);
 
         if ($request->hasFile('logo')) {
@@ -63,8 +69,33 @@ class AjusteController extends Controller
         }
 
         $oldTributo = (float) $empresa->tributo_diario;
-        $empresa->update($validated);
+        // Filtrar datos exclusivos de la empresa para actualizar
+        $empresaData = collect($validated)->except(['admin_name', 'admin_email', 'admin_password', 'admin_password_confirmation'])->toArray();
+        $empresa->update($empresaData);
         $newTributo = (float) $empresa->tributo_diario;
+
+        // Actualizar datos del usuario Administrador logueado
+        $adminData = [];
+        if ($request->filled('admin_name')) {
+            $adminData['name'] = $request->admin_name;
+        }
+        if ($request->filled('admin_email')) {
+            if ($request->admin_email !== $user->email) {
+                $request->validate([
+                    'admin_email' => 'unique:users,email,' . $user->id,
+                ], [
+                    'admin_email.unique' => 'El correo electrónico ya está registrado en el sistema.',
+                ]);
+                $adminData['email'] = $request->admin_email;
+            }
+        }
+        if ($request->filled('admin_password')) {
+            $adminData['password'] = \Illuminate\Support\Facades\Hash::make($request->admin_password);
+        }
+
+        if (!empty($adminData)) {
+            $user->update($adminData);
+        }
 
         $msg = 'Ajustes de empresa actualizados correctamente.';
 
