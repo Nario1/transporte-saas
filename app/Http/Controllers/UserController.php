@@ -45,10 +45,7 @@ class UserController extends Controller
         $empresaId = $request->query('empresa_id') ?? $authUser->empresa_id;
         $prefijo = 'e' . $empresaId . '_';
 
-        $roles = Role::where(function ($q) use ($prefijo) {
-                $q->where('name', 'LIKE', $prefijo . '%')
-                  ->orWhere('name', 'conductor');
-            })
+        $roles = Role::where('name', 'LIKE', $prefijo . '%')
             ->get()
             ->map(function ($role) use ($prefijo) {
                 $role->nombre_limpio = strtoupper(str_replace($prefijo, '', $role->name));
@@ -95,10 +92,7 @@ class UserController extends Controller
 
         $prefijo = 'e' . $authUser->empresa_id . '_';
 
-        $roles = Role::where(function ($q) use ($prefijo) {
-                $q->where('name', 'LIKE', $prefijo . '%')
-                  ->orWhere('name', 'conductor');
-            })
+        $roles = Role::where('name', 'LIKE', $prefijo . '%')
             ->get()
             ->map(function ($role) use ($prefijo) {
                 $role->nombre_limpio = strtoupper(str_replace($prefijo, '', $role->name));
