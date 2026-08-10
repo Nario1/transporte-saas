@@ -23,10 +23,20 @@
 
             <div style="display: flex; flex-direction: column; gap: 14px;">
                 {{-- BOTÓN HACIA EL LOGIN --}}
-                <a href="{{ route('login') }}" class="btn-primary"
-                    style="justify-content: center; padding: 14px; text-decoration: none; font-size: 14px;">
-                    Volver al Inicio de Sesión
-                </a>
+                @if (Illuminate\Support\Facades\Auth::check())
+                    <form action="{{ route('logout') }}" method="POST" style="width: 100%; margin: 0;">
+                        @csrf
+                        <button type="submit" class="btn-primary"
+                            style="width: 100%; justify-content: center; padding: 14px; font-size: 14px; font-weight: 800; border: none; cursor: pointer; font-family: inherit;">
+                            Cerrar Sesión y Volver
+                        </button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="btn-primary"
+                        style="justify-content: center; padding: 14px; text-decoration: none; font-size: 14px; font-weight: 800; display: flex; align-items: center;">
+                        Volver al Inicio de Sesión
+                    </a>
+                @endif
 
                 {{-- INFORMACIÓN ADICIONAL --}}
                 <p
