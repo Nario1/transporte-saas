@@ -23,7 +23,7 @@
             </div>
             <div class="field">
                 <label>N° Flota:</label>
-                <input type="text" name="flota" value="{{ request()->has('flota') ? request('flota') : '1' }}" placeholder="Ej: 1" style="font-weight: 800; font-size: 15px;">
+                <input type="text" name="flota" value="{{ $flota }}" placeholder="Ej: 1" style="font-weight: 800; font-size: 15px;">
             </div>
             <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
                 <label>Día Específico:</label>
@@ -31,7 +31,7 @@
             </div>
             <div class="flex-h" style="gap: 10px; margin-top: auto;">
                 <button type="submit" class="btn-primary" style="height: 48px; padding: 0 25px;">📊 ANALIZAR</button>
-                @if(request('flota') !== '')
+                @if($flota !== '')
                     <a href="{{ route('reportes.vueltas', ['desde' => $desde->toDateString(), 'hasta' => $hasta->toDateString(), 'flota' => '']) }}" class="btn-secondary" style="height: 48px; width: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; text-decoration: none;" title="Ver todas las flotas">
                         <i class="fa-solid fa-xmark"></i>
                     </a>

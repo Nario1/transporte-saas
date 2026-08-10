@@ -54,7 +54,13 @@ class ReporteController extends Controller
         $daysDiff = today()->diffInDays($desde) + 1;
         Tributo::ensureGenerados($user->empresa_id, max(30, $daysDiff));
 
-        $flota = $request->has('flota') ? $request->input('flota') : '1';
+        if ($request->has('flota')) {
+            $flota = $request->input('flota') ?? '';
+        } elseif ($request->has('page')) {
+            $flota = '';
+        } else {
+            $flota = '1';
+        }
 
         // Resumen por día
         $porDiaQuery = Tributo::where('empresa_id', $user->empresa_id)
@@ -133,7 +139,7 @@ class ReporteController extends Controller
         ];
 
         return view('admin.reportes.tributos', compact(
-            'porDia', 'porMetodo', 'conDeuda', 'detalle', 'totales', 'desde', 'hasta'
+            'porDia', 'porMetodo', 'conDeuda', 'detalle', 'totales', 'desde', 'hasta', 'flota'
         ));
     }
 
@@ -144,7 +150,13 @@ class ReporteController extends Controller
         $user = Auth::user();
 
         [$desde, $hasta] = $this->rango($request);
-        $flota = $request->has('flota') ? $request->input('flota') : '1';
+        if ($request->has('flota')) {
+            $flota = $request->input('flota') ?? '';
+        } elseif ($request->has('page')) {
+            $flota = '';
+        } else {
+            $flota = '1';
+        }
 
         // Vueltas por día
         $porDiaQuery = Vuelta::where('empresa_id', $user->empresa_id)
@@ -213,7 +225,7 @@ class ReporteController extends Controller
         ];
 
         return view('admin.reportes.vueltas', compact(
-            'porDia', 'porVehiculo', 'porRuta', 'detalle', 'totales', 'desde', 'hasta'
+            'porDia', 'porVehiculo', 'porRuta', 'detalle', 'totales', 'desde', 'hasta', 'flota'
         ));
     }
 
@@ -224,7 +236,13 @@ class ReporteController extends Controller
         $user = Auth::user();
 
         [$desde, $hasta] = $this->rango($request);
-        $flota = $request->has('flota') ? $request->input('flota') : '1';
+        if ($request->has('flota')) {
+            $flota = $request->input('flota') ?? '';
+        } elseif ($request->has('page')) {
+            $flota = '';
+        } else {
+            $flota = '1';
+        }
 
         $sancionesQuery = Sancion::where('empresa_id', $user->empresa_id)
             ->where('estado', 'pagado')
@@ -262,7 +280,7 @@ class ReporteController extends Controller
         $sanciones = $sancionesQuery->paginate(20)->withQueryString();
 
         return view('admin.reportes.sanciones', compact(
-            'sanciones', 'porEstado', 'porConductor', 'desde', 'hasta'
+            'sanciones', 'porEstado', 'porConductor', 'desde', 'hasta', 'flota'
         ));
     }
 
@@ -273,7 +291,13 @@ class ReporteController extends Controller
         $user = Auth::user();
         $hoy = today();
         
-        $flota = $request->has('flota') ? $request->input('flota') : '1';
+        if ($request->has('flota')) {
+            $flota = $request->input('flota') ?? '';
+        } elseif ($request->has('page')) {
+            $flota = '';
+        } else {
+            $flota = '1';
+        }
 
         // Query Base para Vehículos
         $vQuery = Vehiculo::where('empresa_id', $user->empresa_id)->with('conductor');
@@ -367,7 +391,13 @@ class ReporteController extends Controller
         $daysDiff = today()->diffInDays($desde) + 1;
         Tributo::ensureGenerados($user->empresa_id, max(30, $daysDiff));
 
-        $flota = $request->has('flota') ? $request->input('flota') : '1';
+        if ($request->has('flota')) {
+            $flota = $request->input('flota') ?? '';
+        } elseif ($request->has('page')) {
+            $flota = '';
+        } else {
+            $flota = '1';
+        }
         $tipo = $request->input('tipo', 'todos');
 
         $tributosQuery = Tributo::where('empresa_id', $user->empresa_id)
@@ -453,7 +483,7 @@ class ReporteController extends Controller
         );
         $paginatedItems->withQueryString();
 
-        return view('admin.reportes.deudas', compact('paginatedItems', 'totalDeuda', 'totalCobrado', 'desde', 'hasta'));
+        return view('admin.reportes.deudas', compact('paginatedItems', 'totalDeuda', 'totalCobrado', 'desde', 'hasta', 'flota'));
     }
 
     // ── Helpers ──────────────────────────────────────────────────
