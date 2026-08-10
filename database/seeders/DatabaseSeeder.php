@@ -85,7 +85,7 @@ class DatabaseSeeder extends Seeder
                 'empresa_id'   => null, // Global
                 'conductor_id' => null,
                 'name'         => 'Super Admin',
-                'password'     => Hash::make('password'),
+                'password'     => Hash::make(env('SUPERADMIN_PASSWORD', 'password')),
                 'activo'       => true,
             ]
         );
@@ -96,7 +96,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('✅ BASE DE DATOS INICIALIZADA CORRECTAMENTE');
         $this->command->info('=========================================');
         $this->command->info('🔑 Super Admin Email: superadmin@transjunin.com');
-        $this->command->info('🔑 Password: password');
+        $defaultPass = env('SUPERADMIN_PASSWORD', 'password');
+        $this->command->info('🔑 Password: ' . $defaultPass);
         $this->command->info('-----------------------------------------');
         $this->command->info('Permisos creados: ' . count($permissions));
         $this->command->info('Roles creados: SUPER_ADMIN, conductor');
