@@ -133,7 +133,7 @@ class RoleController extends Controller
     {
         $role = Role::with('users')->findOrFail($id);
 
-        $this->verificarAcceso($role);
+        $this->verificarAcceso($role, 'ver');
 
         $nombreVisible = $this->nombreSinPrefijo($role->name);
         $permissions   = $role->permissions->pluck('name');
@@ -203,22 +203,22 @@ class RoleController extends Controller
     // SEGURIDAD
     // ══════════════════════════════════════════════════════════════
 
-    private function verificarAcceso(Role $role): void
+    private function verificarAcceso(Role $role, string $accion = 'escribir'): void
     {
         $nombreLimpio = $this->nombreSinPrefijo($role->name);
 
         // 1. Roles globales del sistema (sin prefijo eX_)
         if (in_array($role->name, ['SUPER_ADMIN', 'ADMIN', 'OPERADOR', 'conductor'])) {
             // Solo el SUPER_ADMIN global puede tocar estos
-            if (!Auth::user()->hasRole('SUPER_ADMIN')) {
+            if ($accion === 'escribir' && !Auth::user()->hasRole('SUPER_ADMIN')) {
                 abort(403, 'Este rol base del sistema no puede modificarse.');
             }
             return;
         }
 
         // 2. Roles de la empresa (con prefijo eX_)
-        // Bloquear solo si el nombre base es "ADMIN"
-        if ($nombreLimpio === 'ADMIN') {
+        // Bloquear modificación/eliminación del rol ADMIN, pero permitir ver (show)
+        if ($nombreLimpio === 'ADMIN' && $accion === 'escribir') {
             abort(403, 'El rol administrador de la empresa no puede ser modificado ni eliminado.');
         }
 
