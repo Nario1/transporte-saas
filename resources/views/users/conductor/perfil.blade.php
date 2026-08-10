@@ -143,7 +143,7 @@
                         <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence T. Circulación</span>
                         @php
                             $tcVence = \Carbon\Carbon::parse($conductor->tarjeta_circulacion_vence);
-                            $tcDiff = now()->diffInDays($tcVence, false);
+                            $tcDiff = (int) today()->diffInDays($tcVence, false);
                             $tcColor = $tcVence->isPast() ? 'var(--red)' : ($tcDiff <= 15 ? 'var(--orange)' : 'var(--green)');
                         @endphp
                         <span style="font-weight:700; color:{{ $tcColor }};">

@@ -114,7 +114,7 @@
                     <tbody>
                         @forelse($vehiculos as $v)
                             @php
-                                $hoy      = now();
+                                $hoy      = today();
                                 $soatVence = $v->soat_vence;
                                 $revVence  = $v->rev_tecnica_vence;
                                 $tarVence  = $v->tarjeta_prop_vence;

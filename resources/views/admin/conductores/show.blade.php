@@ -87,60 +87,87 @@
                         <div class="card-title">Licencia y Documentación</div>
                     </div>
                     <div class="card-body">
-                        <div class="g-3">
-                            @if($conductor->tipo_licencia)
-                                <div class="field">
-                                    <label>Categoría de Licencia</label>
-                                    <div class="pill blue" style="justify-content: center; font-size: 14px;">
-                                        Cat. {{ $conductor->tipo_licencia }}
-                                    </div>
-                                </div>
-                            @endif
+                        <div class="g-2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
                             
-                            @if($conductor->licencia_vence)
-                                @php
-                                    $licVence = \Carbon\Carbon::parse($conductor->licencia_vence);
-                                    $licDiff = now()->diffInDays($licVence, false);
-                                    $licState = $licVence->isPast() ? 'date-expired' : ($licDiff < 30 ? 'date-warning' : 'date-valid');
-                                @endphp
-                                
-                                <div class="field">
-                                    <label>Vencimiento Licencia</label>
-                                    <div class="{{ $licState }}" style="font-size: 16px;">
-                                        {{ $licVence->format('d/m/Y') }}
-                                    </div>
-                                    <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
-                                        {{ $licDiff < 0 ? '⚠️ Vencida hace ' . abs($licDiff) . ' días' : 'Vence en ' . $licDiff . ' días' }}
-                                    </div>
+                            {{-- BLOQUE 1: Licencia de Conducir --}}
+                            <div style="background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px;">
+                                <h4 style="font-size: 14px; font-weight: 800; color: var(--text); margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-id-card" style="color: var(--accent);"></i> Licencia de Conducir
+                                </h4>
+                                <div class="flex-v" style="gap: 15px; margin-top: 5px;">
+                                    @if($conductor->tipo_licencia)
+                                        <div class="field">
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Categoría de Licencia</label>
+                                            <div class="pill blue" style="justify-content: center; font-size: 13px; font-weight: 800; padding: 6px 12px; text-align: center;">
+                                                Cat. {{ $conductor->tipo_licencia }}
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    @if($conductor->licencia_vence)
+                                        @php
+                                            $licVence = \Carbon\Carbon::parse($conductor->licencia_vence);
+                                            $licDiff = (int) today()->diffInDays($licVence, false);
+                                            $licState = $licVence->isPast() ? 'date-expired' : ($licDiff < 30 ? 'date-warning' : 'date-valid');
+                                        @endphp
+                                        
+                                        <div class="field">
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Vencimiento de Licencia</label>
+                                            <div class="{{ $licState }}" style="font-size: 16px; font-weight: 700;">
+                                                {{ $licVence->format('d/m/Y') }}
+                                            </div>
+                                            <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
+                                                {{ $licDiff < 0 ? '⚠️ Vencida hace ' . abs($licDiff) . ' días' : 'Vence en ' . $licDiff . ' días' }}
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
+                            </div>
 
-                            @if($conductor->tarjeta_circulacion_tipo)
-                                <div class="field">
-                                    <label>Tarjeta de Circulación</label>
-                                    <div class="pill gold" style="justify-content: center; font-size: 14px; background: var(--accent-l); color: var(--accent); border: 1px solid rgba(234, 179, 8, 0.2); font-weight: 700;">
-                                        {{ $conductor->tarjeta_circulacion_tipo }}
-                                    </div>
+                            {{-- BLOQUE 2: Tarjeta de Circulación --}}
+                            <div style="background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px;">
+                                <h4 style="font-size: 14px; font-weight: 800; color: var(--text); margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-address-card" style="color: #d97706;"></i> Tarjeta de Circulación
+                                </h4>
+                                <div class="flex-v" style="gap: 15px; margin-top: 5px;">
+                                    @if($conductor->tarjeta_circulacion_tipo)
+                                        <div class="field">
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Tarjeta de Circulación</label>
+                                            <div class="pill gold" style="justify-content: center; font-size: 13px; background: var(--accent-l); color: var(--accent); border: 1px solid rgba(234, 179, 8, 0.2); font-weight: 700; padding: 6px 12px; text-align: center;">
+                                                {{ $conductor->tarjeta_circulacion_tipo }}
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="field">
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Tarjeta de Circulación</label>
+                                            <div style="font-size: 13px; color: var(--text3); font-style: italic;">No registrada</div>
+                                        </div>
+                                    @endif
+                                    
+                                    @if($conductor->tarjeta_circulacion_vence)
+                                        @php
+                                            $tcVence = \Carbon\Carbon::parse($conductor->tarjeta_circulacion_vence);
+                                            $tcDiff = (int) today()->diffInDays($tcVence, false);
+                                            $tcState = $tcVence->isPast() ? 'date-expired' : ($tcDiff < 30 ? 'date-warning' : 'date-valid');
+                                        @endphp
+                                        
+                                        <div class="field">
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Vencimiento Tarjeta Circulación</label>
+                                            <div class="{{ $tcState }}" style="font-size: 16px; font-weight: 700;">
+                                                {{ $tcVence->format('d/m/Y') }}
+                                            </div>
+                                            <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
+                                                {{ $tcDiff < 0 ? '⚠️ Vencida hace ' . abs($tcDiff) . ' días' : 'Vence en ' . $tcDiff . ' días' }}
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="field">
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Vencimiento Tarjeta Circulación</label>
+                                            <div style="font-size: 13px; color: var(--text3); font-style: italic;">No registrada</div>
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
-                            
-                            @if($conductor->tarjeta_circulacion_vence)
-                                @php
-                                    $tcVence = \Carbon\Carbon::parse($conductor->tarjeta_circulacion_vence);
-                                    $tcDiff = now()->diffInDays($tcVence, false);
-                                    $tcState = $tcVence->isPast() ? 'date-expired' : ($tcDiff < 30 ? 'date-warning' : 'date-valid');
-                                @endphp
-                                
-                                <div class="field">
-                                    <label>Vencimiento Tarjeta Circulación</label>
-                                    <div class="{{ $tcState }}" style="font-size: 16px;">
-                                        {{ $tcVence->format('d/m/Y') }}
-                                    </div>
-                                    <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
-                                        {{ $tcDiff < 0 ? '⚠️ Vencida hace ' . abs($tcDiff) . ' días' : 'Vence en ' . $tcDiff . ' días' }}
-                                    </div>
-                                </div>
-                            @endif
+                            </div>
                         </div>
                     </div>
                 </div>

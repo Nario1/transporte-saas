@@ -223,7 +223,7 @@
                         @foreach($docs as $doc)
                             @php
                                 $vence = $doc['date'] ? \Carbon\Carbon::parse($doc['date']) : null;
-                                $diff = $vence ? now()->diffInDays($vence, false) : null;
+                                $diff = $vence ? (int) today()->diffInDays($vence, false) : null;
                                 $statusClass = $vence ? ($vence->isPast() ? 'date-expired' : ($diff < 30 ? 'date-warning' : 'date-valid')) : '';
                             @endphp
                             <div class="flex-v" style="gap: 6px;">
