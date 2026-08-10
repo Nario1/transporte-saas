@@ -117,7 +117,7 @@
                                                 {{ $licVence->format('d/m/Y') }}
                                             </div>
                                             <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
-                                                {{ $licDiff < 0 ? '⚠️ Vencida hace ' . abs($licDiff) . ' días' : 'Vence en ' . $licDiff . ' días' }}
+                                                {!! $licDiff < 0 ? '<span style="color:var(--red); font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Vencida hace ' . abs($licDiff) . ' días</span>' : 'Vence en ' . $licDiff . ' días' !!}
                                             </div>
                                         </div>
                                     @endif
@@ -157,7 +157,7 @@
                                                 {{ $tcVence->format('d/m/Y') }}
                                             </div>
                                             <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
-                                                {{ $tcDiff < 0 ? '⚠️ Vencida hace ' . abs($tcDiff) . ' días' : 'Vence en ' . $tcDiff . ' días' }}
+                                                {!! $tcDiff < 0 ? '<span style="color:var(--red); font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Vencida hace ' . abs($tcDiff) . ' días</span>' : 'Vence en ' . $tcDiff . ' días' !!}
                                             </div>
                                         </div>
                                     @else

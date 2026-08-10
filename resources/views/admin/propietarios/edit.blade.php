@@ -76,10 +76,10 @@
                             <label for="activo">Estado del Registro</label>
                             <select name="activo" id="activo">
                                 <option value="1" {{ old('activo', $propietario->activo) == 1 ? 'selected' : '' }}>
-                                    🟢 Activo
+                                    Activo
                                 </option>
                                 <option value="0" {{ old('activo', $propietario->activo) == 0 ? 'selected' : '' }}>
-                                    🔴 Inactivo
+                                    Inactivo
                                 </option>
                             </select>
                             @error('activo')

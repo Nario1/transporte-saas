@@ -118,8 +118,8 @@
                                         Vence: {{ $licVence ? $licVence->format('d/m/Y') : '---' }}
                                     </span>
                                     @if($c->tarjeta_circulacion_tipo)
-                                        <span class="text-sub" style="font-size: 10px; margin-top: 3px; font-weight: 600; color: var(--text3);">
-                                            📇 TC: {{ $c->tarjeta_circulacion_tipo }} ({{ $c->tarjeta_circulacion_vence ? \Carbon\Carbon::parse($c->tarjeta_circulacion_vence)->format('d/m/Y') : 'S/V' }})
+                                        <span class="text-sub" style="font-size: 10px; margin-top: 3px; font-weight: 600; color: var(--text3); display: inline-flex; align-items: center; gap: 3px;">
+                                            <i class="fa-solid fa-address-card" style="font-size: 10px; color: #d97706;"></i> TC: {{ $c->tarjeta_circulacion_tipo }} ({{ $c->tarjeta_circulacion_vence ? \Carbon\Carbon::parse($c->tarjeta_circulacion_vence)->format('d/m/Y') : 'S/V' }})
                                         </span>
                                     @endif
                                 </td>

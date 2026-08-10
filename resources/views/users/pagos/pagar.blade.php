@@ -219,7 +219,8 @@
             <div class="card">
                 <div class="card-body">
                     <div class="already-paid">
-                        ✅ {{ $tipo === 'sancion' ? 'Esta sanción' : 'Este tributo' }} ya fue pagado.<br>
+                        <i class="fa-solid fa-circle-check" style="color:var(--green); font-size: 28px; display: block; margin-bottom: 12px; text-align: center;"></i>
+                        {{ $tipo === 'sancion' ? 'Esta sanción' : 'Este tributo' }} ya fue pagado.<br>
                         <span style="font-size:13px;font-weight:400;margin-top:6px;display:block;">
                             Pagado el {{ $tributo->cobrado_at?->format('d/m/Y H:i') }}
                         </span>
@@ -275,7 +276,7 @@
             <div class="card">
                 <div class="card-body">
                     @if (isset($mpError))
-                        <div class="error-box">⚠️ {{ $mpError }}</div>
+                        <div class="error-box"><i class="fa-solid fa-triangle-exclamation"></i> {{ $mpError }}</div>
                     @endif
 
                     @if ($preferenceId)
@@ -293,12 +294,12 @@
                         <div id="payment_brick_container"></div>
 
                         <div class="secure-note">
-                            🔒 <span>Pago 100% seguro</span> procesado por Mercado Pago
+                            <i class="fa-solid fa-lock" style="color: var(--green); margin-right: 5px;"></i> <span>Pago 100% seguro</span> procesado por Mercado Pago
                         </div>
                     @else
                         <div class="error-box">
-                            ⚠️ No se pudo conectar con Mercado Pago.
-                            <a href="{{ request()->url() }}" style="color:#dc2626;font-weight:700;">↺ Reintentar</a>
+                            <i class="fa-solid fa-circle-exclamation"></i> No se pudo conectar con Mercado Pago.
+                            <a href="{{ request()->url() }}" style="color:#dc2626;font-weight:700;"><i class="fa-solid fa-rotate-right"></i> Reintentar</a>
                         </div>
                     @endif
                 </div>

@@ -86,15 +86,19 @@
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="{{ $empresa->activa ? 'btn-danger' : 'btn-primary' }}"
-                                                style="padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 10px; min-width: 100px;">
-                                                {{ $empresa->activa ? '⛔ Suspender' : '✅ Activar' }}
+                                                style="padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 10px; min-width: 100px; display: inline-flex; justify-content: center; align-items: center; gap: 4px;">
+                                                @if($empresa->activa)
+                                                    <i class="fa-solid fa-ban"></i> Suspender
+                                                @else
+                                                    <i class="fa-solid fa-circle-check"></i> Activar
+                                                @endif
                                             </button>
                                         </form>
 
-                                        {{-- Botón Editar (por si quieres cambiar su tributo diario o plan) --}}
+                                        {{-- Botón Editar --}}
                                         <a href="{{ route('superadmin.empresas.edit', $empresa->id) }}" class="btn-secondary"
-                                            style="padding: 8px; border-radius: 10px; text-decoration: none;">
-                                            ⚙️
+                                            style="padding: 8px 12px; border-radius: 10px; text-decoration: none; display: inline-flex; justify-content: center; align-items: center;">
+                                            <i class="fa-solid fa-gear"></i>
                                         </a>
                                     </div>
                                 </td>

@@ -52,8 +52,8 @@
                             placeholder="Repite la contraseña" autocomplete="new-password">
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-block">
-                        ✅ Guardar contraseña
+                    <button type="submit" class="btn btn-primary btn-block" style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar contraseña
                     </button>
                 </form>
             </div>

@@ -22,7 +22,7 @@ class DashboardController extends Controller
         // FORZAR REGISTRO DE ROSTRO (Si requiere facial y no tiene)
         if ($conductor->requiere_facial && !$conductor->rostro()->exists()) {
             return redirect()->route('conductor.rostro.index')
-                ->with('warning', '⚠️ ACCESO RESTRINGIDO: Debes registrar tu rostro para habilitar tu cuenta.');
+                ->with('warning', 'ACCESO RESTRINGIDO: Debes registrar tu rostro para habilitar tu cuenta.');
         }
 
         Tributo::ensureGenerados($user->empresa_id);

@@ -48,11 +48,11 @@ class PagoMp extends Model
     public function getEstadoBadgeAttribute(): string
     {
         return match ($this->estado) {
-            'aprobado'   => '✅ Aprobado',
-            'rechazado'  => '❌ Rechazado',
-            'cancelado'  => '🚫 Cancelado',
-            'en_proceso' => '⏳ En proceso',
-            default      => '⏰ Pendiente',
+            'aprobado'   => 'Aprobado',
+            'rechazado'  => 'Rechazado',
+            'cancelado'  => 'Cancelado',
+            'en_proceso' => 'En proceso',
+            default      => 'Pendiente',
         };
     }
 }

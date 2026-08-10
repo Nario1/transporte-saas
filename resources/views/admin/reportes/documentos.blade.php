@@ -45,8 +45,8 @@
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
-                    @if($flota) 📑 Documentos y Vencimientos de la Unidad #{{ $flota }}
-                    @else 📑 Todos los Documentos y Vencimientos
+                    @if($flota) <i class="fa-solid fa-file-invoice" style="margin-right: 5px;"></i> Documentos y Vencimientos de la Unidad #{{ $flota }}
+                    @else <i class="fa-solid fa-file-invoice" style="margin-right: 5px;"></i> Todos los Documentos y Vencimientos
                     @endif
                 </div>
             </div>

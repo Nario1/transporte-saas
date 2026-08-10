@@ -72,8 +72,8 @@
                 </div>
 
                 <button type="submit" class="btn-primary"
-                    style="width:100%; padding:14px; font-weight:800; border-radius:12px; justify-content: center; font-size: 14px; box-shadow: var(--shadow-m);">
-                    🚀 Registrar mi Empresa
+                    style="width:100%; padding:14px; font-weight:800; border-radius:12px; justify-content: center; font-size: 14px; box-shadow: var(--shadow-m); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-paper-plane"></i> Registrar mi Empresa
                 </button>
 
                 <div style="text-align:center; margin-top:24px; font-size:13px; color: var(--text2);">

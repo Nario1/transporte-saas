@@ -57,14 +57,14 @@
             @if (session('success'))
                 <div class="auth-alert"
                     style="background: var(--green-l); color: var(--green); border: 1px solid rgba(22, 163, 74, 0.2);">
-                    ✅ {{ session('success') }}
+                    <i class="fa-solid fa-circle-check"></i> {{ session('success') }}
                 </div>
             @endif
 
             @if (session('error'))
                 <div class="auth-alert"
                     style="background: var(--red-l); color: var(--red); border: 1px solid rgba(220, 38, 38, 0.2);">
-                    🔒 {{ session('error') }}
+                    <i class="fa-solid fa-lock"></i> {{ session('error') }}
                 </div>
             @endif
 

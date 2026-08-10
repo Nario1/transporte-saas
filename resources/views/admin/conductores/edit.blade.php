@@ -138,13 +138,13 @@
                             <label for="estado">Estado Actual</label>
                             <select name="estado" id="estado" required>
                                 <option value="activo"
-                                    {{ old('estado', $conductor->estado) == 'activo' ? 'selected' : '' }}>🟢 Activo
+                                    {{ old('estado', $conductor->estado) == 'activo' ? 'selected' : '' }}>Activo
                                 </option>
                                 <option value="suspendido"
-                                    {{ old('estado', $conductor->estado) == 'suspendido' ? 'selected' : '' }}>🟡 Suspendido
+                                    {{ old('estado', $conductor->estado) == 'suspendido' ? 'selected' : '' }}>Suspendido
                                 </option>
                                 <option value="inactivo"
-                                    {{ old('estado', $conductor->estado) == 'inactivo' ? 'selected' : '' }}>🔴 Inactivo
+                                    {{ old('estado', $conductor->estado) == 'inactivo' ? 'selected' : '' }}>Inactivo
                                 </option>
                             </select>
                         </div>

@@ -242,7 +242,7 @@
                                     </div>
                                     <div style="font-size: 10px; color: var(--text3); text-align: right;">
                                         @if($diff < 0)
-                                            ⚠️ VENCIDO HACE {{ (int) abs($diff) }} DÍAS
+                                            <span style="color: var(--red); font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> VENCIDO HACE {{ (int) abs($diff) }} DÍAS</span>
                                         @else
                                             Vence en {{ (int) $diff }} días
                                         @endif
