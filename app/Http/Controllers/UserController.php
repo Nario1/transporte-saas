@@ -87,6 +87,12 @@ class UserController extends Controller
         $authUser = Auth::user();
         if ($user->empresa_id !== $authUser->empresa_id) abort(403);
 
+        // Evitar editar al administrador principal protegido
+        if ($user->is_admin_protected) {
+            return redirect()->route('users.index')
+                ->with('error', 'El administrador principal de la empresa está protegido y no puede ser editado.');
+        }
+
         $prefijo = 'e' . $authUser->empresa_id . '_';
 
         $roles = Role::where(function ($q) use ($prefijo) {
@@ -111,6 +117,12 @@ class UserController extends Controller
         /** @var User $authUser */
         $authUser = Auth::user();
         if ($user->empresa_id !== $authUser->empresa_id) abort(403);
+
+        // Evitar actualizar al administrador principal protegido
+        if ($user->is_admin_protected) {
+            return redirect()->route('users.index')
+                ->with('error', 'El administrador principal de la empresa está protegido y no puede ser editado.');
+        }
 
         // 2. Validación
         $request->validated();

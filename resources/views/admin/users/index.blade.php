@@ -65,10 +65,10 @@
                                 </td>
                                 <td class="col-actions">
                                     <div class="flex-h" style="justify-content: flex-end; gap: 4px;">
-                                        <a href="{{ route('users.edit', $user->id) }}" class="action-icon edit-icon" title="Editar">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </a>
                                         @if (!$user->is_admin_protected)
+                                            <a href="{{ route('users.edit', $user->id) }}" class="action-icon edit-icon" title="Editar">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
                                             <form action="{{ route('users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar definitivamente a este usuario?')">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn-icon-submit" title="Eliminar">
@@ -76,8 +76,8 @@
                                                 </button>
                                             </form>
                                         @else
-                                            <button class="action-icon" style="opacity: 0.2; cursor: not-allowed;" title="Protegido">
-                                                <i class="fa-solid fa-lock"></i>
+                                            <button class="action-icon" style="opacity: 0.4; cursor: not-allowed; border: none; background: transparent;" title="Administrador Principal Protegido" disabled>
+                                                <i class="fa-solid fa-lock" style="color: var(--gold);"></i>
                                             </button>
                                         @endif
                                     </div>
