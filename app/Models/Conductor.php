@@ -26,6 +26,8 @@ class Conductor extends Model implements Auditable
         'direccion',
         'tipo_licencia',
         'licencia_vence',
+        'tarjeta_circulacion_tipo',
+        'tarjeta_circulacion_vence',
         'vigencia_examen_medico',  // ← nuevo
         'licencia_digital',        // ← nuevo
         'dni_digital',             // ← nuevo
@@ -36,15 +38,16 @@ class Conductor extends Model implements Auditable
     ];
  
     protected $casts = [
-        'licencia_vence'         => 'date',
-        'vigencia_examen_medico' => 'date',
-        'primer_ingreso'         => 'boolean',
-        'requiere_facial'        => 'boolean',
+        'licencia_vence'            => 'date',
+        'tarjeta_circulacion_vence' => 'date',
+        'vigencia_examen_medico'    => 'date',
+        'primer_ingreso'            => 'boolean',
+        'requiere_facial'           => 'boolean',
     ];
  
     protected $auditInclude = [
         'nombre', 'apellidos', 'estado', 'tipo_licencia',
-        'licencia_vence', 'vigencia_examen_medico',
+        'licencia_vence', 'tarjeta_circulacion_tipo', 'tarjeta_circulacion_vence', 'vigencia_examen_medico',
     ];
  
     public function empresa()     { return $this->belongsTo(Empresa::class); }

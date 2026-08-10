@@ -318,6 +318,14 @@ class ReporteController extends Controller
                     'fecha'     => \Carbon\Carbon::parse($v->conductor->licencia_vence),
                 ]);
             }
+            if ($v->conductor && $v->conductor->tarjeta_circulacion_vence) {
+                $alertas->push((object)[
+                    'placa'     => $v->placa,
+                    'conductor' => $v->conductor->nombre_completo,
+                    'documento' => 'Tarjeta de Circulación' . ($v->conductor->tarjeta_circulacion_tipo ? ' (' . $v->conductor->tarjeta_circulacion_tipo . ')' : ''),
+                    'fecha'     => \Carbon\Carbon::parse($v->conductor->tarjeta_circulacion_vence),
+                ]);
+            }
         }
 
         $alertas = $alertas->sortBy('fecha')->values();

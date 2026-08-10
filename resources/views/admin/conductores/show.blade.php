@@ -114,6 +114,33 @@
                                     </div>
                                 </div>
                             @endif
+
+                            @if($conductor->tarjeta_circulacion_tipo)
+                                <div class="field">
+                                    <label>Tarjeta de Circulación</label>
+                                    <div class="pill gold" style="justify-content: center; font-size: 14px; background: var(--accent-l); color: var(--accent); border: 1px solid rgba(234, 179, 8, 0.2); font-weight: 700;">
+                                        {{ $conductor->tarjeta_circulacion_tipo }}
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            @if($conductor->tarjeta_circulacion_vence)
+                                @php
+                                    $tcVence = \Carbon\Carbon::parse($conductor->tarjeta_circulacion_vence);
+                                    $tcDiff = now()->diffInDays($tcVence, false);
+                                    $tcState = $tcVence->isPast() ? 'date-expired' : ($tcDiff < 30 ? 'date-warning' : 'date-valid');
+                                @endphp
+                                
+                                <div class="field">
+                                    <label>Vencimiento Tarjeta Circulación</label>
+                                    <div class="{{ $tcState }}" style="font-size: 16px;">
+                                        {{ $tcVence->format('d/m/Y') }}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
+                                        {{ $tcDiff < 0 ? '⚠️ Vencida hace ' . abs($tcDiff) . ' días' : 'Vence en ' . $tcDiff . ' días' }}
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -23,17 +23,19 @@ class StoreConductorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nombre'         => 'required|string|max:100',
-            'apellidos'      => 'required|string|max:100',
-            'dni'            => 'nullable|string|size:8',
-            'telefono'       => 'nullable|string|size:9',
-            'email'          => 'nullable|email|max:255',
-            'propietario_id' => 'nullable|integer|exists:propietarios,id',
-            'tipo_licencia'  => 'required|string|max:10',
-            'licencia_vence' => 'nullable|date',
-            'estado'         => 'required|string|in:activo,suspendido,inactivo',
-            'direccion'      => 'nullable|string|max:255',
-            'notas'          => 'nullable|string',
+            'nombre'                    => 'required|string|max:100',
+            'apellidos'                 => 'required|string|max:100',
+            'dni'                       => 'nullable|string|size:8',
+            'telefono'                  => 'nullable|string|size:9',
+            'email'                     => 'nullable|email|max:255',
+            'propietario_id'            => 'nullable|integer|exists:propietarios,id',
+            'tipo_licencia'             => 'required|string|max:10',
+            'licencia_vence'            => 'nullable|date',
+            'tarjeta_circulacion_tipo'  => 'nullable|string|max:50',
+            'tarjeta_circulacion_vence' => 'nullable|date',
+            'estado'                    => 'required|string|in:activo,suspendido,inactivo',
+            'direccion'                 => 'nullable|string|max:255',
+            'notas'                     => 'nullable|string',
         ];
     }
 }

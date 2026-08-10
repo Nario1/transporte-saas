@@ -113,6 +113,26 @@
                             @enderror
                         </div>
 
+                        {{-- TARJETA DE CIRCULACIÓN TIPO --}}
+                        <div class="field">
+                            <label for="tarjeta_circulacion_tipo">Tarjeta de Circulación (Tipo/Nro)</label>
+                            <input type="text" id="tarjeta_circulacion_tipo" name="tarjeta_circulacion_tipo"
+                                value="{{ old('tarjeta_circulacion_tipo', $conductor->tarjeta_circulacion_tipo) }}" placeholder="Ej: Registro-105">
+                            @error('tarjeta_circulacion_tipo')
+                                <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        {{-- TARJETA DE CIRCULACIÓN VENCE --}}
+                        <div class="field">
+                            <label for="tarjeta_circulacion_vence">Vencimiento Tarjeta de Circulación</label>
+                            <input type="date" id="tarjeta_circulacion_vence" name="tarjeta_circulacion_vence"
+                                value="{{ old('tarjeta_circulacion_vence', $conductor->tarjeta_circulacion_vence ? \Carbon\Carbon::parse($conductor->tarjeta_circulacion_vence)->format('Y-m-d') : '') }}">
+                            @error('tarjeta_circulacion_vence')
+                                <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         {{-- ESTADO --}}
                         <div class="field">
                             <label for="estado">Estado Actual</label>

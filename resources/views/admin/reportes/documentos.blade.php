@@ -74,9 +74,15 @@
                                 </td>
                                 <td>
                                     <div style="font-weight: 600; font-size: 13px;">
-                                        @if($a->documento == 'SOAT') <i class="fa-solid fa-shield-heart" style="color:var(--green);"></i> 
-                                        @elseif($a->documento == 'Revisión Técnica') <i class="fa-solid fa-wrench" style="color:var(--orange);"></i>
-                                        @else <i class="fa-solid fa-id-card" style="color:var(--accent);"></i> @endif
+                                        @if($a->documento == 'SOAT') 
+                                            <i class="fa-solid fa-shield-heart" style="color:var(--green);"></i> 
+                                        @elseif($a->documento == 'Revisión Técnica') 
+                                            <i class="fa-solid fa-wrench" style="color:var(--orange);"></i>
+                                        @elseif(str_contains($a->documento, 'Tarjeta de Circulación'))
+                                            <i class="fa-solid fa-address-card" style="color:#d97706;"></i>
+                                        @else 
+                                            <i class="fa-solid fa-id-card" style="color:var(--accent);"></i> 
+                                        @endif
                                         {{ $a->documento }}
                                     </div>
                                 </td>
