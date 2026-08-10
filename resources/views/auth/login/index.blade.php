@@ -37,7 +37,7 @@
         </div>
 
         {{-- Botón de Acción --}}
-        <button type="submit" class="btn-primary" style="width:100%; padding:14px; font-weight:800; border-radius:10px;">
+        <button type="submit" class="btn-primary" style="width:100%; padding:14px; font-weight:800; border-radius:10px; justify-content: center;">
             Entrar al Sistema
         </button>
     </form>

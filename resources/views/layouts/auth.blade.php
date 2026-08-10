@@ -8,6 +8,7 @@
             justify-content: center;
             min-height: 100vh;
             padding: 20px;
+            width: 100%;
         }
 
         .auth-card {
