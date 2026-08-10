@@ -24,22 +24,19 @@ class CheckEmpresaActiva
             return $next($request);
         }
  
-        // 3. Conductor → solo verificar que esté activo
-        if ($user->hasRole('conductor')) {
-            if (!$user->activo) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return redirect()->route('login')
-                    ->with('error', 'Tu cuenta ha sido desactivada. Contacta al administrador.');
-            }
-            return $next($request);
+        // 3. Verificar si el usuario individual está activo
+        if (!$user->activo) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('login')
+                ->with('error', 'Tu cuenta ha sido desactivada. Contacta al administrador.');
         }
  
-        // 4. Admin / Operador → verificar empresa activa
+        // 4. Verificar si la empresa asociada está activa
         $empresa = $user->empresa;
  
-        if (!$empresa || !$empresa->activa) {
+        if ($empresa && !$empresa->activa) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
