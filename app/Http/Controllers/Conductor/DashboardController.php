@@ -17,7 +17,14 @@ class DashboardController extends Controller
         $conductor = $user->conductor;
         $hoy       = today();
  
-        abort_if(!$conductor, 403, 'Sin conductor asociado.');
+        if (!$conductor) {
+            Auth::logout();
+            $request = request();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('login')
+                ->with('error', 'Tu cuenta de usuario no tiene un expediente de conductor asociado en el sistema. Contacta al administrador.');
+        }
  
         // FORZAR REGISTRO DE ROSTRO (Si requiere facial y no tiene)
         if ($conductor->requiere_facial && !$conductor->rostro()->exists()) {
