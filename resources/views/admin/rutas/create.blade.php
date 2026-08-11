@@ -15,8 +15,7 @@
                     <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                         <div class="field" style="grid-column: span 2;">
                             <label for="nombre">Nombre de la Ruta (Ej: Huancayo - El Tambo)</label>
-                            <input type="text" id="nombre" name="nombre" value="{{ old('nombre') }}" required
-                                pattern="[A-Za-zÀ-ÿ\s]{2,60}" title="Solo letras y espacios permitidos">
+                            <input type="text" id="nombre" name="nombre" value="{{ old('nombre') }}" required>
                             @error('nombre')
                                 <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
                             @enderror

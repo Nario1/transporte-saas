@@ -52,27 +52,15 @@ class VueltaAutoController extends Controller
         $proximaVuelta = $ultimaVuelta + 1;
 
         // Rutas autorizadas: solo las que el vehículo del conductor tiene marcadas como activas
-        // en la tabla vehiculo_rutas. Si no tiene vehículo, se muestran todas las rutas.
+        // en la tabla vehiculo_rutas. Si no tiene vehículo o no tiene rutas asignadas, no podrá ver ninguna.
         $vehiculo = $conductor->vehiculos()->first();
+        $rutas = collect();
 
         if ($vehiculo) {
             $rutas = $vehiculo->rutas()
                 ->where('vehiculo_rutas.activo', true)
                 ->where('rutas.estado', 'activa')
                 ->orderBy('rutas.nombre')
-                ->get();
-
-            // Si el vehículo no tiene ninguna ruta autorizada, mostrar todas como fallback
-            if ($rutas->isEmpty()) {
-                $rutas = \App\Models\Ruta::where('empresa_id', $conductor->empresa_id)
-                    ->where('estado', 'activa')
-                    ->orderBy('nombre')
-                    ->get();
-            }
-        } else {
-            $rutas = \App\Models\Ruta::where('empresa_id', $conductor->empresa_id)
-                ->where('estado', 'activa')
-                ->orderBy('nombre')
                 ->get();
         }
 
