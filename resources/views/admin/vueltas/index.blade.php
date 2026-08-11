@@ -124,18 +124,29 @@
                                     @if($vuelta->hora_llegada)
                                         @php
                                             $sec = \Carbon\Carbon::parse($vuelta->hora_salida)->diffInSeconds(\Carbon\Carbon::parse($vuelta->hora_llegada));
+                                            $minutosTotal = floor($sec / 60);
+                                            $estimado = $vuelta->ruta?->duracion_min ?? 0;
+                                            $excede = $estimado > 0 && $minutosTotal > $estimado;
+
                                             if ($sec < 60) $dur = "$sec segundos";
                                             elseif ($sec < 3600) $dur = floor($sec/60) . " minutos";
                                             else $dur = floor($sec/3600) . "h " . (floor($sec/60)%60) . "min";
                                         @endphp
-                                        <span class="pill gray" style="font-weight: 800; font-family: monospace;">
-                                            {{ $dur }}
-                                        </span>
+                                        @if($excede)
+                                            <span class="pill red" style="font-weight: 800; font-family: monospace;" title="Estimado de Ruta: {{ $estimado }} min">
+                                                <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> {{ $dur }} (Excedido)
+                                            </span>
+                                        @else
+                                            <span class="pill gray" style="font-weight: 800; font-family: monospace;">
+                                                <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> {{ $dur }}
+                                            </span>
+                                        @endif
                                     @else
                                         <span class="duracion-vivo pill green" 
                                               data-salida-timestamp="{{ \Carbon\Carbon::parse($vuelta->fecha->format('Y-m-d') . ' ' . $vuelta->hora_salida)->timestamp * 1000 }}"
+                                              data-estimado-minutos="{{ $vuelta->ruta?->duracion_min ?? 0 }}"
                                               style="font-family: monospace; font-weight: 800; font-size: 11px;">
-                                            ⏳ En Ruta...
+                                            <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> En Ruta...
                                         </span>
                                     @endif
                                 </td>
@@ -230,7 +241,18 @@
                     } else {
                         durStr = `${mm}:${ss}`;
                     }
-                    el.textContent = `⏳ ${durStr}`;
+
+                    const diffMin = Math.floor(diff / 60);
+                    const estimado = parseInt(el.getAttribute('data-estimado-minutos')) || 0;
+                    const excede = estimado > 0 && diffMin > estimado;
+
+                    if (excede) {
+                        el.className = "duracion-vivo pill red";
+                        el.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> ${durStr} (Excedido)`;
+                    } else {
+                        el.className = "duracion-vivo pill green";
+                        el.innerHTML = `<i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${durStr}`;
+                    }
                 });
             }
 

@@ -161,12 +161,23 @@
                             <td>
                                 @php
                                     $secArr = \Carbon\Carbon::parse($v->fecha->format('Y-m-d').' '.$v->hora_salida)->diffInSeconds(now());
+                                    $minutosTrans = floor($secArr / 60);
+                                    $estimado = $v->ruta?->duracion_min ?? 0;
+                                    $excede = $estimado > 0 && $minutosTrans > $estimado;
+
                                     if ($secArr < 60) $durArr = "$secArr segundos";
                                     elseif ($secArr < 3600) $durArr = floor($secArr/60) . " minutos";
                                     else $durArr = floor($secArr/3600) . "h " . (floor($secArr/60)%60) . "min";
                                 @endphp
-                                <span class="pill green tiempo-cronometro" data-inicio="{{ $v->fecha->format('Y-m-d').' '.$v->hora_salida }}" style="font-weight: 800; font-family: monospace;">
-                                    {{ $durArr }}
+                                <span class="pill {{ $excede ? 'red' : 'green' }} tiempo-cronometro" 
+                                      data-inicio="{{ $v->fecha->format('Y-m-d').' '.$v->hora_salida }}" 
+                                      data-estimado-minutos="{{ $estimado }}"
+                                      style="font-weight: 800; font-family: monospace;">
+                                    @if ($excede)
+                                        <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> {{ $durArr }} (Excedido)
+                                    @else
+                                        <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> {{ $durArr }}
+                                    @endif
                                 </span>
                             </td>
 
@@ -203,7 +214,7 @@
                                             📍 En vivo
                                         </a>
                                     @else
-                                        <span style="color:var(--green); font-size:11px; font-weight:800;">⏳ En ruta</span>
+                                        <span style="color:var(--green); font-size:11px; font-weight:800;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 5px;"></i> En ruta</span>
                                     @endif
                                 @elseif($v->latitud_fin && $v->longitud_fin)
                                     <a href="https://maps.google.com/?q={{ $v->latitud_fin }},{{ $v->longitud_fin }}"
@@ -365,7 +376,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if(v.estado === 'completada') countRecientes++;
             
             const isActive = v.estado === 'activa';
+            const estimado = parseInt(v.estimado_min) || 0;
+            const minutosTotal = parseInt(v.minutos_total) || 0;
+            const excedeCompletada = !isActive && estimado > 0 && minutosTotal > estimado;
             
+            let htmlDuracion = '';
+            if (isActive) {
+                htmlDuracion = `
+                    <span class="pill green tiempo-cronometro" data-inicio-ts="${v.inicio_ts}" data-estimado-minutos="${estimado}" style="font-weight: 800; font-family: monospace;">
+                        <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> 0s
+                    </span>
+                `;
+            } else if (excedeCompletada) {
+                htmlDuracion = `
+                    <span class="pill red" style="font-weight: 800; font-family: monospace;" title="Estimado de Ruta: ${estimado} min">
+                        <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> ${v.tiempo_total_msg} (Excedido)
+                    </span>
+                `;
+            } else {
+                htmlDuracion = `
+                    <span class="pill gray" style="font-weight: 800; font-family: monospace;">
+                        <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${v.tiempo_total_msg || '—'}
+                    </span>
+                `;
+            }
+
             html += `
                 <tr id="vuelta-${v.id}" class="vuelta-row ${v.estado}">
                     <td style="padding-left: 24px;">
@@ -380,9 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td class="mono">${v.hora_salida}</td>
                     <td class="mono">${v.hora_llegada}</td>
                     <td class="mono">
-                        <span class="pill ${isActive ? 'green tiempo-cronometro' : 'gray'}" ${isActive ? `data-inicio-ts="${v.inicio_ts}"` : ''}>
-                            ${isActive ? '0 s' : (v.tiempo_total_msg || '—')}
-                        </span>
+                        ${htmlDuracion}
                     </td>
                     <td>
                         <span class="pill ${isActive ? 'green' : 'gray'}" style="font-size: 10px; font-weight: 800;">
@@ -399,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${isActive ? (
                             (v.lat_actual && v.lng_actual) ? `
                                 <a href="https://maps.google.com/?q=${v.lat_actual},${v.lng_actual}" target="_blank" class="btn-secondary" style="font-size:10px; padding: 5px 10px; text-decoration: none; background: var(--green); color: white;">📍 En vivo</a>
-                            ` : `<span style="color:var(--green); font-size:11px; font-weight:800;">⏳ En ruta</span>`
+                            ` : `<span style="color:var(--green); font-size:11px; font-weight:800;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 5px;"></i> En ruta</span>`
                         ) : (
                             (v.latitud_fin && v.longitud_fin) ? `
                                 <a href="https://maps.google.com/?q=${v.latitud_fin},${v.longitud_fin}" target="_blank" class="btn-secondary" style="font-size:10px; padding: 5px 10px; text-decoration: none; background: var(--accent); color: white;">🏁 Llegada</a>
@@ -473,8 +506,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (inicioTs) {
-                const diffSec = Math.floor((ahora - parseInt(inicioTs)) / 1000);
-                el.textContent = formatTimeSpanish(diffSec);
+                const diffSec = Math.max(0, Math.floor((ahora - parseInt(inicioTs)) / 1000));
+                const diffMin = Math.floor(diffSec / 60);
+                const estimado = parseInt(el.dataset.estimadoMinutos) || 0;
+                const excede = estimado > 0 && diffMin > estimado;
+                
+                const timeStr = formatTimeSpanish(diffSec);
+                
+                if (excede) {
+                    el.className = "pill red tiempo-cronometro";
+                    el.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> ${timeStr} (Excedido)`;
+                } else {
+                    el.className = "pill green tiempo-cronometro";
+                    el.innerHTML = `<i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${timeStr}`;
+                }
             }
         });
     }

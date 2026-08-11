@@ -88,10 +88,12 @@ class VueltasEnVivoController extends Controller
                 'inicio_ts'     => $inicio->timestamp * 1000,
                 'hora_llegada'  => '—',
                 'minutos_en_ruta' => $minutos,
+                'estimado_min'  => $v->ruta?->duracion_min ?? 0,
                 'estado'        => 'activa',
                 'tiempo_label'  => $minutos < 60 ? "{$minutos} min" : floor($minutos / 60) . 'h ' . ($minutos % 60) . 'min',
             ];
         })->concat($recientes->map(function (Vuelta $v) {
+            $sec = $v->hora_llegada ? \Carbon\Carbon::parse($v->hora_salida)->diffInSeconds(\Carbon\Carbon::parse($v->hora_llegada)) : 0;
             return [
                 'id'            => $v->id,
                 'conductor'     => $v->conductor?->nombre_completo ?? '—',
@@ -108,9 +110,10 @@ class VueltasEnVivoController extends Controller
                 'latitud_fin'   => $v->latitud_fin,
                 'longitud_fin'  => $v->longitud_fin,
                 'estado'        => 'completada',
-                'tiempo_total_msg' => (function() use ($v) {
-                    if (!$v->hora_llegada) return '—';
-                    $sec = \Carbon\Carbon::parse($v->hora_salida)->diffInSeconds(\Carbon\Carbon::parse($v->hora_llegada));
+                'estimado_min'  => $v->ruta?->duracion_min ?? 0,
+                'minutos_total' => (int) floor($sec / 60),
+                'tiempo_total_msg' => (function() use ($sec) {
+                    if ($sec <= 0) return '—';
                     if ($sec < 60) return "$sec segundos";
                     if ($sec < 3600) return floor($sec/60) . " minutos";
                     return floor($sec/3600) . "h " . (floor($sec/60)%60) . "min";
