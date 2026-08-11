@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'TransJunín — SaaS')</title>
+    @php
+        $logoFavicon = Auth::check() && Auth::user()->empresa && Auth::user()->empresa->logo_path
+            ? asset('storage/' . Auth::user()->empresa->logo_path)
+            : null;
+    @endphp
+    @if ($logoFavicon)
+        <link rel="icon" href="{{ $logoFavicon }}">
+    @endif
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
