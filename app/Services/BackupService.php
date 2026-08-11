@@ -101,16 +101,39 @@ class BackupService
         if ($returnVar === 0) {
             $size = filesize($filePath);
             
-            return Backup::create([
+            $newBackup = Backup::create([
                 'empresa_id' => $empresa_id,
                 'filename'   => $filename,
                 'path'       => $diskPath,
                 'size'       => $size,
                 'type'       => $type
             ]);
+
+            // Limpiar automáticamente backups antiguos de más de 30 días
+            $this->cleanOldBackups(30);
+
+            return $newBackup;
         }
 
         Log::error("Error en Backup: Código " . $returnVar);
         return false;
+    }
+
+    /**
+     * Elimina físicamente y de la base de datos backups que superen el límite de días.
+     */
+    public function cleanOldBackups($days = 30)
+    {
+        try {
+            $oldBackups = Backup::where('created_at', '<', Carbon::now()->subDays($days))->get();
+            foreach ($oldBackups as $backup) {
+                if (Storage::disk('local')->exists($backup->path)) {
+                    Storage::disk('local')->delete($backup->path);
+                }
+                $backup->delete();
+            }
+        } catch (\Exception $e) {
+            Log::error("Error al limpiar backups antiguos: " . $e->getMessage());
+        }
     }
 }
