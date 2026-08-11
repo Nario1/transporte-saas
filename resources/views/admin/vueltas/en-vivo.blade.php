@@ -172,7 +172,7 @@
                                 <span class="pill {{ $excede ? 'red' : 'green' }} tiempo-cronometro" 
                                       data-inicio="{{ $v->fecha->format('Y-m-d').' '.$v->hora_salida }}" 
                                       data-estimado-minutos="{{ $estimado }}"
-                                      style="font-weight: 800; font-family: monospace;">
+                                      style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
                                     @if ($excede)
                                         <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> {{ $durArr }} (Excedido)
                                     @else
@@ -383,19 +383,19 @@ document.addEventListener('DOMContentLoaded', function() {
             let htmlDuracion = '';
             if (isActive) {
                 htmlDuracion = `
-                    <span class="pill green tiempo-cronometro" data-inicio-ts="${v.inicio_ts}" data-estimado-minutos="${estimado}" style="font-weight: 800; font-family: monospace;">
+                    <span class="pill green tiempo-cronometro" data-inicio-ts="${v.inicio_ts}" data-estimado-minutos="${estimado}" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
                         <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> 0s
                     </span>
                 `;
             } else if (excedeCompletada) {
                 htmlDuracion = `
-                    <span class="pill red" style="font-weight: 800; font-family: monospace;" title="Estimado de Ruta: ${estimado} min">
+                    <span class="pill red" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;" title="Estimado de Ruta: ${estimado} min">
                         <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> ${v.tiempo_total_msg} (Excedido)
                     </span>
                 `;
             } else {
                 htmlDuracion = `
-                    <span class="pill gray" style="font-weight: 800; font-family: monospace;">
+                    <span class="pill gray" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
                         <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${v.tiempo_total_msg || '—'}
                     </span>
                 `;

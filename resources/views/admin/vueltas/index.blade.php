@@ -133,11 +133,11 @@
                                             else $dur = floor($sec/3600) . "h " . (floor($sec/60)%60) . "min";
                                         @endphp
                                         @if($excede)
-                                            <span class="pill red" style="font-weight: 800; font-family: monospace;" title="Estimado de Ruta: {{ $estimado }} min">
+                                            <span class="pill red" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;" title="Estimado de Ruta: {{ $estimado }} min">
                                                 <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> {{ $dur }} (Excedido)
                                             </span>
                                         @else
-                                            <span class="pill gray" style="font-weight: 800; font-family: monospace;">
+                                            <span class="pill gray" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
                                                 <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> {{ $dur }}
                                             </span>
                                         @endif
@@ -145,7 +145,7 @@
                                         <span class="duracion-vivo pill green" 
                                               data-salida-timestamp="{{ \Carbon\Carbon::parse($vuelta->fecha->format('Y-m-d') . ' ' . $vuelta->hora_salida)->timestamp * 1000 }}"
                                               data-estimado-minutos="{{ $vuelta->ruta?->duracion_min ?? 0 }}"
-                                              style="font-family: monospace; font-weight: 800; font-size: 11px;">
+                                              style="font-family: monospace; font-weight: 800; font-size: 13px; padding: 6px 12px;">
                                             <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> En Ruta...
                                         </span>
                                     @endif
