@@ -111,6 +111,23 @@
                             </div>
 
                             <div class="field">
+                                <label for="tarjeta_circulacion_tipo">Tarjeta de Circulación (Tipo/Nro)</label>
+                                <input type="text" id="tarjeta_circulacion_tipo" name="tarjeta_circulacion_tipo" value="{{ old('tarjeta_circulacion_tipo') }}"
+                                    placeholder="Ej: Municipal, Especial">
+                                @error('tarjeta_circulacion_tipo')
+                                    <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="field">
+                                <label for="tarjeta_circulacion_vence">Vencimiento Tarjeta de Circulación</label>
+                                <input type="date" id="tarjeta_circulacion_vence" name="tarjeta_circulacion_vence" value="{{ old('tarjeta_circulacion_vence') }}">
+                                @error('tarjeta_circulacion_vence')
+                                    <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="field">
                                 <label for="conductor_estado">Estado Inicial</label>
                                 <select name="conductor_estado" id="conductor_estado">
                                     <option value="activo" {{ old('conductor_estado') == 'activo' ? 'selected' : '' }}>ACTIVO</option>

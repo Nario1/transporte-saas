@@ -70,17 +70,19 @@ class PropietarioController extends Controller
                 // 2. ¿Es también conductor?
                 if (!empty($data['es_conductor'])) {
                     Conductor::create([
-                        'empresa_id'     => $user->empresa_id,
-                        'propietario_id' => $propietario->id,
-                        'nombre'         => $data['nombre'],
-                        'apellidos'      => $data['apellidos'],
-                        'dni'            => $data['dni'] ?? null,
-                        'telefono'       => $data['telefono'] ?? null,
-                        'email'          => $data['email'] ?? null,
-                        'direccion'      => $data['direccion'] ?? null,
-                        'tipo_licencia'  => $data['tipo_licencia'] ?? null,
-                        'licencia_vence' => $data['licencia_vence'] ?? null,
-                        'estado'         => $data['conductor_estado'] ?? 'activo',
+                        'empresa_id'                => $user->empresa_id,
+                        'propietario_id'            => $propietario->id,
+                        'nombre'                    => $data['nombre'],
+                        'apellidos'                 => $data['apellidos'],
+                        'dni'                       => $data['dni'] ?? null,
+                        'telefono'                  => $data['telefono'] ?? null,
+                        'email'                     => $data['email'] ?? null,
+                        'direccion'                 => $data['direccion'] ?? null,
+                        'tipo_licencia'             => $data['tipo_licencia'] ?? null,
+                        'licencia_vence'            => $data['licencia_vence'] ?? null,
+                        'tarjeta_circulacion_tipo'  => $data['tarjeta_circulacion_tipo'] ?? null,
+                        'tarjeta_circulacion_vence' => $data['tarjeta_circulacion_vence'] ?? null,
+                        'estado'                    => $data['conductor_estado'] ?? 'activo',
                     ]);
                 }
 
