@@ -10,3 +10,10 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('backup:run-db')->weekly();
+
+// Limpieza automática de la tabla de auditorías (registros con más de 30 días)
+Schedule::call(function () {
+    Illuminate\Support\Facades\DB::table('audits')
+        ->where('created_at', '<', now()->subDays(30))
+        ->delete();
+})->daily();
