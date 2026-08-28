@@ -135,8 +135,7 @@
                                                     <select name="metodo_pago" required class="filter-select"
                                                         style="height: 32px; padding: 0 25px 0 8px; font-size: 10px; background-color: var(--bg);">
                                                         <option value="efectivo">EFECTIVO</option>
-                                                        <option value="yape">YAPE</option>
-                                                        <option value="plin">PLIN</option>
+                                                        <option value="yape" style="color: #7c3aed; font-weight: bold;">EFECTIVO</option>
                                                     </select>
                                                     <button type="submit" class="btn-primary"
                                                         style="height: 32px; background: var(--green); font-size: 10px; padding: 0 10px;">
@@ -204,15 +203,13 @@
                                                 {{ $pag->cobrado_at ? $pag->cobrado_at->format('h:i A') : '---' }}</span>
                                         </td>
                                         <td>
-                                            @if($pag->metodo_pago === 'mercadopago')
-                                                <span class="pill blue" style="font-size: 9px; padding: 2px 8px; font-weight: 800; background-color: #00bef0; color: #fff;">
-                                                    MERCADOPAGO ({{ strtoupper($pag->pagoMp?->metodo ?? 'WEB') }})
-                                                </span>
-                                            @else
-                                                <span class="pill blue" style="font-size: 9px; padding: 2px 8px; font-weight: 800;">
-                                                    {{ strtoupper($pag->metodo_pago ?? '---') }}
-                                                </span>
-                                            @endif
+                                            @php
+                                                $isDigital = in_array(strtolower($pag->metodo_pago), ['yape', 'plin', 'mercadopago']);
+                                                $pillStyle = $isDigital ? 'background-color: #7c3aed; color: #fff;' : '';
+                                            @endphp
+                                            <span class="pill blue" style="font-size: 9px; padding: 2px 8px; font-weight: 800; {{ $pillStyle }}">
+                                                EFECTIVO
+                                            </span>
                                             @if($pag->cobrador)
                                                 <span class="text-sub" style="display:inline; margin-left: 5px;">Recibe:
                                                     {{ explode(' ', $pag->cobrador->name)[0] }}</span>
