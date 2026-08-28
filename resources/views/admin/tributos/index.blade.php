@@ -133,8 +133,9 @@
                                                     class="flex-h" style="gap: 4px;">
                                                     @csrf
                                                     <select name="metodo_pago" required class="filter-select"
-                                                        style="height: 32px; padding: 0 25px 0 8px; font-size: 10px; background-color: var(--bg);">
-                                                        <option value="efectivo">EFECTIVO</option>
+                                                        onchange="this.style.color = this.value === 'yape' ? '#7c3aed' : 'inherit'; this.style.fontWeight = this.value === 'yape' ? 'bold' : 'normal';"
+                                                        style="height: 32px; padding: 0 25px 0 8px; font-size: 10px; background-color: var(--bg); color: inherit;">
+                                                        <option value="efectivo" style="color: var(--text);">EFECTIVO</option>
                                                         <option value="yape" style="color: #7c3aed; font-weight: bold;">EFECTIVO</option>
                                                     </select>
                                                     <button type="submit" class="btn-primary"
