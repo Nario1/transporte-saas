@@ -45,7 +45,7 @@
                 @elseif($tributoHoy?->estado === 'exonerado')
                     <i class="fa-solid fa-shield-halved"></i> Exonerado
                 @elseif($tributoHoy)
-                    <i class="fa-solid fa-hourglass-half"></i> Pendiente
+                    <i class="fa-solid fa-hourglass-half"></i> Deuda
                 @else
                     Sin registro
                 @endif
@@ -92,7 +92,7 @@
                             @elseif($tributoHoy->estado === 'exonerado')
                                 <span class="pill blue"><i class="fa-solid fa-shield"></i> Exonerado</span>
                             @else
-                                <span class="pill red"><i class="fa-solid fa-clock"></i> Pendiente</span>
+                                <span class="pill red"><i class="fa-solid fa-triangle-exclamation"></i> Deuda</span>
                             @endif
                         </div>
                     </div>
@@ -107,17 +107,10 @@
                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; background: var(--red-l); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(220, 38, 38, 0.2);">
                                     <div style="font-size: 12px; color: var(--red);">
                                         <div style="font-weight: 700;">{{ $deuda->fecha->locale('es')->isoFormat('ddd D MMM') }}</div>
-                                        <div style="font-size: 10px; opacity: 0.8;">Tributo Pendiente</div>
+                                        <div style="font-size: 10px; opacity: 0.8;">Deuda</div>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 10px;">
                                         <div style="font-weight: 800; color: var(--red); font-size: 14px;">S/ {{ number_format($deuda->monto, 2) }}</div>
-                                        <form action="{{ route('conductor.tributos.pagar-mp', $deuda) }}" method="POST" style="margin: 0;">
-                                            @csrf
-                                            <button type="submit" class="btn-mp btn-mp-sm btn-mp-danger">
-                                                <i class="fa-solid fa-mobile-screen-button"></i>
-                                                <span>PAGAR CON YAPE</span>
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
                                 @endforeach
@@ -128,25 +121,17 @@
                     <div style="margin-top: 16px;">
                         @if ($tributoHoy->estado === 'pagado')
                             <div class="payment-info" style="background: var(--green-l); border-radius: 10px; padding: 12px; font-size: 13px; color: var(--green); border: 1px solid rgba(22, 163, 74, 0.15);">
-                                <strong>Pago registrado:</strong> {{ $tributoHoy->cobrado_at?->format('d/m/Y h:i A') }} vía {{ ucfirst($tributoHoy->metodo_pago) }}
+                                @php
+                                    $isDigital = in_array(strtolower($tributoHoy->metodo_pago), ['yape', 'plin', 'mercadopago']);
+                                    $efectivoColor = $isDigital ? '#7c3aed' : 'inherit';
+                                    $efectivoWeight = $isDigital ? '700' : 'normal';
+                                @endphp
+                                <strong>Pago registrado:</strong> {{ $tributoHoy->cobrado_at?->format('d/m/Y h:i A') }} vía <span style="color: {{ $efectivoColor }}; font-weight: {{ $efectivoWeight }};">EFECTIVO</span>
                             </div>
                         @else
-                            @if($conductor->vehiculos->count() > 0)
-                                <div class="payment-box" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 14px; border-radius: 12px; margin-top: 0;">
-                                    <div class="payment-label" style="font-size: 13px; font-weight: 600;">Pagar tributo de hoy:</div>
-                                    <form action="{{ route('conductor.tributos.pagar-mp', $tributoHoy) }}" method="POST" style="margin: 0;">
-                                        @csrf
-                                        <button type="submit" class="btn-mp">
-                                            <i class="fa-solid fa-mobile-screen-button"></i>
-                                            <span>PAGAR CON YAPE</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            @else
-                                <div class="alert warning" style="margin-bottom: 0;">
-                                    No tienes un vehículo asignado para realizar el pago.
-                                </div>
-                            @endif
+                            <div class="alert danger" style="margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Estado: <strong>Deuda</strong> (Tributo de hoy pendiente de pago)
+                            </div>
                         @endif
                     </div>
                 </div>

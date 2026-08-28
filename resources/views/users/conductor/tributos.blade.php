@@ -52,14 +52,19 @@
                     @elseif($tributoHoy->estado === 'exonerado')
                         <span class="pill blue"><i class="fa-solid fa-shield"></i> Exonerado</span>
                     @else
-                        <span class="pill red"><i class="fa-solid fa-clock"></i> Pendiente</span>
+                        <span class="pill red"><i class="fa-solid fa-triangle-exclamation"></i> Deuda</span>
                     @endif
                 </div>
                 
                 @if ($tributoHoy->estado === 'pagado')
                     <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f8fafc;">
                         <span class="summary-label" style="font-weight:500; color:var(--text2);">Método de Pago</span>
-                        <span class="summary-val" style="font-weight:600;">{{ ucfirst($tributoHoy->metodo_pago ?? '—') }}</span>
+                        @php
+                            $isDigital = in_array(strtolower($tributoHoy->metodo_pago), ['yape', 'plin', 'mercadopago']);
+                            $efectivoColor = $isDigital ? '#7c3aed' : 'inherit';
+                            $efectivoWeight = $isDigital ? '700' : 'normal';
+                        @endphp
+                        <span class="summary-val" style="font-weight:600; color: {{ $efectivoColor }}; font-weight: {{ $efectivoWeight }};">EFECTIVO</span>
                     </div>
                     <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
                         <span class="summary-label" style="font-weight:500; color:var(--text2);">Fecha y Hora</span>
@@ -69,17 +74,6 @@
                     <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
                         <span class="summary-label" style="font-weight:500; color:var(--text2);">Motivo Exoneración</span>
                         <span class="summary-val" style="font-weight:600;">{{ $tributoHoy->observaciones }}</span>
-                    </div>
-                @else
-                    <div class="payment-box" style="margin-top: 18px;">
-                        <div class="payment-label">Pagar tributo del día:</div>
-                        <form action="{{ route('conductor.tributos.pagar-mp', $tributoHoy) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn-mp">
-                                <i class="fa-solid fa-mobile-screen-button"></i>
-                                <span>PAGAR CON YAPE</span>
-                            </button>
-                        </form>
                     </div>
                 @endif
             @else
@@ -106,8 +100,13 @@
                         </div>
                         <div style="font-size:11.5px; color:#6b7280; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
                             <i class="fa-solid fa-car" style="font-size: 10px;"></i> {{ $tributeInHistory->vehiculo?->placa ?? '—' }}
-                            @if ($tributeInHistory->metodo_pago)
-                                · {{ ucfirst($tributeInHistory->metodo_pago) }}
+                            @if ($tributeInHistory->estado === 'pagado')
+                                · @php
+                                    $isDigital = in_array(strtolower($tributeInHistory->metodo_pago), ['yape', 'plin', 'mercadopago']);
+                                    $efectivoColor = $isDigital ? '#7c3aed' : 'inherit';
+                                    $efectivoWeight = $isDigital ? '700' : 'normal';
+                                @endphp
+                                <span style="color: {{ $efectivoColor }}; font-weight: {{ $efectivoWeight }};">EFECTIVO</span>
                             @endif
                         </div>
                     </div>
@@ -120,19 +119,10 @@
                                 @elseif($tributeInHistory->estado === 'exonerado')
                                     <span class="pill blue" style="font-size:9px; padding:2px 6px;"><i class="fa-solid fa-shield"></i> Exonerado</span>
                                 @else
-                                    <span class="pill red" style="font-size:9px; padding:2px 6px;"><i class="fa-solid fa-clock"></i> Pendiente</span>
+                                    <span class="pill red" style="font-size:9px; padding:2px 6px;"><i class="fa-solid fa-triangle-exclamation"></i> Deuda</span>
                                 @endif
                             </div>
                         </div>
-                        @if($tributeInHistory->estado === 'pendiente')
-                            <form action="{{ route('conductor.tributos.pagar-mp', $tributeInHistory) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn-mp btn-mp-sm">
-                                    <i class="fa-solid fa-mobile-screen-button"></i>
-                                    <span>PAGAR CON YAPE</span>
-                                </button>
-                            </form>
-                        @endif
                     </div>
                 </div>
             @empty
