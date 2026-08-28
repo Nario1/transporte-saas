@@ -132,23 +132,23 @@
                     <span class="summary-label" style="font-weight:500; color: var(--text2);">Licencia</span>
                     <span class="pill blue" style="font-weight:700;">{{ $conductor->tipo_licencia }}</span>
                 </div>
-                @if($conductor->tarjeta_circulacion_tipo)
+                @if($conductor->carnet_habilitacion_tipo)
                     <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Tarjeta Circulación</span>
-                        <span style="font-weight:600; color:#1e293b;">{{ $conductor->tarjeta_circulacion_tipo }}</span>
+                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Carnet Habilitación</span>
+                        <span style="font-weight:600; color:#1e293b;">{{ $conductor->carnet_habilitacion_tipo }}</span>
                     </div>
                 @endif
-                @if($conductor->tarjeta_circulacion_vence)
+                @if($conductor->carnet_habilitacion_vence)
                     <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence T. Circulación</span>
+                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence Carnet Hab.</span>
                         @php
-                            $tcVence = \Carbon\Carbon::parse($conductor->tarjeta_circulacion_vence);
-                            $tcDiff = (int) today()->diffInDays($tcVence, false);
-                            $tcColor = $tcVence->isPast() ? 'var(--red)' : ($tcDiff <= 15 ? 'var(--orange)' : 'var(--green)');
+                            $chVence = \Carbon\Carbon::parse($conductor->carnet_habilitacion_vence);
+                            $chDiff = (int) today()->diffInDays($chVence, false);
+                            $chColor = $chVence->isPast() ? 'var(--red)' : ($chDiff <= 15 ? 'var(--orange)' : 'var(--green)');
                         @endphp
-                        <span style="font-weight:700; color:{{ $tcColor }};">
-                            {{ $tcVence->format('d/m/Y') }}
-                            @if($tcVence->isPast()) (Vencida) @endif
+                        <span style="font-weight:700; color:{{ $chColor }};">
+                            {{ $chVence->format('d/m/Y') }}
+                            @if($chVence->isPast()) (Vencido) @endif
                         </span>
                     </div>
                 @endif

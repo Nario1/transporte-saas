@@ -107,19 +107,19 @@
                             </div>
 
                             <div class="field">
-                                <label for="tarjeta_circulacion_tipo">Tarjeta de Circulación (Tipo/Nro)</label>
-                                <input type="text" id="tarjeta_circulacion_tipo" name="tarjeta_circulacion_tipo"
-                                    value="{{ old('tarjeta_circulacion_tipo') }}" placeholder="Ej: Registro-105">
-                                @error('tarjeta_circulacion_tipo')
+                                <label for="carnet_habilitacion_tipo">Carnet de Habilitación (Tipo/Nro)</label>
+                                <input type="text" id="carnet_habilitacion_tipo" name="carnet_habilitacion_tipo"
+                                    value="{{ old('carnet_habilitacion_tipo') }}" placeholder="Ej: Registro-105">
+                                @error('carnet_habilitacion_tipo')
                                     <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
                                 @enderror
                             </div>
 
                             <div class="field">
-                                <label for="tarjeta_circulacion_vence">Vencimiento Tarjeta de Circulación</label>
-                                <input type="date" id="tarjeta_circulacion_vence" name="tarjeta_circulacion_vence"
-                                    value="{{ old('tarjeta_circulacion_vence') }}">
-                                @error('tarjeta_circulacion_vence')
+                                <label for="carnet_habilitacion_vence">Vencimiento Carnet de Habilitación</label>
+                                <input type="date" id="carnet_habilitacion_vence" name="carnet_habilitacion_vence"
+                                    value="{{ old('carnet_habilitacion_vence') }}">
+                                @error('carnet_habilitacion_vence')
                                     <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
                                 @enderror
                             </div>

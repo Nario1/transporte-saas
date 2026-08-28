@@ -34,8 +34,8 @@ class StorePropietarioRequest extends FormRequest
             'es_conductor'              => 'nullable|boolean',
             'tipo_licencia'             => 'exclude_unless:es_conductor,1|required|string|max:10',
             'licencia_vence'            => 'exclude_unless:es_conductor,1|required|date',
-            'tarjeta_circulacion_tipo'  => 'exclude_unless:es_conductor,1|nullable|string|max:50',
-            'tarjeta_circulacion_vence' => 'exclude_unless:es_conductor,1|nullable|date',
+            'carnet_habilitacion_tipo'  => 'exclude_unless:es_conductor,1|nullable|string|max:50',
+            'carnet_habilitacion_vence' => 'exclude_unless:es_conductor,1|nullable|date',
             'conductor_estado'          => 'exclude_unless:es_conductor,1|required|string|in:activo,suspendido,inactivo',
         ];
     }

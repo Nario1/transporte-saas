@@ -80,8 +80,8 @@ class PropietarioController extends Controller
                         'direccion'                 => $data['direccion'] ?? null,
                         'tipo_licencia'             => $data['tipo_licencia'] ?? null,
                         'licencia_vence'            => $data['licencia_vence'] ?? null,
-                        'tarjeta_circulacion_tipo'  => $data['tarjeta_circulacion_tipo'] ?? null,
-                        'tarjeta_circulacion_vence' => $data['tarjeta_circulacion_vence'] ?? null,
+                        'carnet_habilitacion_tipo'  => $data['carnet_habilitacion_tipo'] ?? null,
+                        'carnet_habilitacion_vence' => $data['carnet_habilitacion_vence'] ?? null,
                         'estado'                    => $data['conductor_estado'] ?? 'activo',
                     ]);
                 }

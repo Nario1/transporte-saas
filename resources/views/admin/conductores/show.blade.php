@@ -124,46 +124,46 @@
                                 </div>
                             </div>
 
-                            {{-- BLOQUE 2: Tarjeta de Circulación --}}
+                            {{-- BLOQUE 2: Carnet de Habilitación --}}
                             <div style="background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px;">
                                 <h4 style="font-size: 14px; font-weight: 800; color: var(--text); margin: 0; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fa-solid fa-address-card" style="color: #d97706;"></i> Tarjeta de Circulación
+                                    <i class="fa-solid fa-address-card" style="color: #d97706;"></i> Carnet de Habilitación
                                 </h4>
                                 <div class="flex-v" style="gap: 15px; margin-top: 5px;">
-                                    @if($conductor->tarjeta_circulacion_tipo)
+                                    @if($conductor->carnet_habilitacion_tipo)
                                         <div class="field">
-                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Tarjeta de Circulación</label>
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Carnet de Habilitación</label>
                                             <div class="pill gold" style="justify-content: center; font-size: 13px; background: var(--accent-l); color: var(--accent); border: 1px solid rgba(234, 179, 8, 0.2); font-weight: 700; padding: 6px 12px; text-align: center;">
-                                                {{ $conductor->tarjeta_circulacion_tipo }}
+                                                {{ $conductor->carnet_habilitacion_tipo }}
                                             </div>
                                         </div>
                                     @else
                                         <div class="field">
-                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Tarjeta de Circulación</label>
-                                            <div style="font-size: 13px; color: var(--text3); font-style: italic;">No registrada</div>
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Carnet de Habilitación</label>
+                                            <div style="font-size: 13px; color: var(--text3); font-style: italic;">No registrado</div>
                                         </div>
                                     @endif
                                     
-                                    @if($conductor->tarjeta_circulacion_vence)
+                                    @if($conductor->carnet_habilitacion_vence)
                                         @php
-                                            $tcVence = \Carbon\Carbon::parse($conductor->tarjeta_circulacion_vence);
-                                            $tcDiff = (int) today()->diffInDays($tcVence, false);
-                                            $tcState = $tcVence->isPast() ? 'date-expired' : ($tcDiff < 30 ? 'date-warning' : 'date-valid');
+                                            $chVence = \Carbon\Carbon::parse($conductor->carnet_habilitacion_vence);
+                                            $chDiff = (int) today()->diffInDays($chVence, false);
+                                            $chState = $chVence->isPast() ? 'date-expired' : ($chDiff < 30 ? 'date-warning' : 'date-valid');
                                         @endphp
                                         
                                         <div class="field">
-                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Vencimiento Tarjeta Circulación</label>
-                                            <div class="{{ $tcState }}" style="font-size: 16px; font-weight: 700;">
-                                                {{ $tcVence->format('d/m/Y') }}
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Vencimiento Carnet de Habilitación</label>
+                                            <div class="{{ $chState }}" style="font-size: 16px; font-weight: 700;">
+                                                {{ $chVence->format('d/m/Y') }}
                                             </div>
                                             <div style="font-size: 11px; color: var(--text3); margin-top: 2px;">
-                                                {!! $tcDiff < 0 ? '<span style="color:var(--red); font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Vencida hace ' . abs($tcDiff) . ' días</span>' : 'Vence en ' . $tcDiff . ' días' !!}
+                                                {!! $chDiff < 0 ? '<span style="color:var(--red); font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Vencido hace ' . abs($chDiff) . ' días</span>' : 'Vence en ' . $chDiff . ' días' !!}
                                             </div>
                                         </div>
                                     @else
                                         <div class="field">
-                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Vencimiento Tarjeta Circulación</label>
-                                            <div style="font-size: 13px; color: var(--text3); font-style: italic;">No registrada</div>
+                                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: 700; display: block; margin-bottom: 4px;">Vencimiento Carnet de Habilitación</label>
+                                            <div style="font-size: 13px; color: var(--text3); font-style: italic;">No registrado</div>
                                         </div>
                                     @endif
                                 </div>
