@@ -163,8 +163,7 @@
                 {{-- GRUPO: CONFIGURACIÓN --}}
                 @if (auth()->user()->can('gestionar usuarios') ||
                         auth()->user()->can('gestionar roles') ||
-                        auth()->user()->can('gestionar ajustes de empresa') ||
-                        auth()->user()->can('gestionar backups'))
+                        auth()->user()->can('gestionar ajustes de empresa'))
                     <div class="nav-group">
                         @can('gestionar usuarios')
                             <a href="{{ route('users.index') }}"
@@ -182,12 +181,6 @@
                             <a href="{{ route('ajustes.index') }}"
                                 class="nav-item nav-item-modern {{ request()->routeIs('ajustes.*') ? 'active' : '' }}">
                                 <span class="ni"><i class="fa-solid fa-sliders"></i></span> Ajustes de Empresa
-                            </a>
-                        @endcan
-                        @can('gestionar backups')
-                            <a href="{{ route('backups.index') }}"
-                                class="nav-item nav-item-modern {{ request()->routeIs('backups.*') ? 'active' : '' }}">
-                                <span class="ni"><i class="fa-solid fa-database"></i></span> Copia de Seguridad
                             </a>
                         @endcan
                     </div>

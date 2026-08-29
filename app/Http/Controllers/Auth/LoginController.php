@@ -114,7 +114,6 @@ class LoginController extends Controller
             'gestionar roles'    => 'roles.index',
             'gestionar alertas'  => 'admin.alertas.index',
             'gestionar ajustes de empresa' => 'ajustes.index',
-            'gestionar backups'  => 'backups.index',
         ];
  
         foreach ($rutasPorPermiso as $permiso => $ruta) {

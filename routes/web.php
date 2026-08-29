@@ -276,12 +276,6 @@ Route::middleware(['auth', 'empresa.activa', 'admin.configurado'])
         Route::put('/ajustes',                 [\App\Http\Controllers\Admin\AjusteController::class, 'update'])->name('ajustes.update');
     });
 
-    Route::middleware('permission:gestionar backups')->group(function () {
-        Route::get('/backups', [App\Http\Controllers\Admin\BackupController::class, 'index'])->name('backups.index');
-        Route::post('/backups', [App\Http\Controllers\Admin\BackupController::class, 'store'])->name('backups.store');
-        Route::get('/backups/{backup}/download', [App\Http\Controllers\Admin\BackupController::class, 'download'])->name('backups.download');
-        Route::delete('/backups/{backup}', [App\Http\Controllers\Admin\BackupController::class, 'destroy'])->name('backups.destroy');
-    });
 });
 
 Route::get('/debug-roles', function() {
