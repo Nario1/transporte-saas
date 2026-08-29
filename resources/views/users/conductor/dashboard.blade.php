@@ -143,8 +143,8 @@
                         </div>
                     @endif
 
-                    <div style="margin-top: 16px;">
-                        @if ($tributoHoy->estado === 'pagado')
+                    @if ($tributoHoy->estado === 'pagado')
+                        <div style="margin-top: 16px;">
                             <div class="payment-info" style="background: var(--green-l); border-radius: 10px; padding: 12px; font-size: 13px; color: var(--green); border: 1px solid rgba(22, 163, 74, 0.15);">
                                 @php
                                     $isDigital = in_array(strtolower($tributoHoy->metodo_pago), ['yape', 'plin', 'mercadopago']);
@@ -153,12 +153,8 @@
                                 @endphp
                                 <strong>Pago registrado:</strong> {{ $tributoHoy->cobrado_at?->format('d/m/Y h:i A') }} vía <span style="color: {{ $efectivoColor }}; font-weight: {{ $efectivoWeight }};">EFECTIVO</span>
                             </div>
-                        @else
-                            <div class="alert danger" style="margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-triangle-exclamation"></i> Estado: <strong>Deuda</strong> (Tributo de hoy pendiente de pago)
-                            </div>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
                 </div>
             @else
                 <div class="empty-state">
