@@ -3,6 +3,14 @@
 @section('back_url', route('reportes.index'))
 
 @section('content')
+<style>
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+</style>
     <div style="display: grid; gap: 20px;">
         {{-- Filtros --}}
         <div class="card no-print">
@@ -105,7 +113,7 @@
                                         <div style="display:flex; flex-direction:column; gap:2px;">
                                              @php
                                                  $isDigital = in_array(strtolower($reg->metodo_pago), ['yape', 'plin', 'mercadopago']);
-                                                 $pillStyle = $isDigital ? 'background-color: #7c3aed; color: #fff;' : '';
+                                                 $pillStyle = $isDigital ? 'background-color: #7c3aed !important; color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;' : '';
                                              @endphp
                                              <span class="pill blue" style="font-size: 9px; align-self:flex-start; {{ $pillStyle }}">
                                                  EFECTIVO

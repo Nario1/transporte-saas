@@ -8,6 +8,14 @@
 @endphp
 
 @section('content')
+<style>
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+</style>
 <div style="display: grid; gap: 20px;">
 
     {{-- 1. FILTROS --}}
@@ -110,7 +118,7 @@
                                     @if ($s->estado === 'pagado')
                                          @php
                                              $isDigital = in_array(strtolower($s->metodo_pago), ['yape', 'plin', 'mercadopago']);
-                                             $pillStyle = $isDigital ? 'background-color: #7c3aed; color: #fff;' : '';
+                                             $pillStyle = $isDigital ? 'background-color: #7c3aed !important; color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;' : '';
                                          @endphp
                                          <span class="pill blue" style="font-size: 8px; padding: 2px 4px; font-weight: 800; {{ $pillStyle }}">
                                              EFECTIVO
