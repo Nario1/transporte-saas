@@ -98,8 +98,6 @@ class AlertaOperativoController extends Controller
      */
     public function adminIndex()
     {
-        $this->middleware('permission:gestionar alertas');
-
         $empresaId = auth()->user()->empresa_id;
 
         // Alertas Activas (estado activo y sin expirar)
@@ -129,8 +127,6 @@ class AlertaOperativoController extends Controller
      */
     public function adminStore(Request $request)
     {
-        $this->middleware('permission:gestionar alertas');
-
         $request->validate([
             'punto' => 'required|in:Punto A,Punto B,Punto C',
         ]);
@@ -167,8 +163,6 @@ class AlertaOperativoController extends Controller
      */
     public function adminFinalizar(AlertaOperativo $alerta)
     {
-        $this->middleware('permission:gestionar alertas');
-
         if ($alerta->empresa_id !== auth()->user()->empresa_id) {
             abort(403, 'Acceso no autorizado.');
         }
