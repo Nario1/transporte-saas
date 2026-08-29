@@ -11,7 +11,8 @@
         box-shadow: var(--shadow-m);
         z-index: 1;
     }
-    .vuelta-row { transition: all 0.3s ease; }
+    .vuelta-row { transition: all 0.3s ease; cursor: pointer; }
+    .vuelta-row:hover { background: #f1f5f9 !important; }
     .vuelta-row.completada { background: #f8fafc; color: #94a3b8; }
     .marker-active { filter: hue-rotate(90deg); } /* Green-ish */
     .marker-finished { filter: grayscale(1); opacity: 0.7; }
@@ -75,25 +76,33 @@
         </div>
     </div>
 
-    <div class="live-stats-bar no-print">
-        <div class="stat-mini-card">
-            <div class="stat-mini-icon" style="background: var(--green-l); color: var(--green);">
-                <i class="fa-solid fa-bus"></i>
+    <div class="live-stats-bar no-print" id="stats-por-ruta">
+        @php
+            $vueltasPorRuta = $vueltasActivas->groupBy(function($v) {
+                return $v->ruta?->nombre ?? 'Sin Ruta';
+            });
+        @endphp
+        @forelse($vueltasPorRuta as $nombreRuta => $grupo)
+            <div class="stat-mini-card">
+                <div class="stat-mini-icon" style="background: var(--green-l); color: var(--green);">
+                    <i class="fa-solid fa-bus"></i>
+                </div>
+                <div>
+                    <div style="font-size: 18px; font-weight: 800;">{{ $grupo->count() }}</div>
+                    <div style="font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase;">{{ $nombreRuta }}</div>
+                </div>
             </div>
-            <div>
-                <div style="font-size: 18px; font-weight: 800;" id="count-activas">{{ $totalConductoresActivos }}</div>
-                <div style="font-size: 11px; color: var(--text3); font-weight: 600;">EN RUTA</div>
+        @empty
+            <div class="stat-mini-card">
+                <div class="stat-mini-icon" style="background: var(--gray-l); color: var(--text3);">
+                    <i class="fa-solid fa-bus"></i>
+                </div>
+                <div>
+                    <div style="font-size: 18px; font-weight: 800;">0</div>
+                    <div style="font-size: 11px; color: var(--text3); font-weight: 600;">SIN UNIDADES EN RUTA</div>
+                </div>
             </div>
-        </div>
-        <div class="stat-mini-card">
-            <div class="stat-mini-icon" style="background: var(--gray-l); color: var(--text3);">
-                <i class="fa-solid fa-flag-checkered"></i>
-            </div>
-            <div>
-                <div style="font-size: 18px; font-weight: 800;" id="count-recientes">0</div>
-                <div style="font-size: 11px; color: var(--text3); font-weight: 600;">FINALIZADAS (30M)</div>
-            </div>
-        </div>
+        @endforelse
     </div>
 
     {{-- MAPA INTERACTIVO --}}
@@ -293,8 +302,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- ELEMENTOS UI ---
     const tbody = document.getElementById('tbody-vueltas');
-    const totalActivasEl = document.getElementById('count-activas');
-    const totalRecientesEl = document.getElementById('count-recientes');
     const ultimaActEl = document.getElementById('ultima-actualizacion');
 
     // --- MAPA ---
@@ -325,7 +332,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await resp.json();
             
             todasLasVueltas = data.vueltas;
-            totalActivasEl.textContent = data.total_activas;
+            
+            // Recalcular estadísticas por ruta
+            recalcularYRenderizarStatsPorRuta(todasLasVueltas);
             
             aplicarFiltroYRenderizar();
             
@@ -333,6 +342,53 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {
             console.error("Error polling data:", e);
         }
+    }
+
+    function recalcularYRenderizarStatsPorRuta(vueltas) {
+        const statsContainer = document.getElementById('stats-por-ruta');
+        if (!statsContainer) return;
+        
+        const conteoPorRuta = {};
+        
+        vueltas.forEach(v => {
+            if (v.estado === 'activa') {
+                const rutaNombre = v.ruta || 'Sin Ruta';
+                conteoPorRuta[rutaNombre] = (conteoPorRuta[rutaNombre] || 0) + 1;
+            }
+        });
+        
+        let htmlStats = '';
+        const rutas = Object.keys(conteoPorRuta);
+        
+        if (rutas.length === 0) {
+            htmlStats = `
+                <div class="stat-mini-card">
+                    <div class="stat-mini-icon" style="background: var(--gray-l); color: var(--text3);">
+                        <i class="fa-solid fa-bus"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 18px; font-weight: 800;">0</div>
+                        <div style="font-size: 11px; color: var(--text3); font-weight: 600;">SIN UNIDADES EN RUTA</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            rutas.forEach(nombreRuta => {
+                htmlStats += `
+                    <div class="stat-mini-card">
+                        <div class="stat-mini-icon" style="background: var(--green-l); color: var(--green);">
+                            <i class="fa-solid fa-bus"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 18px; font-weight: 800;">${conteoPorRuta[nombreRuta]}</div>
+                            <div style="font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase;">${nombreRuta}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        statsContainer.innerHTML = htmlStats;
     }
 
     function aplicarFiltroYRenderizar() {
@@ -366,7 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                 </tr>
             `;
-            totalRecientesEl.textContent = 0;
             return;
         }
 
@@ -445,7 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         tbody.innerHTML = html;
-        totalRecientesEl.textContent = countRecientes;
     }
 
     function renderMapaVueltas(vueltas) {

@@ -97,7 +97,7 @@
                             <th>Salida</th>
                             <th>Llegada</th>
                             <th>Duracion</th>
-                            <th class="col-status">Estado</th>
+                            <th class="col-status" style="width: 150px;">Estado</th>
                             <th>G Salida</th>
                             <th>G Llegada</th>
                             <th class="col-actions">Acciones</th>
