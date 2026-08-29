@@ -244,18 +244,27 @@ class AlertaOperativoController extends Controller
         }
         $empresaId = $user->empresa_id;
 
-        $alertas = AlertaOperativo::where('empresa_id', $empresaId)
+        $alertas = AlertaOperativo::with(['conductor.vehiculos'])
+            ->where('empresa_id', $empresaId)
             ->where('estado', 'activo')
             ->where('expires_at', '>', now())
             ->get()
             ->map(function ($al) use ($user) {
                 $timeStr = $al->created_at->format('h:i A');
                 $isCreator = $user->conductor && $al->conductor_id === $user->conductor->id;
+                
+                $creatorStr = 'Administración';
+                if ($al->conductor) {
+                    $veh = $al->conductor->vehiculos->first();
+                    $creatorStr = $veh ? "la flota {$veh->numero_flota}" : 'la flota S/N';
+                }
+
                 return [
-                    'id'         => $al->id,
-                    'punto'      => $al->punto,
-                    'creado_at'  => $timeStr,
-                    'es_creador' => $isCreator
+                    'id'            => $al->id,
+                    'punto'         => $al->punto,
+                    'creado_at'     => $timeStr,
+                    'es_creador'    => $isCreator,
+                    'reportado_por' => $creatorStr
                 ];
             });
 

@@ -858,7 +858,7 @@
                 $layoutAlertas = \App\Models\AlertaOperativo::where('empresa_id', auth()->user()->empresa_id)
                     ->where('estado', 'activo')
                     ->where('expires_at', '>', now())
-                    ->with(['conductor', 'user'])
+                    ->with(['conductor.vehiculos', 'user'])
                     ->get();
             @endphp
             <div id="global-operativos-container" style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box; margin-bottom: 14px;">
@@ -870,10 +870,19 @@
                                     <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #facc15;"></i>
                                 </div>
                                 <div style="text-align: left;">
-                                    <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">Operativo</div>
+                                    <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">⚠️ Control / Operativo</div>
                                     <div style="font-size: 12px; font-weight: 700; opacity: 0.95; margin-top: 2px; color: #fef08a;">
                                         Ubicación: <strong style="font-size: 14px; text-decoration: underline;">{{ $opAlerta->punto }}</strong>
-                                        <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 1px;">Reportado a las {{ $opAlerta->created_at->format('h:i A') }}</span>
+                                        <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 2px;">
+                                            @php
+                                                $creatorStr = 'Administración';
+                                                if ($opAlerta->conductor) {
+                                                    $veh = $opAlerta->conductor->vehiculos->first();
+                                                    $creatorStr = $veh ? "la flota {$veh->numero_flota}" : 'la flota S/N';
+                                                }
+                                            @endphp
+                                            Reportado a las {{ $opAlerta->created_at->format('h:i A') }} por {{ $creatorStr }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -997,10 +1006,10 @@
                                                 <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #facc15;"></i>
                                             </div>
                                             <div style="text-align: left;">
-                                                <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">Operativo</div>
+                                                <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">⚠️ Control / Operativo</div>
                                                 <div style="font-size: 12px; font-weight: 700; opacity: 0.95; margin-top: 2px; color: #fef08a;">
                                                     Ubicación: <strong style="font-size: 14px; text-decoration: underline;">${alerta.punto}</strong>
-                                                    <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 1px;">Reportado a las ${alerta.creado_at}</span>
+                                                    <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 2px;">Reportado a las ${alerta.creado_at} por ${alerta.reportado_por}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1016,7 +1025,7 @@
                                 sessionStorage.setItem('notified_alertas', JSON.stringify(notifiedAlertIds));
                                 Swal.fire({
                                     title: '🚨 ¡OPERATIVO DETECTADO!',
-                                    html: `Se reportó un operativo en el punto <strong>${alerta.punto}</strong>.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
+                                    html: `Se reportó un operativo en el punto <strong>${alerta.punto}</strong> a las ${alerta.creado_at} por ${alerta.reportado_por}.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
                                     icon: 'warning',
                                     confirmButtonText: 'Entendido',
                                     confirmButtonColor: '#dc2626',
