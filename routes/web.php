@@ -95,6 +95,7 @@ Route::middleware(['auth', 'empresa.activa', 'role:conductor', 'forzar.password'
         // Alertas de Operativos
         Route::post('/operativos/reportar', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'store'])->name('operativos.reportar');
         Route::post('/operativos/{alerta}/finalizar', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'finalizar'])->name('operativos.finalizar');
+        Route::get('/operativos/activos', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'getActivosApi'])->name('operativos.activos.api');
     });
 
 // ── Panel Super Admin ─────────────────────────────────────────────

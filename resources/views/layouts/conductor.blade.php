@@ -951,28 +951,47 @@
             const layoutEmpresaId = '{{ auth()->user()->empresa_id }}';
             const currentConductorId = '{{ auth()->user()->conductor?->id ?? "" }}';
             
-            window.addEventListener('DOMContentLoaded', () => {
-                if (window.Echo) {
-                    window.Echo.private(`empresa.${layoutEmpresaId}.operativos`)
-                        .listen('.operativo.creado', (e) => {
-                            // Validar que no exista ya en el DOM
-                            if (document.getElementById(`operativo-card-${e.alerta.id}`)) {
-                                return;
-                            }
+            let notifiedAlertIds = JSON.parse(sessionStorage.getItem('notified_alertas') || '[]');
 
-                            const container = document.getElementById('global-operativos-container');
-                            if (container) {
-                                const showButton = currentConductorId && e.alerta.conductor_id == currentConductorId;
-                                const buttonHtml = showButton ? `
-                                    <button onclick="finalizarOperativo(${e.alerta.id})" style="background: #22c55e; color: white; border: none; padding: 8px 14px; font-size: 11px; font-weight: 900; border-radius: 8px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(34,197,94,0.4); z-index: 2; flex-shrink: 0; transition: transform 0.15s ease;">
+            function checkOperativosPolling() {
+                fetch('{{ route("conductor.operativos.activos.api") }}')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.alertas) return;
+                        
+                        const container = document.getElementById('global-operativos-container');
+                        if (!container) return;
+
+                        const serverIds = data.alertas.map(a => a.id);
+                        
+                        // 1. Remover alertas expiradas o apagadas
+                        const existingCards = container.querySelectorAll('[id^="operativo-card-"]');
+                        existingCards.forEach(card => {
+                            const id = parseInt(card.id.replace('operativo-card-', ''));
+                            if (!serverIds.includes(id)) {
+                                card.remove();
+                                Swal.fire({
+                                    title: '🛡️ Punto Liberado',
+                                    text: 'El operativo en esa zona ha finalizado.',
+                                    icon: 'success',
+                                    timer: 2500,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
+
+                        // 2. Insertar alertas nuevas y lanzar aviso
+                        data.alertas.forEach(alerta => {
+                            let card = document.getElementById(`operativo-card-${alerta.id}`);
+                            if (!card) {
+                                const buttonHtml = alerta.es_creador ? `
+                                    <button onclick="finalizarOperativo(${alerta.id})" style="background: #22c55e; color: white; border: none; padding: 8px 14px; font-size: 11px; font-weight: 900; border-radius: 8px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(34,197,94,0.4); z-index: 2; flex-shrink: 0; transition: transform 0.15s ease;">
                                         <i class="fa-solid fa-circle-check"></i> Retirado
                                     </button>
                                 ` : '';
 
-                                const timeStr = new Date(e.alerta.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
-
                                 const cardHtml = `
-                                    <div id="operativo-card-${e.alerta.id}" class="alert-pulse-red" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 20px 16px; border-radius: 14px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); border: 2px solid #ef4444; position: relative; overflow: hidden; width: 100%; box-sizing: border-box; gap: 14px;">
+                                    <div id="operativo-card-${alerta.id}" class="alert-pulse-red" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 20px 16px; border-radius: 14px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); border: 2px solid #ef4444; position: relative; overflow: hidden; width: 100%; box-sizing: border-box; gap: 14px;">
                                         <div style="display: flex; align-items: center; gap: 12px; z-index: 2;">
                                             <div style="width: 38px; height: 38px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-icon 1.2s infinite; flex-shrink: 0;">
                                                 <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #facc15;"></i>
@@ -980,8 +999,8 @@
                                             <div style="text-align: left;">
                                                 <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">⚠️ Control / Operativo</div>
                                                 <div style="font-size: 12px; font-weight: 700; opacity: 0.95; margin-top: 2px; color: #fef08a;">
-                                                    Ubicación: <strong style="font-size: 14px; text-decoration: underline;">${e.alerta.punto}</strong>
-                                                    <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 1px;">Reportado a las ${timeStr}</span>
+                                                    Ubicación: <strong style="font-size: 14px; text-decoration: underline;">${alerta.punto}</strong>
+                                                    <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 1px;">Reportado a las ${alerta.creado_at}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -991,28 +1010,40 @@
                                 container.insertAdjacentHTML('beforeend', cardHtml);
                             }
 
-                            Swal.fire({
-                                title: '🚨 ¡OPERATIVO DETECTADO!',
-                                html: `Se reportó control municipal en el <strong>${e.alerta.punto}</strong>.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
-                                icon: 'warning',
-                                confirmButtonText: 'Entendido',
-                                confirmButtonColor: '#dc2626',
-                                allowOutsideClick: true
-                            });
+                            // Notificar con SweetAlert una sola vez por ID de alerta
+                            if (!notifiedAlertIds.includes(alerta.id)) {
+                                notifiedAlertIds.push(alerta.id);
+                                sessionStorage.setItem('notified_alertas', JSON.stringify(notifiedAlertIds));
+                                Swal.fire({
+                                    title: '🚨 ¡OPERATIVO DETECTADO!',
+                                    html: `Se reportó control municipal en el <strong>${alerta.punto}</strong>.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
+                                    icon: 'warning',
+                                    confirmButtonText: 'Entendido',
+                                    confirmButtonColor: '#dc2626',
+                                    allowOutsideClick: true
+                                });
+                            }
+                        });
+                    })
+                    .catch(e => console.error("Error al consultar alertas activas:", e));
+            }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                // Polling inicial
+                checkOperativosPolling();
+
+                // Polling recurrente cada 8 segundos como fallback/fail-safe
+                setInterval(checkOperativosPolling, 8000);
+
+                if (window.Echo) {
+                    window.Echo.private(`empresa.${layoutEmpresaId}.operativos`)
+                        .listen('.operativo.creado', (e) => {
+                            // Sincronizar inmediatamente al recibir el WebSocket
+                            checkOperativosPolling();
                         })
                         .listen('.operativo.finalizado', (e) => {
-                            const card = document.getElementById(`operativo-card-${e.alerta.id}`);
-                            if (card) {
-                                card.remove();
-                            }
-
-                            Swal.fire({
-                                title: '🛡️ Punto Liberado',
-                                text: `El operativo en el ${e.alerta.punto} ha finalizado.`,
-                                icon: 'success',
-                                timer: 3000,
-                                showConfirmButton: false
-                            });
+                            // Sincronizar inmediatamente al recibir el WebSocket
+                            checkOperativosPolling();
                         });
                 }
             });

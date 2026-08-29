@@ -232,4 +232,35 @@ class AlertaOperativoController extends Controller
 
         return back()->with('success', 'Punto de control eliminado correctamente.');
     }
+
+    /**
+     * Obtener listado de alertas activas en formato JSON (API para conductores).
+     */
+    public function getActivosApi()
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['error' => 'No autorizado'], 401);
+        }
+        $empresaId = $user->empresa_id;
+
+        $alertas = AlertaOperativo::where('empresa_id', $empresaId)
+            ->where('estado', 'activo')
+            ->where('expires_at', '>', now())
+            ->get()
+            ->map(function ($al) use ($user) {
+                $timeStr = $al->created_at->format('h:i A');
+                $isCreator = $user->conductor && $al->conductor_id === $user->conductor->id;
+                return [
+                    'id'         => $al->id,
+                    'punto'      => $al->punto,
+                    'creado_at'  => $timeStr,
+                    'es_creador' => $isCreator
+                ];
+            });
+
+        return response()->json([
+            'alertas' => $alertas
+        ]);
+    }
 }

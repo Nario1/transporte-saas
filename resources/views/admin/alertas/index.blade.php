@@ -135,8 +135,14 @@
                                         <td>{{ $alerta->created_at->format('h:i A') }}</td>
                                         <td style="font-family: monospace; font-weight: 800;">
                                             @php
-                                                $diff = now()->diffInMinutes($alerta->expires_at, false);
-                                                echo $diff > 0 ? "{$diff} min" : 'Expirando...';
+                                                $diffSeconds = now()->diffInSeconds($alerta->expires_at, false);
+                                                if ($diffSeconds > 0) {
+                                                    $mins = floor($diffSeconds / 60);
+                                                    $secs = $diffSeconds % 60;
+                                                    echo sprintf("%02dm %02ds", $mins, $secs);
+                                                } else {
+                                                    echo 'Expirando...';
+                                                }
                                             @endphp
                                         </td>
                                         <td class="col-actions">
