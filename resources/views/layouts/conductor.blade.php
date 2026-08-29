@@ -997,7 +997,7 @@
                                                 <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #facc15;"></i>
                                             </div>
                                             <div style="text-align: left;">
-                                                <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">⚠️ Control / Operativo</div>
+                                                <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">Operativo</div>
                                                 <div style="font-size: 12px; font-weight: 700; opacity: 0.95; margin-top: 2px; color: #fef08a;">
                                                     Ubicación: <strong style="font-size: 14px; text-decoration: underline;">${alerta.punto}</strong>
                                                     <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 1px;">Reportado a las ${alerta.creado_at}</span>

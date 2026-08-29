@@ -287,7 +287,7 @@
     function reportarOperativo(punto) {
         Swal.fire({
             title: '¿Confirmar Alerta?',
-            text: `¿Viste un operativo activo en el ${punto}? Esto notificará a todos tus compañeros.`,
+            text: `¿Viste un operativo activo en el punto ${punto}? Esto notificará a todos tus compañeros.`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Sí, reportar',
