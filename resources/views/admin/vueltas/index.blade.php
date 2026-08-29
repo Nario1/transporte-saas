@@ -107,17 +107,17 @@
                         @forelse($vueltas as $vuelta)
                             <tr>
                                 <td>
-                                    <span class="text-main">Unidad #{{ $vuelta->vehiculo?->numero_flota }}</span>
+                                    <span class="text-main" style="font-size: 16px; font-weight: 800; color: #0f172a;">#{{ $vuelta->vehiculo?->numero_flota }}</span>
                                     <span class="text-sub">{{ $vuelta->conductor?->nombre_completo }} • {{ $vuelta->vehiculo?->placa }}</span>
                                 </td>
                                 <td>
                                     <span class="text-main">{{ $vuelta->ruta?->nombre ?? 'Sin Ruta' }}</span>
                                     <span class="text-sub">{{ $vuelta->ruta?->origen }} » {{ $vuelta->ruta?->destino }}</span>
                                 </td>
-                                <td class="mono" style="font-weight: 700; font-size: 14px;">
+                                <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
                                     {{ $vuelta->hora_salida ? \Carbon\Carbon::parse($vuelta->hora_salida)->format('h:i A') : '--:--' }}
                                 </td>
-                                <td class="mono" style="font-weight: 700; font-size: 14px;">
+                                <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
                                     {{ $vuelta->hora_llegada ? \Carbon\Carbon::parse($vuelta->hora_llegada)->format('h:i A') : '--:--' }}
                                 </td>
                                 <td>
@@ -128,16 +128,17 @@
                                             $estimado = $vuelta->ruta?->duracion_min ?? 0;
                                             $excede = $estimado > 0 && $minutosTotal > $estimado;
 
-                                            if ($sec < 60) $dur = "$sec segundos";
-                                            elseif ($sec < 3600) $dur = floor($sec/60) . " minutos";
-                                            else $dur = floor($sec/3600) . "h " . (floor($sec/60)%60) . "min";
+                                            $hh = floor($sec / 3600);
+                                            $mm = floor(($sec % 3600) / 60);
+                                            $ss = $sec % 60;
+                                            $dur = ($hh > 0 ? "{$hh}h " : "0h ") . "{$mm}m {$ss}s";
                                         @endphp
                                         @if($excede)
-                                            <span class="pill red" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;" title="Estimado de Ruta: {{ $estimado }} min">
+                                            <span class="pill red" style="font-weight: 800; font-family: monospace; font-size: 14px; padding: 8px 14px;" title="Estimado de Ruta: {{ $estimado }} min">
                                                 <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> {{ $dur }} (Excedido)
                                             </span>
                                         @else
-                                            <span class="pill gray" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
+                                            <span class="pill gray" style="font-weight: 800; font-family: monospace; font-size: 14px; padding: 8px 14px;">
                                                 <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> {{ $dur }}
                                             </span>
                                         @endif
@@ -145,13 +146,13 @@
                                         <span class="duracion-vivo pill green" 
                                               data-salida-timestamp="{{ \Carbon\Carbon::parse($vuelta->fecha->format('Y-m-d') . ' ' . $vuelta->hora_salida)->timestamp * 1000 }}"
                                               data-estimado-minutos="{{ $vuelta->ruta?->duracion_min ?? 0 }}"
-                                              style="font-family: monospace; font-weight: 800; font-size: 13px; padding: 6px 12px;">
+                                              style="font-family: monospace; font-weight: 800; font-size: 14px; padding: 8px 14px;">
                                             <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> En Ruta...
                                         </span>
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="pill {{ $vuelta->estado === 'activa' ? 'green' : 'blue' }}" style="font-size: 10px; font-weight: 800;">
+                                    <span class="pill {{ $vuelta->estado === 'activa' ? 'green' : 'blue' }}" style="font-size: 12px; font-weight: 800; padding: 6px 12px; display: inline-block;">
                                         {{ strtoupper($vuelta->estado) }}
                                     </span>
                                 </td>
@@ -230,17 +231,12 @@
                     const salidaMs = parseInt(el.getAttribute('data-salida-timestamp'));
                     let diff = Math.max(0, Math.floor((ahora - salidaMs) / 1000));
                     
-                    const hh = String(Math.floor(diff / 3600)).padStart(2, '0');
+                    const hh = Math.floor(diff / 3600);
                     let residuo = diff % 3600;
-                    const mm = String(Math.floor(residuo / 60)).padStart(2, '0');
-                    const ss = String(residuo % 60).padStart(2, '0');
+                    const mm = Math.floor(residuo / 60);
+                    const ss = residuo % 60;
                     
-                    let durStr = "";
-                    if (hh > 0) {
-                        durStr = `${hh}:${mm}:${ss}`;
-                    } else {
-                        durStr = `${mm}:${ss}`;
-                    }
+                    let durStr = `${hh}h ${mm}m ${ss}s`;
 
                     const diffMin = Math.floor(diff / 60);
                     const estimado = parseInt(el.getAttribute('data-estimado-minutos')) || 0;

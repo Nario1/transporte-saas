@@ -114,9 +114,10 @@ class VueltasEnVivoController extends Controller
                 'minutos_total' => (int) floor($sec / 60),
                 'tiempo_total_msg' => (function() use ($sec) {
                     if ($sec <= 0) return '—';
-                    if ($sec < 60) return "$sec segundos";
-                    if ($sec < 3600) return floor($sec/60) . " minutos";
-                    return floor($sec/3600) . "h " . (floor($sec/60)%60) . "min";
+                    $hh = floor($sec / 3600);
+                    $mm = floor(($sec % 3600) / 60);
+                    $ss = $sec % 60;
+                    return ($hh > 0 ? "{$hh}h " : "0h ") . "{$mm}m {$ss}s";
                 })(),
             ];
         }));

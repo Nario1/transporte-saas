@@ -136,21 +136,21 @@
 
                             <td style="padding-left: 24px;">
                                 <div style="font-weight: 700;">{{ $v->conductor?->nombre_completo ?? '—' }}</div>
-                                <div style="font-size:11px;color:var(--text3); font-family: monospace;">
+                                <div style="font-size:12px;color:var(--text3); font-family: monospace;">
                                     {{ $v->conductor?->dni }}
                                 </div>
                             </td>
 
                             <td>
-                                <div style="font-weight: 800;">#{{ $v->vehiculo?->numero_flota ?? '?' }}</div>
-                                <div style="font-size: 11px; color: var(--text3); font-family: monospace;">{{ $v->vehiculo?->placa ?? '—' }}</div>
+                                <div style="font-weight: 800; font-size: 16px; color: #0f172a;">#{{ $v->vehiculo?->numero_flota ?? '?' }}</div>
+                                <div style="font-size: 12px; color: var(--text3); font-family: monospace;">{{ $v->vehiculo?->placa ?? '—' }}</div>
                             </td>
 
                             <td>
                                 <div style="font-weight: 600; font-size: 14px;">{{ $v->ruta?->nombre ?? 'Sin ruta' }}</div>
                             </td>
 
-                            <td class="mono" style="font-weight: 600; font-size: 14px;">
+                            <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
                                 {{ $v->hora_salida }}
                             </td>
 
@@ -165,14 +165,15 @@
                                     $estimado = $v->ruta?->duracion_min ?? 0;
                                     $excede = $estimado > 0 && $minutosTrans > $estimado;
 
-                                    if ($secArr < 60) $durArr = "$secArr segundos";
-                                    elseif ($secArr < 3600) $durArr = floor($secArr/60) . " minutos";
-                                    else $durArr = floor($secArr/3600) . "h " . (floor($secArr/60)%60) . "min";
+                                    $hh = floor($secArr / 3600);
+                                    $mm = floor(($secArr % 3600) / 60);
+                                    $ss = $secArr % 60;
+                                    $durArr = ($hh > 0 ? "{$hh}h " : "0h ") . "{$mm}m {$ss}s";
                                 @endphp
                                 <span class="pill {{ $excede ? 'red' : 'green' }} tiempo-cronometro" 
                                       data-inicio="{{ $v->fecha->format('Y-m-d').' '.$v->hora_salida }}" 
                                       data-estimado-minutos="{{ $estimado }}"
-                                      style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
+                                      style="font-weight: 800; font-family: monospace; font-size: 14px; padding: 8px 14px;">
                                     @if ($excede)
                                         <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> {{ $durArr }} (Excedido)
                                     @else
@@ -182,11 +183,11 @@
                             </td>
 
                             <td>
-                                <span class="pill green" style="font-size: 10px; font-weight: 800;">ACTIVA</span>
+                                <span class="pill green" style="font-size: 12px; font-weight: 800; padding: 6px 12px;">ACTIVA</span>
                             </td>
 
                             <td>
-                                <span class="pill blue" style="font-weight: 800; padding: 4px 10px;">
+                                <span class="pill blue" style="font-weight: 800; padding: 6px 12px; font-size: 12px;">
                                     V{{ $v->numero_vuelta }}
                                 </span>
                             </td>
@@ -383,19 +384,19 @@ document.addEventListener('DOMContentLoaded', function() {
             let htmlDuracion = '';
             if (isActive) {
                 htmlDuracion = `
-                    <span class="pill green tiempo-cronometro" data-inicio-ts="${v.inicio_ts}" data-estimado-minutos="${estimado}" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
+                    <span class="pill green tiempo-cronometro" data-inicio-ts="${v.inicio_ts}" data-estimado-minutos="${estimado}" style="font-weight: 800; font-family: monospace; font-size: 14px; padding: 8px 14px;">
                         <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> 0s
                     </span>
                 `;
             } else if (excedeCompletada) {
                 htmlDuracion = `
-                    <span class="pill red" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;" title="Estimado de Ruta: ${estimado} min">
+                    <span class="pill red" style="font-weight: 800; font-family: monospace; font-size: 14px; padding: 8px 14px;" title="Estimado de Ruta: ${estimado} min">
                         <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> ${v.tiempo_total_msg} (Excedido)
                     </span>
                 `;
             } else {
                 htmlDuracion = `
-                    <span class="pill gray" style="font-weight: 800; font-family: monospace; font-size: 13px; padding: 6px 12px;">
+                    <span class="pill gray" style="font-weight: 800; font-family: monospace; font-size: 14px; padding: 8px 14px;">
                         <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${v.tiempo_total_msg || '—'}
                     </span>
                 `;
@@ -405,24 +406,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 <tr id="vuelta-${v.id}" class="vuelta-row ${v.estado}">
                     <td style="padding-left: 24px;">
                         <div style="font-weight: 700;">${v.conductor}</div>
-                        <div style="font-size:10px; color:var(--text3);">${v.estado.toUpperCase()}</div>
+                        <div style="font-size:12px; color:var(--text3); font-family: monospace;">${v.estado.toUpperCase()}</div>
                     </td>
                     <td>
-                        <div style="font-weight: 800;">#${v.flota}</div>
-                        <div style="font-size: 11px; color: var(--text3); font-family: monospace;">${v.vehiculo}</div>
+                        <div style="font-weight: 800; font-size: 16px; color: #0f172a;">#${v.flota}</div>
+                        <div style="font-size: 12px; color: var(--text3); font-family: monospace;">${v.vehiculo}</div>
                     </td>
-                    <td><div style="font-weight: 600; font-size: 13px;">${v.ruta}</div></td>
-                    <td class="mono">${v.hora_salida}</td>
-                    <td class="mono">${v.hora_llegada}</td>
+                    <td><div style="font-weight: 600; font-size: 14px;">${v.ruta}</div></td>
+                    <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">${v.hora_salida}</td>
+                    <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">${v.hora_llegada || '—'}</td>
                     <td class="mono">
                         ${htmlDuracion}
                     </td>
                     <td>
-                        <span class="pill ${isActive ? 'green' : 'gray'}" style="font-size: 10px; font-weight: 800;">
+                        <span class="pill ${isActive ? 'green' : 'gray'}" style="font-size: 12px; font-weight: 800; padding: 6px 12px; display: inline-block;">
                             ${v.estado.toUpperCase()}
                         </span>
                     </td>
-                    <td><span class="pill blue">V${v.numero_vuelta}</span></td>
+                    <td><span class="pill blue" style="font-size: 12px; font-weight: 800; padding: 6px 12px;">V${v.numero_vuelta}</span></td>
                     <td>
                         ${(v.lat_salida && v.lng_salida) ? `
                             <a href="https://maps.google.com/?q=${v.lat_salida},${v.lng_salida}" target="_blank" class="btn-secondary" style="font-size:10px; padding: 5px 10px; text-decoration: none;">🛫 Salida</a>
@@ -486,12 +487,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- CRONOMETRO EN VIVO ---
     function formatTimeSpanish(sec) {
-        if (sec < 60) return `${sec} segundos`;
-        const min = Math.floor(sec / 60);
-        if (min < 60) return `${min} minutos`;
-        const h = Math.floor(min / 60);
-        const m = min % 60;
-        return `${h}h ${m}min`;
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        return `${h}h ${m}m ${s}s`;
     }
 
     function actualizarCronometros() {
