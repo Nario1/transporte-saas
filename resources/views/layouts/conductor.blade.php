@@ -1016,7 +1016,7 @@
                                 sessionStorage.setItem('notified_alertas', JSON.stringify(notifiedAlertIds));
                                 Swal.fire({
                                     title: '🚨 ¡OPERATIVO DETECTADO!',
-                                    html: `Se reportó control municipal en el <strong>${alerta.punto}</strong>.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
+                                    html: `Se reportó un operativo en el punto <strong>${alerta.punto}</strong>.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
                                     icon: 'warning',
                                     confirmButtonText: 'Entendido',
                                     confirmButtonColor: '#dc2626',
