@@ -804,6 +804,19 @@
                 transform: none;
             }
         }
+        @keyframes pulse-icon {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(254, 240, 21, 0.4); }
+            70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(254, 240, 21, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(254, 240, 21, 0); }
+        }
+        .alert-pulse-red {
+            animation: pulse-bg 2s infinite;
+        }
+        @keyframes pulse-bg {
+            0% { border-color: #ef4444; }
+            50% { border-color: #facc15; }
+            100% { border-color: #ef4444; }
+        }
     </style>
     @yield('extra_css')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -840,6 +853,41 @@
 
     {{-- CONTENT --}}
     <main class="c-content">
+        @if (auth()->check() && auth()->user()->empresa_id)
+            @php
+                $layoutAlertas = \App\Models\AlertaOperativo::where('empresa_id', auth()->user()->empresa_id)
+                    ->where('estado', 'activo')
+                    ->where('expires_at', '>', now())
+                    ->with(['conductor', 'user'])
+                    ->get();
+            @endphp
+            @if ($layoutAlertas->count() > 0)
+                <div id="global-operativos-container" style="padding: 16px 16px 0 16px; display: flex; flex-direction: column; gap: 10px;">
+                    @foreach ($layoutAlertas as $opAlerta)
+                        <div class="alert-pulse-red" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 14px 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); border: 2px solid #ef4444; position: relative; overflow: hidden;">
+                            <div style="display: flex; align-items: center; gap: 12px; z-index: 2;">
+                                <div style="width: 38px; height: 38px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-icon 1.2s infinite; flex-shrink: 0;">
+                                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #facc15;"></i>
+                                </div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">⚠️ Control / Operativo</div>
+                                    <div style="font-size: 12px; font-weight: 700; opacity: 0.95; margin-top: 2px; color: #fef08a;">
+                                        Ubicación: <strong style="font-size: 14px; text-decoration: underline;">{{ $opAlerta->punto }}</strong>
+                                        <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 1px;">Reportado a las {{ $opAlerta->created_at->format('h:i A') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            @if (auth()->user()->conductor && $opAlerta->conductor_id === auth()->user()->conductor->id)
+                                <button onclick="finalizarOperativo({{ $opAlerta->id }})" style="background: #22c55e; color: white; border: none; padding: 8px 14px; font-size: 11px; font-weight: 900; border-radius: 8px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(34,197,94,0.4); z-index: 2; flex-shrink: 0; transition: transform 0.15s ease;">
+                                    <i class="fa-solid fa-circle-check"></i> Retirado
+                                </button>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        @endif
+
         @yield('content')
     </main>
 
@@ -896,6 +944,85 @@
             <span>Mi Flota</span>
         </a>
     </nav>
+
+    @if(auth()->check() && auth()->user()->empresa_id)
+        @vite(['resources/js/app.js'])
+        <script>
+            const layoutEmpresaId = '{{ auth()->user()->empresa_id }}';
+            
+            window.addEventListener('DOMContentLoaded', () => {
+                if (window.Echo) {
+                    window.Echo.private(`empresa.${layoutEmpresaId}.operativos`)
+                        .listen('.operativo.creado', (e) => {
+                            Swal.fire({
+                                title: '🚨 ¡OPERATIVO DETECTADO!',
+                                html: `Se reportó control municipal en el <strong>${e.alerta.punto}</strong>.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
+                                icon: 'warning',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#dc2626',
+                                allowOutsideClick: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        })
+                        .listen('.operativo.finalizado', (e) => {
+                            Swal.fire({
+                                title: '🛡️ Punto Liberado',
+                                text: `El operativo en el ${e.alerta.punto} ha finalizado.`,
+                                icon: 'success',
+                                timer: 3000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        });
+                }
+            });
+
+            function finalizarOperativo(alertaId) {
+                Swal.fire({
+                    title: '¿Operativo Retirado?',
+                    text: '¿Confirmas que los inspectores ya se retiraron de este punto?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, ya se retiraron',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#22c55e'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.showLoading();
+                        fetch(`/conductor/operativos/${alertaId}/finalizar`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Alerta Cancelada',
+                                    text: 'Se notificó a tus compañeros que el punto está libre.',
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Error', data.error || 'No se pudo cancelar la alerta.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('Error', 'No se pudo finalizar la alerta.', 'error');
+                        });
+                    }
+                });
+            }
+        </script>
+    @endif
 
     @stack('scripts')
     <script>

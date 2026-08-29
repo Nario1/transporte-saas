@@ -81,6 +81,11 @@ class AlertaOperativoController extends Controller
             return response()->json(['error' => 'Acceso no autorizado.'], 403);
         }
 
+        // Que solo pueda apagar la alerta el que la emitió
+        if ($alerta->conductor_id !== $conductor->id) {
+            return response()->json(['error' => 'Solo el conductor que reportó este operativo puede desactivar la alerta.'], 403);
+        }
+
         if ($alerta->estado === 'activo') {
             $alerta->update(['estado' => 'finalizado']);
             broadcast(new AlertaOperativoFinalizada($alerta))->toOthers();
