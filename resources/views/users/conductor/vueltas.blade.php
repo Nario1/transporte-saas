@@ -67,40 +67,66 @@
         </div>
         <div class="card-body" style="padding:12px 14px;">
             @forelse($vueltas as $vuelta)
-                <div class="vuelta-card">
-                    <div class="vuelta-num">{{ $vuelta->numero_vuelta }}</div>
-                    <div class="vuelta-info">
-                        <div class="vuelta-name">{{ $vuelta->ruta?->nombre ?? 'Sin ruta' }}</div>
-                        <div class="vuelta-sub">
+                <div class="vuelta-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 12px; align-items: stretch;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="vuelta-num" style="width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #fff; flex-shrink: 0;">
+                                {{ $vuelta->numero_vuelta }}
+                            </div>
+                            <div style="font-weight: 700; font-size: 15px; color: #1e293b;">
+                                {{ $vuelta->ruta?->nombre ?? 'Sin ruta' }}
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 4px 8px; border-radius: 6px;">
                             {{ $vuelta->vehiculo?->placa_form ?? '—' }}
-                            @if ($vuelta->ruta)
-                                · {{ $vuelta->ruta->origen }} → {{ $vuelta->ruta->destino }}
-                            @endif
-                        </div>
-                        @if($vuelta->hora_llegada)
-                            @php
-                                $sec = \Carbon\Carbon::parse($vuelta->hora_salida)->diffInSeconds(\Carbon\Carbon::parse($vuelta->hora_llegada));
-                                if ($sec < 60) $dur = "$sec segundos";
-                                elseif ($sec < 3600) $dur = floor($sec/60) . " minutos";
-                                else $dur = floor($sec/3600) . "h " . (floor($sec/60)%60) . "min";
-                            @endphp
-                            <div style="font-size: 11.5px; color: var(--accent); font-weight: 700; margin-top: 4px;">
-                                <i class="fa-solid fa-clock"></i> Duración: {{ $dur }}
-                            </div>
-                        @else
-                            <div style="font-size: 11.5px; color: var(--green); font-weight: 700; margin-top: 4px;">
-                                <i class="fa-solid fa-circle-play"></i> En curso...
-                            </div>
-                        @endif
-                    </div>
-                    <div class="vuelta-time">
-                        <div style="font-weight: 700;">
-                            {{ $vuelta->hora_salida ? \Carbon\Carbon::parse($vuelta->hora_salida)->format('h:i A') : '--:--' }}
-                            @if($vuelta->hora_llegada)
-                                - {{ \Carbon\Carbon::parse($vuelta->hora_llegada)->format('h:i A') }}
-                            @endif
                         </div>
                     </div>
+                    
+                    @if ($vuelta->ruta)
+                        <div style="font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-route" style="color: #94a3b8;"></i>
+                            <span>{{ $vuelta->ruta->origen }} → {{ $vuelta->ruta->destino }}</span>
+                        </div>
+                    @endif
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px 12px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Salida</span>
+                            <span style="font-size: 13px; font-weight: 700; color: #334155; font-family: monospace;">
+                                {{ $vuelta->hora_salida ? \Carbon\Carbon::parse($vuelta->hora_salida)->format('h:i A') : '--:--' }}
+                            </span>
+                        </div>
+                        <div style="height: 20px; width: 1px; background: #e2e8f0;"></div>
+                        <div style="display: flex; flex-direction: column; gap: 2px; text-align: right;">
+                            <span style="font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Llegada</span>
+                            <span style="font-size: 13px; font-weight: 700; color: #334155; font-family: monospace;">
+                                {{ $vuelta->hora_llegada ? \Carbon\Carbon::parse($vuelta->hora_llegada)->format('h:i A') : '--:--' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    @if($vuelta->hora_llegada)
+                        @php
+                            $sec = \Carbon\Carbon::parse($vuelta->hora_salida)->diffInSeconds(\Carbon\Carbon::parse($vuelta->hora_llegada));
+                            $hh = floor($sec / 3600);
+                            $mm = floor(($sec % 3600) / 60);
+                            $ss = $sec % 60;
+                            $dur = ($hh > 0 ? "{$hh}h " : "") . "{$mm}m {$ss}s";
+                        @endphp
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748b; font-weight: 500;">Duración de viaje:</span>
+                            <span class="pill gray" style="font-family: monospace; font-weight: 800; font-size: 13px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-regular fa-clock" style="color: var(--accent);"></i> {{ $dur }}
+                            </span>
+                        </div>
+                    @else
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748b; font-weight: 500;">Duración de viaje:</span>
+                            <span class="pill green" style="font-family: monospace; font-weight: 800; font-size: 13px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> En curso...
+                            </span>
+                        </div>
+                    @endif
                 </div>
             @empty
                 <div class="empty-state">Sin vueltas para esta fecha</div>

@@ -21,6 +21,7 @@ class VueltaController extends Controller
         $flota = request('flota');
 
         $vueltasQuery = Vuelta::where('empresa_id', $user->empresa_id)
+            ->where('estado', 'completada')
             ->whereDate('fecha', $fecha)
             ->when($flota, function ($q) use ($flota) {
                 return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
@@ -36,6 +37,7 @@ class VueltaController extends Controller
 
         // Resumen
         $resumenQuery = Vuelta::where('empresa_id', $user->empresa_id)
+            ->where('estado', 'completada')
             ->whereDate('fecha', $fecha)
             ->when($flota, function ($q) use ($flota) {
                 return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
