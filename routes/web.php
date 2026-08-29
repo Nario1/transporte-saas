@@ -91,6 +91,10 @@ Route::middleware(['auth', 'empresa.activa', 'role:conductor', 'forzar.password'
         Route::post('/vuelta/terminar', [VueltaAutoController::class, 'terminar'])->name('vuelta.terminar');
         Route::post('/vuelta/actualizar-ubicacion', [VueltaAutoController::class, 'actualizarUbicacion'])->name('vuelta.ubicacion');
         Route::get('/vuelta/estado',    [VueltaAutoController::class, 'estado'])->name('vuelta.estado');
+
+        // Alertas de Operativos
+        Route::post('/operativos/reportar', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'store'])->name('operativos.reportar');
+        Route::post('/operativos/{alerta}/finalizar', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'finalizar'])->name('operativos.finalizar');
     });
 
 // ── Panel Super Admin ─────────────────────────────────────────────
@@ -222,6 +226,12 @@ Route::middleware(['auth', 'empresa.activa', 'admin.configurado'])
         // MÓDULO 3 — Dashboard Vueltas en Tiempo Real
         Route::get('/vueltas/en-vivo',          [VueltasEnVivoController::class, 'index'])->name('vueltas.en-vivo');
         Route::get('/api/vueltas-activas', [VueltasEnVivoController::class, 'activas'])->name('vueltas.api.activas');
+    });
+
+    Route::middleware('permission:gestionar alertas')->group(function () {
+        Route::get('/alertas', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'adminIndex'])->name('admin.alertas.index');
+        Route::post('/alertas', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'adminStore'])->name('admin.alertas.store');
+        Route::post('/alertas/{alerta}/finalizar', [\App\Http\Controllers\Conductor\AlertaOperativoController::class, 'adminFinalizar'])->name('admin.alertas.finalizar');
     });
 
     Route::middleware('permission:ver tributos')->group(function () {

@@ -121,7 +121,7 @@
                 @endif
 
                 {{-- GRUPO: OPERACIÓN --}}
-                @if (auth()->user()->can('ver vueltas') || auth()->user()->can('ver tributos') || auth()->user()->can('ver sanciones'))
+                @if (auth()->user()->can('ver vueltas') || auth()->user()->can('ver tributos') || auth()->user()->can('ver sanciones') || auth()->user()->can('gestionar alertas'))
                     <div class="nav-group">
                         @can('ver vueltas')
                             <a href="{{ route('vueltas.index') }}"
@@ -139,6 +139,12 @@
                             <a href="{{ route('sanciones.index') }}"
                                 class="nav-item nav-item-modern {{ request()->routeIs('sanciones.*') ? 'active' : '' }}">
                                 <span class="ni"><i class="fa-solid fa-triangle-exclamation"></i></span> Sanciones
+                            </a>
+                        @endcan
+                        @can('gestionar alertas')
+                            <a href="{{ route('admin.alertas.index') }}"
+                                class="nav-item nav-item-modern {{ request()->routeIs('admin.alertas.*') ? 'active' : '' }}">
+                                <span class="ni"><i class="fa-solid fa-bullhorn"></i></span> Alertas Operativos
                             </a>
                         @endcan
                     </div>

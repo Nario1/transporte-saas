@@ -10,3 +10,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('empresa.{empresaId}.vueltas', function ($user, $empresaId) {
     return (int) $user->empresa_id === (int) $empresaId;
 });
+
+Broadcast::channel('empresa.{empresaId}.operativos', function ($user, $empresaId) {
+    return (int) $user->empresa_id === (int) $empresaId;
+});

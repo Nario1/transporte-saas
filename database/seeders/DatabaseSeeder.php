@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             'gestionar empresas',
             'gestionar ajustes de empresa',
             'gestionar backups',
+            'gestionar alertas',
 
             // Panel conductor (panel propio)
             'conductor.dashboard',

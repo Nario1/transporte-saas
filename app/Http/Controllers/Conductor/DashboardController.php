@@ -69,6 +69,13 @@ class DashboardController extends Controller
             $alertas[] = "Tu examen médico vence el {$conductor->vigencia_examen_medico->format('d/m/Y')}";
         }
  
+        // Alertas de Operativos activas
+        $alertasOperativos = \App\Models\AlertaOperativo::where('empresa_id', $user->empresa_id)
+            ->where('estado', 'activo')
+            ->where('expires_at', '>', now())
+            ->with(['conductor', 'user'])
+            ->get();
+ 
         return view('users.conductor.dashboard', compact(
             'conductor',
             'tributoHoy',
@@ -77,6 +84,7 @@ class DashboardController extends Controller
             'tributosPendientes',
             'deudaTributos',
             'alertas',
+            'alertasOperativos',
         ));
     }
 }

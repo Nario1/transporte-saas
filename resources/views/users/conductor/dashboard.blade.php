@@ -15,6 +15,27 @@
         @endforeach
     @endif
 
+    {{-- Alertas de Operativos Activas --}}
+    @if ($alertasOperativos->count() > 0)
+        @foreach ($alertasOperativos as $opAlerta)
+            <div class="alert red mb16 flash-red" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #ef4444; background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-warning" style="font-size: 18px; animation: blink 1s infinite; color: #ef4444;"></i>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 800; font-size: 13.5px;">⚠️ CONTROL MUNICIPAL / OPERATIVO</div>
+                        <div style="font-size: 12px; font-weight: 600; opacity: 0.9; margin-top: 2px;">
+                            Ubicado en: <strong style="font-size: 14px; color: #dc2626;">{{ $opAlerta->punto }}</strong>
+                            <br>Reportado a las: {{ $opAlerta->created_at->format('h:i A') }}
+                        </div>
+                    </div>
+                </div>
+                <button onclick="finalizarOperativo({{ $opAlerta->id }})" class="btn" style="background: #22c55e; color: white; border: none; padding: 8px 12px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(34,197,94,0.3);">
+                    <i class="fa-solid fa-circle-check"></i> Libre
+                </button>
+            </div>
+        @endforeach
+    @endif
+
     {{-- 2. Hero del conductor - Centrado en el Vehículo --}}
     <div class="conductor-hero mb16" style="background: linear-gradient(135deg, var(--gold) 0%, #92400e 100%); margin-bottom: 16px;">
         <div class="conductor-av">
@@ -148,6 +169,32 @@
         </div>
     </div>
 
+    {{-- Reportar Operativo --}}
+    <div class="card mb16" style="margin-bottom: 16px;">
+        <div class="card-header">
+            <span class="card-title"><i class="fa-solid fa-bullhorn" style="color: var(--accent); margin-right: 5px;"></i> Reportar Control / Operativo</span>
+        </div>
+        <div class="card-body" style="padding: 16px;">
+            <p style="font-size: 12px; color: var(--text3); margin-bottom: 12px; line-height: 1.4;">
+                ¿Ves inspectores municipales o fiscalizadores en la ruta? Toca uno de los puntos para alertar a todos los conductores en tiempo real.
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                <button onclick="reportarOperativo('Punto A')" class="btn" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; font-weight: 800; font-size: 12px; padding: 12px 6px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
+                    <span>Punto A</span>
+                </button>
+                <button onclick="reportarOperativo('Punto B')" class="btn" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; font-weight: 800; font-size: 12px; padding: 12px 6px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
+                    <span>Punto B</span>
+                </button>
+                <button onclick="reportarOperativo('Punto C')" class="btn" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; font-weight: 800; font-size: 12px; padding: 12px 6px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
+                    <span>Punto C</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     {{-- 5. Vueltas del día --}}
     <div class="card mb16" style="margin-bottom: 16px;">
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -229,5 +276,141 @@
     .border-green { border-color: var(--green) !important; }
     .border-red { border-color: var(--red) !important; }
     .border-blue { border-color: var(--accent) !important; }
+
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+        100% { opacity: 1; }
+    }
+    .flash-red {
+        animation: borderBlink 1.5s infinite;
+    }
+    @keyframes borderBlink {
+        0% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0); }
+    }
 </style>
+@endpush
+
+@push('scripts')
+@vite(['resources/js/app.js'])
+<script>
+    const empresaId = '{{ auth()->user()->empresa_id }}';
+    
+    // Escuchar eventos en tiempo real
+    if (window.Echo) {
+        window.Echo.private(`empresa.${empresaId}.operativos`)
+            .listen('.operativo.creado', (e) => {
+                Swal.fire({
+                    title: '🚨 ¡OPERATIVO DETECTADO!',
+                    html: `Se reportó control municipal en el <strong>${e.alerta.punto}</strong> a las ${e.alerta.creado_at}.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
+                    icon: 'warning',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#dc2626',
+                    allowOutsideClick: false
+                }).then(() => {
+                    location.reload();
+                });
+            })
+            .listen('.operativo.finalizado', (e) => {
+                Swal.fire({
+                    title: '🛡️ Punto Liberado',
+                    text: `El operativo en el ${e.alerta.punto} ha finalizado.`,
+                    icon: 'success',
+                    timer: 3000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            });
+    }
+
+    // Enviar reporte AJAX
+    function reportarOperativo(punto) {
+        Swal.fire({
+            title: '¿Confirmar Alerta?',
+            text: `¿Viste un operativo activo en el ${punto}? Esto notificará a todos tus compañeros.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, reportar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc2626'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.showLoading();
+                fetch('{{ route("conductor.operativos.reportar") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ punto: punto })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: '¡Alerta Emitida!',
+                            text: data.message,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Atención', data.message || 'No se pudo emitir la alerta.', 'info');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Hubo un problema al procesar la solicitud.', 'error');
+                });
+            }
+        });
+    }
+
+    // Finalizar alerta AJAX
+    function finalizarOperativo(alertaId) {
+        Swal.fire({
+            title: '¿Operativo Retirado?',
+            text: '¿Confirmas que los inspectores ya se retiraron de este punto?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, ya se retiraron',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#22c55e'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.showLoading();
+                fetch(`/conductor/operativos/${alertaId}/finalizar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Alerta Cancelada',
+                            text: 'Se notificó a tus compañeros que el punto está libre.',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'No se pudo finalizar la alerta.', 'error');
+                });
+            }
+        });
+    }
+</script>
 @endpush
