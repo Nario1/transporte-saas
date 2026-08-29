@@ -79,23 +79,27 @@
         </div>
         <div class="card-body" style="padding: 16px;">
             @if ($tributoHoy)
-                <div class="dashboard-tributo-summary">
-                    <div class="summary-main" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                        <div class="summary-col">
-                            <span class="summary-label" style="font-size: 11px; color: var(--text3); text-transform: uppercase;">Monto del Día</span>
-                            <span class="summary-val" style="font-size: 24px; font-weight: 800; color: var(--text); display: block; margin-top: 4px;">S/ {{ number_format($tributoHoy->monto, 2) }}</span>
+                <div class="dashboard-tributo-summary" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.02); margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 44px; height: 44px; background: {{ $tributoHoy->estado === 'pagado' ? '#dcfce7' : ($tributoHoy->estado === 'exonerado' ? '#dbeafe' : '#fee2e2') }}; color: {{ $tributoHoy->estado === 'pagado' ? '#22c55e' : ($tributoHoy->estado === 'exonerado' ? '#3b82f6' : '#ef4444') }}; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <i class="fa-solid fa-sack-dollar"></i>
                         </div>
-                        <div class="summary-col" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
-                            <span class="summary-label" style="font-size: 11px; color: var(--text3); text-transform: uppercase; margin-bottom: 4px;">Estado</span>
-                            @if($tributoHoy->estado === 'pagado')
-                                <span class="pill green"><i class="fa-solid fa-circle-check"></i> Pagado</span>
-                            @elseif($tributoHoy->estado === 'exonerado')
-                                <span class="pill blue"><i class="fa-solid fa-shield"></i> Exonerado</span>
-                            @else
-                                <span class="pill red"><i class="fa-solid fa-triangle-exclamation"></i> Deuda</span>
-                            @endif
+                        <div>
+                            <span style="font-size: 11px; color: var(--text3); text-transform: uppercase; font-weight: 700; display: block;">Monto del Día</span>
+                            <span style="font-size: 22px; font-weight: 900; color: #1e293b; display: block; margin-top: 2px;">S/ {{ number_format($tributoHoy->monto, 2) }}</span>
                         </div>
                     </div>
+                    <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                        <span style="font-size: 11px; color: var(--text3); text-transform: uppercase; font-weight: 700;">Estado</span>
+                        @if($tributoHoy->estado === 'pagado')
+                            <span class="pill green" style="font-size: 12px; font-weight: 800; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> Pagado</span>
+                        @elseif($tributoHoy->estado === 'exonerado')
+                            <span class="pill blue" style="font-size: 12px; font-weight: 800; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-shield-halved"></i> Exonerado</span>
+                        @else
+                            <span class="pill red" style="font-size: 12px; font-weight: 800; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> Deuda</span>
+                        @endif
+                    </div>
+                </div>
 
                     @if ($tributosPendientes->count() > 0)
                         <div class="debt-warning" style="margin-top: 16px;">
