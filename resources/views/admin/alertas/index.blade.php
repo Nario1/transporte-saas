@@ -27,33 +27,75 @@
 
     <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: start;">
         
-        {{-- COLUMNA 1: FORMULARIO REGISTRO --}}
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title"><i class="fa-solid fa-plus-circle" style="color:var(--accent); margin-right:5px;"></i> Reportar Nuevo Operativo</span>
-            </div>
-            <div class="card-body" style="padding: 20px;">
-                <form action="{{ route('admin.alertas.store') }}" method="POST">
-                    @csrf
-                    
-                    <div class="field" style="margin-bottom: 20px;">
-                        <label style="font-weight:700; font-size:13px; color:var(--text); margin-bottom:8px; display:block;">Punto Crítico / Ubicación</label>
-                        <select name="punto" required class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size:14px; font-weight:700; color:var(--text);">
-                            <option value="">-- Seleccionar punto --</option>
-                            <option value="Punto A">Punto A</option>
-                            <option value="Punto B">Punto B</option>
-                            <option value="Punto C">Punto C</option>
-                        </select>
-                        <span style="font-size: 11px; color: var(--text3); display: block; margin-top: 4px;">
-                            La alerta se enviará en tiempo real a las pantallas de todos los conductores y expirará en 1 hora.
-                        </span>
-                    </div>
+        {{-- COLUMNA 1: FORMULARIO REGISTRO & PUNTOS DE CONTROL --}}
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            {{-- REPORTAR OPERATIVO --}}
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-plus-circle" style="color:var(--accent); margin-right:5px;"></i> Reportar Nuevo Operativo</span>
+                </div>
+                <div class="card-body" style="padding: 20px;">
+                    <form action="{{ route('admin.alertas.store') }}" method="POST">
+                        @csrf
+                        
+                        <div class="field" style="margin-bottom: 20px;">
+                            <label style="font-weight:700; font-size:13px; color:var(--text); margin-bottom:8px; display:block;">Punto Crítico / Ubicación</label>
+                            <select name="punto" required class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size:14px; font-weight:700; color:var(--text);">
+                                <option value="">-- Seleccionar punto --</option>
+                                @foreach($puntos as $punto)
+                                    <option value="{{ $punto->nombre }}">{{ $punto->nombre }}</option>
+                                @endforeach
+                            </select>
+                            <span style="font-size: 11px; color: var(--text3); display: block; margin-top: 4px;">
+                                La alerta se enviará en tiempo real a las pantallas de todos los conductores y expirará en 1 hora.
+                            </span>
+                        </div>
 
-                    <button type="submit" class="btn-primary" style="width: 100%; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 700; border-radius: 8px;">
-                        <i class="fa-solid fa-paper-plane"></i> Emitir Alerta Real-Time
-                    </button>
-                </form>
+                        <button type="submit" class="btn-primary" style="width: 100%; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 700; border-radius: 8px;" @if($puntos->isEmpty()) disabled title="Agrega opciones primero" @endif>
+                            <i class="fa-solid fa-paper-plane"></i> Emitir Alerta Real-Time
+                        </button>
+                    </form>
+                </div>
             </div>
+
+            {{-- GESTIÓN DE PUNTOS DE CONTROL --}}
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-map-pin" style="color:var(--accent); margin-right:5px;"></i> Opciones de Puntos de Control</span>
+                </div>
+                <div class="card-body" style="padding: 20px;">
+                    <form action="{{ route('admin.puntos.store') }}" method="POST" style="margin-bottom: 20px; display: flex; gap: 8px;">
+                        @csrf
+                        <div class="field" style="margin: 0; flex: 1;">
+                            <input type="text" name="nombre" placeholder="Ej: Óvalo Sumar" required class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size:13px; font-weight:700; height: 38px;">
+                        </div>
+                        <button type="submit" class="btn-primary" style="height: 38px; padding: 0 14px; font-size: 12px; font-weight: 700; border-radius: 8px; flex-shrink:0;">
+                            + Agregar
+                        </button>
+                    </form>
+
+                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
+                        @forelse($puntos as $pt)
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #f1f5f9;">
+                                <span style="font-weight: 700; font-size: 13px; color: var(--text);">{{ $pt->nombre }}</span>
+                                <form action="{{ route('admin.puntos.destroy', $pt->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" style="background: none; border: none; color: var(--red); cursor: pointer; font-size: 12px;" onclick="return confirm('¿Seguro que deseas eliminar este punto de control?')" title="Eliminar punto">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        @empty
+                            <div style="text-align: center; color: var(--text3); font-size: 12px; padding: 15px;">
+                                No hay opciones registradas.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         {{-- COLUMNA 2: LISTADOS --}}

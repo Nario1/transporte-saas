@@ -75,6 +75,9 @@ class DashboardController extends Controller
             ->where('expires_at', '>', now())
             ->with(['conductor', 'user'])
             ->get();
+
+        // Puntos de control registrados
+        $puntosControl = \App\Models\PuntoControl::where('empresa_id', $user->empresa_id)->orderBy('nombre')->get();
  
         return view('users.conductor.dashboard', compact(
             'conductor',
@@ -85,6 +88,7 @@ class DashboardController extends Controller
             'deudaTributos',
             'alertas',
             'alertasOperativos',
+            'puntosControl',
         ));
     }
 }

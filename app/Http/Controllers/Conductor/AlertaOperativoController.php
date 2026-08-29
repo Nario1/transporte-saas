@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Conductor;
 
 use App\Http\Controllers\Controller;
 use App\Models\AlertaOperativo;
+use App\Models\PuntoControl;
 use App\Events\AlertaOperativoCreada;
 use App\Events\AlertaOperativoFinalizada;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class AlertaOperativoController extends Controller
 {
@@ -22,16 +24,20 @@ class AlertaOperativoController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'punto' => 'required|in:Punto A,Punto B,Punto C',
-        ]);
-
         $user = auth()->user();
         $conductor = $user->conductor;
 
         if (!$conductor) {
             return response()->json(['error' => 'No tienes un perfil de conductor asociado.'], 403);
         }
+
+        $request->validate([
+            'punto' => [
+                'required',
+                'string',
+                Rule::exists('puntos_control', 'nombre')->where('empresa_id', $conductor->empresa_id)
+            ],
+        ]);
 
         // Evitar duplicados activos en el mismo punto para la misma empresa
         $existeActivo = AlertaOperativo::where('empresa_id', $conductor->empresa_id)
@@ -100,6 +106,9 @@ class AlertaOperativoController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
 
+        // Puntos de control registrados para la empresa
+        $puntos = PuntoControl::where('empresa_id', $empresaId)->orderBy('nombre')->get();
+
         // Alertas Activas (estado activo y sin expirar)
         $activas = AlertaOperativo::where('empresa_id', $empresaId)
             ->where('estado', 'activo')
@@ -119,7 +128,7 @@ class AlertaOperativoController extends Controller
             ->take(20)
             ->get();
 
-        return view('admin.alertas.index', compact('activas', 'historial'));
+        return view('admin.alertas.index', compact('activas', 'historial', 'puntos'));
     }
 
     /**
@@ -127,11 +136,15 @@ class AlertaOperativoController extends Controller
      */
     public function adminStore(Request $request)
     {
-        $request->validate([
-            'punto' => 'required|in:Punto A,Punto B,Punto C',
-        ]);
-
         $empresaId = auth()->user()->empresa_id;
+
+        $request->validate([
+            'punto' => [
+                'required',
+                'string',
+                Rule::exists('puntos_control', 'nombre')->where('empresa_id', $empresaId)
+            ],
+        ]);
 
         // Evitar duplicados activos
         $existeActivo = AlertaOperativo::where('empresa_id', $empresaId)
@@ -141,7 +154,7 @@ class AlertaOperativoController extends Controller
             ->exists();
 
         if ($existeActivo) {
-            return back()->with('error', 'Ya existe un reporte activo para este punto.');
+            return back()->with('error', 'Ya existe un reporte operativo activo para este punto.');
         }
 
         $alerta = AlertaOperativo::create([
@@ -173,5 +186,45 @@ class AlertaOperativoController extends Controller
         }
 
         return back()->with('success', 'El operativo se marcó como finalizado.');
+    }
+
+    /**
+     * Agregar un nuevo punto de control (Administrador).
+     */
+    public function adminAddPunto(Request $request)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:100',
+        ]);
+
+        $empresaId = auth()->user()->empresa_id;
+
+        // Evitar duplicados de nombre
+        $existe = PuntoControl::where('empresa_id', $empresaId)
+            ->where('nombre', $request->nombre)
+            ->exists();
+
+        if ($existe) {
+            return back()->with('error', 'Este punto de control ya existe.');
+        }
+
+        PuntoControl::create([
+            'empresa_id' => $empresaId,
+            'nombre'     => $request->nombre,
+        ]);
+
+        return back()->with('success', 'Punto de control agregado correctamente.');
+    }
+
+    /**
+     * Eliminar un punto de control (Administrador).
+     */
+    public function adminDeletePunto($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $punto = PuntoControl::where('empresa_id', $empresaId)->findOrFail($id);
+        $punto->delete();
+
+        return back()->with('success', 'Punto de control eliminado correctamente.');
     }
 }

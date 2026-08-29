@@ -176,22 +176,26 @@
         </div>
         <div class="card-body" style="padding: 16px;">
             <p style="font-size: 12px; color: var(--text3); margin-bottom: 12px; line-height: 1.4;">
-                ¿Ves inspectores municipales o fiscalizadores en la ruta? Toca uno de los puntos para alertar a todos los conductores en tiempo real.
+                ¿Ves inspectores municipales o fiscalizadores en la ruta? Selecciona la ubicación para alertar a todos los conductores en tiempo real.
             </p>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                <button onclick="reportarOperativo('Punto A')" class="btn" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; font-weight: 800; font-size: 12px; padding: 12px 6px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
-                    <span>Punto A</span>
-                </button>
-                <button onclick="reportarOperativo('Punto B')" class="btn" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; font-weight: 800; font-size: 12px; padding: 12px 6px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
-                    <span>Punto B</span>
-                </button>
-                <button onclick="reportarOperativo('Punto C')" class="btn" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; font-weight: 800; font-size: 12px; padding: 12px 6px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
-                    <span>Punto C</span>
-                </button>
-            </div>
+            @if($puntosControl->isEmpty())
+                <div style="text-align: center; color: var(--text3); font-size: 12px; padding: 10px; border: 1px dashed var(--border); border-radius: 8px;">
+                    El administrador debe configurar los puntos de control en el panel primero.
+                </div>
+            @else
+                <div style="display: flex; gap: 8px;">
+                    <select id="select-operativo-punto" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size:13px; font-weight:700; color:var(--text); height: 42px; background: var(--bg);">
+                        <option value="">-- Seleccionar ubicación --</option>
+                        @foreach($puntosControl as $pt)
+                            <option value="{{ $pt->nombre }}">{{ $pt->nombre }}</option>
+                        @endforeach
+                    </select>
+                    <button onclick="reportarOperativoDynamic()" class="btn" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; font-weight: 800; font-size: 12px; height: 42px; padding: 0 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(220,38,38,0.1); flex-shrink: 0;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 14px;"></i>
+                        <span>Alerta</span>
+                    </button>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -324,6 +328,15 @@
                     location.reload();
                 });
             });
+    }
+
+    function reportarOperativoDynamic() {
+        const select = document.getElementById('select-operativo-punto');
+        if (!select || !select.value) {
+            Swal.fire('Atención', 'Por favor selecciona un punto de control primero.', 'info');
+            return;
+        }
+        reportarOperativo(select.value);
     }
 
     // Enviar reporte AJAX
