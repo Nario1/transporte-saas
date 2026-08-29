@@ -861,10 +861,10 @@
                     ->with(['conductor', 'user'])
                     ->get();
             @endphp
-            @if ($layoutAlertas->count() > 0)
-                <div id="global-operativos-container" style="padding: 16px 16px 0 16px; display: flex; flex-direction: column; gap: 10px;">
+            <div id="global-operativos-container" style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box; margin-bottom: 14px;">
+                @if ($layoutAlertas->count() > 0)
                     @foreach ($layoutAlertas as $opAlerta)
-                        <div class="alert-pulse-red" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 14px 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); border: 2px solid #ef4444; position: relative; overflow: hidden;">
+                        <div id="operativo-card-{{ $opAlerta->id }}" class="alert-pulse-red" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 20px 16px; border-radius: 14px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); border: 2px solid #ef4444; position: relative; overflow: hidden; width: 100%; box-sizing: border-box; gap: 14px;">
                             <div style="display: flex; align-items: center; gap: 12px; z-index: 2;">
                                 <div style="width: 38px; height: 38px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-icon 1.2s infinite; flex-shrink: 0;">
                                     <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #facc15;"></i>
@@ -884,8 +884,8 @@
                             @endif
                         </div>
                     @endforeach
-                </div>
-            @endif
+                @endif
+            </div>
         @endif
 
         @yield('content')
@@ -949,31 +949,69 @@
         @vite(['resources/js/app.js'])
         <script>
             const layoutEmpresaId = '{{ auth()->user()->empresa_id }}';
+            const currentConductorId = '{{ auth()->user()->conductor?->id ?? "" }}';
             
             window.addEventListener('DOMContentLoaded', () => {
                 if (window.Echo) {
                     window.Echo.private(`empresa.${layoutEmpresaId}.operativos`)
                         .listen('.operativo.creado', (e) => {
+                            // Validar que no exista ya en el DOM
+                            if (document.getElementById(`operativo-card-${e.alerta.id}`)) {
+                                return;
+                            }
+
+                            const container = document.getElementById('global-operativos-container');
+                            if (container) {
+                                const showButton = currentConductorId && e.alerta.conductor_id == currentConductorId;
+                                const buttonHtml = showButton ? `
+                                    <button onclick="finalizarOperativo(${e.alerta.id})" style="background: #22c55e; color: white; border: none; padding: 8px 14px; font-size: 11px; font-weight: 900; border-radius: 8px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(34,197,94,0.4); z-index: 2; flex-shrink: 0; transition: transform 0.15s ease;">
+                                        <i class="fa-solid fa-circle-check"></i> Retirado
+                                    </button>
+                                ` : '';
+
+                                const timeStr = new Date(e.alerta.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+                                const cardHtml = `
+                                    <div id="operativo-card-${e.alerta.id}" class="alert-pulse-red" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 20px 16px; border-radius: 14px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); border: 2px solid #ef4444; position: relative; overflow: hidden; width: 100%; box-sizing: border-box; gap: 14px;">
+                                        <div style="display: flex; align-items: center; gap: 12px; z-index: 2;">
+                                            <div style="width: 38px; height: 38px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-icon 1.2s infinite; flex-shrink: 0;">
+                                                <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #facc15;"></i>
+                                            </div>
+                                            <div style="text-align: left;">
+                                                <div style="font-weight: 900; font-size: 13.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">⚠️ Control / Operativo</div>
+                                                <div style="font-size: 12px; font-weight: 700; opacity: 0.95; margin-top: 2px; color: #fef08a;">
+                                                    Ubicación: <strong style="font-size: 14px; text-decoration: underline;">${e.alerta.punto}</strong>
+                                                    <span style="font-size: 10px; display: block; opacity: 0.8; font-weight: normal; margin-top: 1px;">Reportado a las ${timeStr}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ${buttonHtml}
+                                    </div>
+                                `;
+                                container.insertAdjacentHTML('beforeend', cardHtml);
+                            }
+
                             Swal.fire({
                                 title: '🚨 ¡OPERATIVO DETECTADO!',
                                 html: `Se reportó control municipal en el <strong>${e.alerta.punto}</strong>.<br><br><span style="color:#ef4444;font-weight:700;">¡Conduce con cuidado!</span>`,
                                 icon: 'warning',
                                 confirmButtonText: 'Entendido',
                                 confirmButtonColor: '#dc2626',
-                                allowOutsideClick: false
-                            }).then(() => {
-                                location.reload();
+                                allowOutsideClick: true
                             });
                         })
                         .listen('.operativo.finalizado', (e) => {
+                            const card = document.getElementById(`operativo-card-${e.alerta.id}`);
+                            if (card) {
+                                card.remove();
+                            }
+
                             Swal.fire({
                                 title: '🛡️ Punto Liberado',
                                 text: `El operativo en el ${e.alerta.punto} ha finalizado.`,
                                 icon: 'success',
                                 timer: 3000,
                                 showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
                             });
                         });
                 }
@@ -1001,14 +1039,16 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
+                                const card = document.getElementById(`operativo-card-${alertaId}`);
+                                if (card) {
+                                    card.remove();
+                                }
                                 Swal.fire({
                                     title: 'Alerta Cancelada',
                                     text: 'Se notificó a tus compañeros que el punto está libre.',
                                     icon: 'success',
                                     timer: 2000,
                                     showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
                                 });
                             } else {
                                 Swal.fire('Error', data.error || 'No se pudo cancelar la alerta.', 'error');

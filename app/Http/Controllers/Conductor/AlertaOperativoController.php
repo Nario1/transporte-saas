@@ -56,7 +56,7 @@ class AlertaOperativoController extends Controller
             'user_id'      => null,
             'punto'        => $request->punto,
             'estado'       => 'activo',
-            'expires_at'   => now()->addHour(),
+            'expires_at'   => now()->addMinutes(20),
         ]);
 
         // Transmitir evento en tiempo real
@@ -168,7 +168,7 @@ class AlertaOperativoController extends Controller
             'user_id'      => auth()->id(),
             'punto'        => $request->punto,
             'estado'       => 'activo',
-            'expires_at'   => now()->addHour(),
+            'expires_at'   => now()->addMinutes(20),
         ]);
 
         broadcast(new AlertaOperativoCreada($alerta))->toOthers();
