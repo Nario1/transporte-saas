@@ -43,6 +43,7 @@ class EmpresaObserver
             'gestionar usuarios',
             'gestionar roles',
             'gestionar ajustes de empresa', // El permiso solicitado
+            'gestionar alertas',
         ]);
 
         $operadorRole->syncPermissions([

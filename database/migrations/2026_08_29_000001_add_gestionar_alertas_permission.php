@@ -25,6 +25,12 @@ return new class extends Migration
         if ($superAdmin) {
             $superAdmin->givePermissionTo($perm);
         }
+
+        // Asignar a todos los roles ADMIN de las empresas existentes (e.g. e1_ADMIN, e2_ADMIN)
+        $rolesAdmin = Role::where('name', 'LIKE', '%_ADMIN')->get();
+        foreach ($rolesAdmin as $role) {
+            $role->givePermissionTo($perm);
+        }
     }
 
     /**
