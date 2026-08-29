@@ -609,6 +609,34 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // Centrar mapa al hacer click en la fila de un conductor
+    tbody.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr.vuelta-row');
+        if (!tr) return;
+        
+        // Evitar que interfiera si el click es en enlaces o botones
+        if (e.target.closest('a') || e.target.closest('button')) return;
+        
+        const idParts = tr.id.split('-');
+        const vueltaId = parseInt(idParts[1]);
+        
+        if (markers[vueltaId]) {
+            const marker = markers[vueltaId];
+            map.setView(marker.getLatLng(), 16);
+            marker.openPopup();
+            
+            // Marcar mapa como movido manualmente para que fitBounds no lo resetee de inmediato
+            map._manualMove = true;
+            
+            // Efecto flash visual temporal
+            const originalBg = tr.style.background;
+            tr.style.background = '#dbeafe';
+            setTimeout(() => {
+                tr.style.background = originalBg;
+            }, 800);
+        }
+    });
+
     // Detener auto-ajuste de cámara si el usuario mueve el mapa
     map.on('movestart', () => map._manualMove = true);
     setTimeout(() => map._manualMove = false, 30000); // Reactivar cada 30s
