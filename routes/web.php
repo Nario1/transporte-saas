@@ -279,3 +279,39 @@ Route::middleware(['auth', 'empresa.activa', 'admin.configurado'])
         Route::delete('/backups/{backup}', [App\Http\Controllers\Admin\BackupController::class, 'destroy'])->name('backups.destroy');
     });
 });
+
+Route::get('/debug-roles', function() {
+    $user = auth()->user();
+    if (!$user) return 'No estás logueado en la aplicación.';
+    
+    $roles = $user->roles->pluck('name')->toArray();
+    $permissionsDirect = $user->permissions->pluck('name')->toArray();
+    $permissionsViaRoles = $user->getPermissionsViaRoles()->pluck('name')->toArray();
+    $allPermissions = $user->getAllPermissions()->pluck('name')->toArray();
+    
+    $permExists = \Spatie\Permission\Models\Permission::where('name', 'gestionar alertas')->exists();
+    
+    $rolesAdminInDb = \Spatie\Permission\Models\Role::where('name', 'LIKE', '%_ADMIN')->get()->map(function($r) {
+        try {
+            $hasPerm = $r->hasPermissionTo('gestionar alertas');
+        } catch (\Exception $e) {
+            $hasPerm = false;
+        }
+        return [
+            'role' => $r->name,
+            'tiene_gestionar_alertas' => $hasPerm
+        ];
+    })->toArray();
+
+    return response()->json([
+        'usuario' => $user->email,
+        'roles_del_usuario' => $roles,
+        'permiso_gestionar_alertas_existe_en_bd' => $permExists,
+        'tiene_permiso_gestionar_alertas_directo' => $user->hasDirectPermission('gestionar alertas') ? true : false,
+        'tiene_permiso_gestionar_alertas_via_rol' => $user->hasPermissionTo('gestionar alertas') ? true : false,
+        'permisos_directos' => $permissionsDirect,
+        'permisos_via_roles' => $permissionsViaRoles,
+        'todos_los_permisos' => $allPermissions,
+        'roles_admin_en_bd_y_estado_permiso' => $rolesAdminInDb
+    ]);
+});
