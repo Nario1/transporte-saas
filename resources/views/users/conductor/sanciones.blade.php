@@ -50,18 +50,9 @@
                             </div>
                             <div style="text-align:right; flex-shrink:0;">
                                 <div style="font-weight:900; color:var(--red); font-size: 18px;">S/ {{ number_format($sancion->monto, 2) }}</div>
-                                <span class="pill red" style="margin-top:4px;"><i class="fa-solid fa-clock"></i> Pendiente</span>
+                                <span class="pill red" style="margin-top:4px;"><i class="fa-solid fa-triangle-exclamation"></i> Deuda</span>
                             </div>
                         </div>
-
-                        {{-- Botón de Pago MP --}}
-                        <form action="{{ route('conductor.sanciones.pagar-mp', $sancion) }}" method="POST" style="margin-top: 5px;">
-                            @csrf
-                            <button type="submit" class="btn-mp btn-block">
-                                <i class="fa-solid fa-mobile-screen-button"></i>
-                                <span>Pagar con Yape</span>
-                            </button>
-                        </form>
                     </div>
                 @endforeach
             </div>
@@ -86,6 +77,14 @@
                                 {{ $sancion->fecha->format('d/m/Y') }}
                                 @if ($sancion->vehiculo)
                                     · {{ $sancion->vehiculo->placa_form }}
+                                @endif
+                                @if ($sancion->metodo_pago)
+                                    · @php
+                                        $isDigital = in_array(strtolower($sancion->metodo_pago), ['yape', 'plin', 'mercadopago']);
+                                        $efectivoColor = $isDigital ? '#7c3aed' : 'inherit';
+                                        $efectivoWeight = $isDigital ? '700' : 'normal';
+                                    @endphp
+                                    <span style="color: {{ $efectivoColor }}; font-weight: {{ $efectivoWeight }};">EFECTIVO</span>
                                 @endif
                             </div>
                         </div>

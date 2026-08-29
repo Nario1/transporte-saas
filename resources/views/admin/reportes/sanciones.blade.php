@@ -108,16 +108,14 @@
                                         {{ strtoupper($s->estado) }}
                                     </span>
                                     @if ($s->estado === 'pagado')
-                                        @if($s->metodo_pago === 'mercadopago')
-                                            <span class="pill blue" style="font-size: 8px; padding: 2px 4px; font-weight: 800; background-color: #00bef0; color: #fff;">
-                                                MP ({{ strtoupper($s->pagoMp?->metodo ?? 'WEB') }})
-                                            </span>
-                                        @else
-                                            <span style="font-size: 9px; color: var(--text3); font-weight: 600;">
-                                                Vía: {{ strtoupper($s->metodo_pago ?? 'EFECTIVO') }}
-                                            </span>
-                                        @endif
-                                    @endif
+                                         @php
+                                             $isDigital = in_array(strtolower($s->metodo_pago), ['yape', 'plin', 'mercadopago']);
+                                             $pillStyle = $isDigital ? 'background-color: #7c3aed; color: #fff;' : '';
+                                         @endphp
+                                         <span class="pill blue" style="font-size: 8px; padding: 2px 4px; font-weight: 800; {{ $pillStyle }}">
+                                             EFECTIVO
+                                         </span>
+                                     @endif
                                 </div>
                             </td>
                             <td style="text-align: right; font-weight: 900; color: {{ $s->estado === 'pagado' ? 'var(--green)' : 'var(--red)' }};">
