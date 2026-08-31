@@ -490,6 +490,10 @@ class ReporteController extends Controller
                         $item->metodo_pago = null;
                         $item->pagoMp = null;
                         $item->motivo_exoneracion = null;
+                        $item->monto_inicial = $p->monto_inicial;
+                        $item->cuota_1 = $p->cuota_1;
+                        $item->cuota_2 = $p->cuota_2;
+                        $item->cuota_3 = $p->cuota_3;
                         $items->push($item);
                     }
                 }
@@ -512,6 +516,10 @@ class ReporteController extends Controller
                         $item->metodo_pago = 'efectivo';
                         $item->pagoMp = null;
                         $item->motivo_exoneracion = null;
+                        $item->monto_inicial = $p->monto_inicial;
+                        $item->cuota_1 = $p->cuota_1;
+                        $item->cuota_2 = $p->cuota_2;
+                        $item->cuota_3 = $p->cuota_3;
                         $items->push($item);
                     }
                 }

@@ -107,6 +107,14 @@
                                     @if(isset($item->conductor) && $item->conductor)
                                         <div style="font-size: 10px; color: var(--text3);">Conductor: {{ $item->conductor->nombre ?? '---' }}</div>
                                     @endif
+                                    @if($item->tipo_obligacion === 'MONTO DE INGRESO')
+                                        <div style="font-size: 10.5px; color: var(--text3); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                            <span><strong>Inicial:</strong> S/ {{ number_format($item->monto_inicial ?? 0, 2) }}</span>
+                                            <span><strong>Cuota 1:</strong> S/ {{ number_format($item->cuota_1 ?? 0, 2) }}</span>
+                                            <span><strong>Cuota 2:</strong> S/ {{ number_format($item->cuota_2 ?? 0, 2) }}</span>
+                                            <span><strong>Cuota 3:</strong> S/ {{ number_format($item->cuota_3 ?? 0, 2) }}</span>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td style="font-weight: 800; color: var(--text);">
                                     S/ {{ number_format($item->monto, 2) }}
