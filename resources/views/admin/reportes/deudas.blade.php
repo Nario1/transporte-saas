@@ -10,11 +10,11 @@
         {{-- Filtros --}}
         <div class="card no-print">
             <form action="{{ route('reportes.deudas') }}" method="GET" class="card-body g-filters">
-                <div class="field">
+                <div class="field" id="field-desde">
                     <label>Desde:</label>
                     <input type="date" name="desde" value="{{ $desde->toDateString() }}">
                 </div>
-                <div class="field">
+                <div class="field" id="field-hasta">
                     <label>Hasta:</label>
                     <input type="date" name="hasta" value="{{ $hasta->toDateString() }}">
                 </div>
@@ -40,7 +40,7 @@
                         <option value="monto_ingreso" {{ request('tipo') === 'monto_ingreso' ? 'selected' : '' }}>Monto de Ingreso</option>
                     </select>
                 </div>
-                <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
+                <div class="field" id="field-dia-especifico" style="border-left: 1px solid var(--border); padding-left: 20px;">
                     <label>Día Específico:</label>
                     <input type="date" value="{{ $desde->toDateString() === $hasta->toDateString() ? $desde->toDateString() : '' }}" onchange="if(this.value){ document.getElementsByName('desde')[0].value=this.value; document.getElementsByName('hasta')[0].value=this.value; this.form.submit(); }">
                 </div>
@@ -207,14 +207,23 @@
         const tipoSelect = document.getElementsByName('tipo')[0];
         const fieldFlota = document.getElementById('field-flota');
         const fieldPropietario = document.getElementById('field-propietario');
+        const fieldDesde = document.getElementById('field-desde');
+        const fieldHasta = document.getElementById('field-hasta');
+        const fieldDia = document.getElementById('field-dia-especifico');
 
         function toggleFields() {
             if (tipoSelect && tipoSelect.value === 'monto_ingreso') {
                 if (fieldFlota) fieldFlota.style.display = 'none';
                 if (fieldPropietario) fieldPropietario.style.display = 'block';
+                if (fieldDesde) fieldDesde.style.display = 'none';
+                if (fieldHasta) fieldHasta.style.display = 'none';
+                if (fieldDia) fieldDia.style.display = 'none';
             } else {
                 if (fieldFlota) fieldFlota.style.display = 'block';
                 if (fieldPropietario) fieldPropietario.style.display = 'none';
+                if (fieldDesde) fieldDesde.style.display = 'block';
+                if (fieldHasta) fieldHasta.style.display = 'block';
+                if (fieldDia) fieldDia.style.display = 'block';
             }
         }
 
