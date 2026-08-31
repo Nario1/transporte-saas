@@ -44,20 +44,22 @@
                             <i class="fa-solid fa-xmark"></i>
                         </a>
                     @endif
-                    <button type="button" onclick="window.print()" class="btn-secondary"
+                    <button type="button" onclick="const url = new URL(window.location.href); url.searchParams.set('print', '1'); window.open(url.toString(), '_blank');" class="btn-secondary"
                         style="height: 48px; border-radius: 12px; width: 48px; padding: 0; display: flex; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-print"></i>
                     </button>
                 </div>
-                <div style="width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 15px;">
-                    <div style="background: #e0f2fe; color: #0369a1; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
-                        Total Recaudado (en rango): S/ {{ number_format($totales['cobrado'], 2) }}
-                    </div>
-                    <div style="background: #fee2e2; color: #b91c1c; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px;">
-                        Deuda Pendiente (en rango): S/ {{ number_format($totales['pendiente'], 2) }}
-                    </div>
-                </div>
             </form>
+        </div>
+
+        {{-- Totales Recaudados (Imprimibles) --}}
+        <div style="display: flex; justify-content: flex-end; gap: 15px; margin-bottom: 5px;">
+            <div style="background: #e0f2fe; color: #0369a1; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px; border: 1px solid #bae6fd;">
+                Total Recaudado (en rango): S/ {{ number_format($totales['cobrado'], 2) }}
+            </div>
+            <div style="background: #fee2e2; color: #b91c1c; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px; border: 1px solid #fecaca;">
+                Deuda Pendiente (en rango): S/ {{ number_format($totales['pendiente'], 2) }}
+            </div>
         </div>
 
         {{-- TABLA DETALLADA --}}
@@ -160,4 +162,14 @@
                 </div>
             @endif
         </div>
+
+        @if(request('print') == 1)
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 1000);
+                });
+            </script>
+        @endif
     @endsection

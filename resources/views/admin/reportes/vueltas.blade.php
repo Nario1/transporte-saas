@@ -36,11 +36,50 @@
                         <i class="fa-solid fa-xmark"></i>
                     </a>
                 @endif
-                <button type="button" onclick="window.print()" class="btn-secondary" style="height: 48px; border-radius: 12px; width: 48px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                <button type="button" onclick="const url = new URL(window.location.href); url.searchParams.set('print', '1'); window.open(url.toString(), '_blank');" class="btn-secondary" style="height: 48px; border-radius: 12px; width: 48px; padding: 0; display: flex; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-print"></i>
                 </button>
             </div>
         </form>
+    </div>
+
+    {{-- Resumen de Vueltas por Ruta (Imprimible) --}}
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Resumen de Vueltas por Ruta</div>
+        </div>
+        <div class="tbl-wrap">
+            <table class="tbl tbl-modern">
+                <thead>
+                    <tr>
+                        <th>Ruta</th>
+                        <th>Origen / Destino</th>
+                        <th style="text-align: center;">Total de Vueltas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($porRuta as $pr)
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700; color: var(--accent);">{{ $pr->ruta?->nombre ?? 'Sin Ruta' }}</div>
+                            </td>
+                            <td>
+                                {{ $pr->ruta?->origen ?? '---' }} - {{ $pr->ruta?->destino ?? '---' }}
+                            </td>
+                            <td style="text-align: center; font-weight: 800;">
+                                <span class="pill blue" style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 99px;">
+                                    {{ $pr->total_vueltas }} vueltas
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" style="text-align: center; padding: 25px; color: var(--text3);">No hay datos de rutas registradas.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     {{-- 2. HISTORIAL DETALLADO --}}
@@ -132,4 +171,14 @@
         @endif
     </div>
 </div>
+
+@if(request('print') == 1)
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                window.print();
+            }, 1000);
+        });
+    </script>
+@endif
 @endsection

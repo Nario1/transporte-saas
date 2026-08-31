@@ -34,7 +34,7 @@
                             <i class="fa-solid fa-xmark"></i>
                         </a>
                     @endif
-                    <button type="button" onclick="window.print()" class="btn-secondary" style="height: 48px; border-radius: 12px; width: 48px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                    <button type="button" onclick="const url = new URL(window.location.href); url.searchParams.set('print', '1'); window.open(url.toString(), '_blank');" class="btn-secondary" style="height: 48px; border-radius: 12px; width: 48px; padding: 0; display: flex; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-print"></i>
                     </button>
                 </div>
@@ -114,4 +114,13 @@
             @endif
         </div>
     </div>
+    @if(request('print') == 1)
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    window.print();
+                }, 1000);
+            });
+        </script>
+    @endif
 @endsection
