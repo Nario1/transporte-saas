@@ -3,6 +3,9 @@
 @section('back_url', route('reportes.index'))
 
 @section('content')
+    @php
+        $isMontoIngreso = request('tipo') === 'monto_ingreso';
+    @endphp
     <div style="display: grid; gap: 20px;">
         {{-- Filtros --}}
         <div class="card no-print">
@@ -78,7 +81,14 @@
                             <th>Tipo</th>
                             <th>Vehículo / Flota</th>
                             <th>Concepto / Motivo</th>
-                            <th>Monto</th>
+                            @if($isMontoIngreso)
+                                <th>Monto Inicial</th>
+                                <th>Cuota 1</th>
+                                <th>Cuota 2</th>
+                                <th>Cuota 3</th>
+                            @else
+                                <th>Monto</th>
+                            @endif
                             <th style="text-align:center;">Estado</th>
                             <th>Detalle de Pago / Observaciones</th>
                         </tr>
@@ -107,7 +117,7 @@
                                     @if(isset($item->conductor) && $item->conductor)
                                         <div style="font-size: 10px; color: var(--text3);">Conductor: {{ $item->conductor->nombre ?? '---' }}</div>
                                     @endif
-                                    @if($item->tipo_obligacion === 'MONTO DE INGRESO')
+                                    @if(!$isMontoIngreso && $item->tipo_obligacion === 'MONTO DE INGRESO')
                                         <div style="font-size: 10.5px; color: var(--text3); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap;">
                                             <span><strong>Inicial:</strong> S/ {{ number_format($item->monto_inicial ?? 0, 2) }}</span>
                                             <span><strong>Cuota 1:</strong> S/ {{ number_format($item->cuota_1 ?? 0, 2) }}</span>
@@ -116,9 +126,24 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td style="font-weight: 800; color: var(--text);">
-                                    S/ {{ number_format($item->monto, 2) }}
-                                </td>
+                                @if($isMontoIngreso)
+                                    <td style="font-weight: 800; color: var(--text);">
+                                        S/ {{ number_format($item->monto_inicial ?? 0, 2) }}
+                                    </td>
+                                    <td style="font-weight: 800; color: var(--text);">
+                                        S/ {{ number_format($item->cuota_1 ?? 0, 2) }}
+                                    </td>
+                                    <td style="font-weight: 800; color: var(--text);">
+                                        S/ {{ number_format($item->cuota_2 ?? 0, 2) }}
+                                    </td>
+                                    <td style="font-weight: 800; color: var(--text);">
+                                        S/ {{ number_format($item->cuota_3 ?? 0, 2) }}
+                                    </td>
+                                @else
+                                    <td style="font-weight: 800; color: var(--text);">
+                                        S/ {{ number_format($item->monto, 2) }}
+                                    </td>
+                                @endif
                                 <td style="text-align: center;">
                                     @if($item->estado === 'pagado')
                                         <span class="pill green" style="font-size: 9px; font-weight: 800;">PAGADO</span>
@@ -148,7 +173,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text3);">No hay registros de obligaciones en este rango.</td></tr>
+                            <tr><td colspan="{{ $isMontoIngreso ? 10 : 7 }}" style="text-align:center; padding: 40px; color: var(--text3);">No hay registros de obligaciones en este rango.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
