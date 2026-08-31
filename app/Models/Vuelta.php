@@ -12,7 +12,7 @@ class Vuelta extends Model implements Auditable
     use SoftDeletes, AuditableWithEmpresa;
 
     protected $fillable = [
-        'empresa_id','vehiculo_id','conductor_id','ruta_id','created_by',
+        'empresa_id','vehiculo_id','conductor_id','ruta_id','paradero_salida_id','paradero_llegada_id','created_by',
         'fecha', 'numero_vuelta', 'hora_salida', 'hora_llegada', 'observaciones',
         'latitud', 'longitud', 'lat_actual', 'lng_actual', 'latitud_fin', 'longitud_fin', 'estado',
     ];
@@ -31,6 +31,8 @@ class Vuelta extends Model implements Auditable
     public function vehiculo()   { return $this->belongsTo(Vehiculo::class); }
     public function conductor()  { return $this->belongsTo(Conductor::class); }
     public function ruta()       { return $this->belongsTo(Ruta::class); }
+    public function paraderoSalida() { return $this->belongsTo(RutaParadero::class, 'paradero_salida_id'); }
+    public function paraderoLlegada() { return $this->belongsTo(RutaParadero::class, 'paradero_llegada_id'); }
     public function creadoPor()  { return $this->belongsTo(User::class, 'created_by'); }
 
     public function scopeDeEmpresa($q)

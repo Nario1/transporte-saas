@@ -159,12 +159,22 @@
                                 <div style="font-weight: 600; font-size: 14px;">{{ $v->ruta?->nombre ?? 'Sin ruta' }}</div>
                             </td>
 
-                            <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
-                                {{ $v->hora_salida }}
+                            <td>
+                                <div class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
+                                    {{ $v->hora_salida }}
+                                </div>
+                                <div class="text-sub" style="font-size:11px; margin-top:2px;">
+                                    <i class="fa-solid fa-map-pin" style="color:var(--text3); font-size:9px;"></i> {{ $v->paraderoSalida?->nombre ?? '—' }}
+                                </div>
                             </td>
 
-                            <td class="mono" style="color:var(--text3);">
-                                —
+                            <td>
+                                <div class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
+                                    {{ $v->hora_llegada ?? '—' }}
+                                </div>
+                                <div class="text-sub" style="font-size:11px; margin-top:2px;">
+                                    <i class="fa-solid fa-flag" style="color:var(--text3); font-size:9px;"></i> {{ $v->paraderoLlegada?->nombre ?? '—' }}
+                                </div>
                             </td>
 
                             <td>
@@ -468,8 +478,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div style="font-size: 12px; color: var(--text3); font-family: monospace;">${v.vehiculo}</div>
                     </td>
                     <td><div style="font-weight: 600; font-size: 14px;">${v.ruta}</div></td>
-                    <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">${v.hora_salida}</td>
-                    <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">${v.hora_llegada || '—'}</td>
+                    <td>
+                        <div class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">${v.hora_salida}</div>
+                        <div class="text-sub" style="font-size:11px; margin-top:2px;">
+                            <i class="fa-solid fa-map-pin" style="color:var(--text3); font-size:9px;"></i> ${v.paradero_salida || '—'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">${v.hora_llegada || '—'}</div>
+                        <div class="text-sub" style="font-size:11px; margin-top:2px;">
+                            <i class="fa-solid fa-flag" style="color:var(--text3); font-size:9px;"></i> ${v.paradero_llegada || '—'}
+                        </div>
+                    </td>
                     <td class="mono">
                         ${htmlDuracion}
                     </td>

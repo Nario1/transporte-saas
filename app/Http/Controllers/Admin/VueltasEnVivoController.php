@@ -17,7 +17,7 @@ class VueltasEnVivoController extends Controller
         $empresaId = auth()->user()->empresa_id;
         $flota = request('flota');
 
-        $vueltasActivasQuery = Vuelta::with(['conductor', 'vehiculo', 'ruta'])
+        $vueltasActivasQuery = Vuelta::with(['conductor', 'vehiculo', 'ruta', 'paraderoSalida', 'paraderoLlegada'])
             ->where('empresa_id', $empresaId)
             ->where('estado', 'activa')
             ->whereDate('fecha', today())
@@ -43,7 +43,7 @@ class VueltasEnVivoController extends Controller
         $flota = request('flota');
 
         // Vueltas Activas
-        $activas = Vuelta::with(['conductor', 'vehiculo', 'ruta'])
+        $activas = Vuelta::with(['conductor', 'vehiculo', 'ruta', 'paraderoSalida', 'paraderoLlegada'])
             ->where('empresa_id', $empresaId)
             ->where('estado', 'activa')
             ->whereDate('fecha', today())
@@ -55,7 +55,7 @@ class VueltasEnVivoController extends Controller
             ->get();
 
         // Vueltas Terminadas Recientemente (últimos 30 min)
-        $recientes = Vuelta::with(['conductor', 'vehiculo', 'ruta'])
+        $recientes = Vuelta::with(['conductor', 'vehiculo', 'ruta', 'paraderoSalida', 'paraderoLlegada'])
             ->where('empresa_id', $empresaId)
             ->where('estado', 'completada')
             ->whereDate('fecha', today())
@@ -78,6 +78,8 @@ class VueltasEnVivoController extends Controller
                 'flota'         => $v->vehiculo?->numero_flota ?? '?',
                 'ruta'          => $v->ruta?->nombre ?? 'Sin ruta',
                 'hora_salida'   => $v->hora_salida,
+                'paradero_salida'=> $v->paraderoSalida?->nombre ?? '—',
+                'paradero_llegada'=> $v->paraderoLlegada?->nombre ?? '—',
                 'numero_vuelta' => $v->numero_vuelta,
                 'latitud'       => $v->lat_actual ?? $v->latitud,
                 'longitud'      => $v->lng_actual ?? $v->longitud,

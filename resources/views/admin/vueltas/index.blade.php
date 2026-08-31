@@ -114,11 +114,21 @@
                                     <span class="text-main">{{ $vuelta->ruta?->nombre ?? 'Sin Ruta' }}</span>
                                     <span class="text-sub">{{ $vuelta->ruta?->origen }} » {{ $vuelta->ruta?->destino }}</span>
                                 </td>
-                                <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
-                                    {{ $vuelta->hora_salida ? \Carbon\Carbon::parse($vuelta->hora_salida)->format('h:i A') : '--:--' }}
+                                <td>
+                                    <div class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
+                                        {{ $vuelta->hora_salida ? \Carbon\Carbon::parse($vuelta->hora_salida)->format('h:i A') : '--:--' }}
+                                    </div>
+                                    <div class="text-sub" style="font-size:11px; margin-top:2px;">
+                                        <i class="fa-solid fa-map-pin" style="color:var(--text3); font-size:9px;"></i> {{ $vuelta->paraderoSalida?->nombre ?? '—' }}
+                                    </div>
                                 </td>
-                                <td class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
-                                    {{ $vuelta->hora_llegada ? \Carbon\Carbon::parse($vuelta->hora_llegada)->format('h:i A') : '--:--' }}
+                                <td>
+                                    <div class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">
+                                        {{ $vuelta->hora_llegada ? \Carbon\Carbon::parse($vuelta->hora_llegada)->format('h:i A') : '--:--' }}
+                                    </div>
+                                    <div class="text-sub" style="font-size:11px; margin-top:2px;">
+                                        <i class="fa-solid fa-flag" style="color:var(--text3); font-size:9px;"></i> {{ $vuelta->paraderoLlegada?->nombre ?? '—' }}
+                                    </div>
                                 </td>
                                 <td>
                                     @if($vuelta->hora_llegada)

@@ -118,7 +118,8 @@ class VueltaAutoController extends Controller
                 $request->ruta_id,
                 $request->latitud,
                 $request->longitud,
-                auth()->id()
+                auth()->id(),
+                $request->ruta_paradero_id
             );
 
             return response()->json([
@@ -174,6 +175,7 @@ class VueltaAutoController extends Controller
         $tieneCoordenadasAlguno = $paraderos->contains(fn($p) => !is_null($p->latitud_a));
 
         $paraderoFinalNombre = null;
+        $paraderoFinalId = null;
 
         if ($tieneCoordenadasAlguno) {
             $dentroDeAlguno = false;
@@ -181,6 +183,7 @@ class VueltaAutoController extends Controller
                 if (!is_null($p->latitud_a) && $this->isPointWithinSegment($request->latitud, $request->longitud, $p->latitud_a, $p->longitud_a, $p->latitud_b, $p->longitud_b, $p->tolerancia ?? 30)) {
                     $dentroDeAlguno = true;
                     $paraderoFinalNombre = $p->nombre;
+                    $paraderoFinalId = $p->id;
                     break;
                 }
             }
@@ -198,7 +201,8 @@ class VueltaAutoController extends Controller
             $duracion = $this->vueltaService->terminarVuelta(
                 $vuelta,
                 $request->latitud,
-                $request->longitud
+                $request->longitud,
+                $paraderoFinalId
             );
 
             session()->flash('success', '¡Vuelta completada con éxito!');

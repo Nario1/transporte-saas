@@ -28,7 +28,7 @@ class VueltaController extends Controller
                     $vQ->where('numero_flota', $flota);
                 });
             })
-            ->with(['vehiculo', 'conductor', 'ruta'])
+            ->with(['vehiculo', 'conductor', 'ruta', 'paraderoSalida', 'paraderoLlegada'])
             ->orderBy('fecha', 'desc')
             ->orderBy('numero_vuelta')
             ->orderBy('created_at');

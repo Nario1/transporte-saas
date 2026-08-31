@@ -13,14 +13,14 @@ class VueltaService
     /**
      * Inicia una nueva vuelta para el conductor.
      */
-    public function iniciarVuelta(Conductor $conductor, ?int $rutaId, ?float $latitud, ?float $longitud, int $creadorId): Vuelta
+    public function iniciarVuelta(Conductor $conductor, ?int $rutaId, ?float $latitud, ?float $longitud, int $creadorId, ?int $paraderoSalidaId = null): Vuelta
     {
         $ultimaVuelta = Vuelta::where('conductor_id', $conductor->id)
             ->whereDate('fecha', today())
             ->max('numero_vuelta') ?? 0;
         $proximaVuelta = $ultimaVuelta + 1;
 
-        $vuelta = DB::transaction(function () use ($conductor, $rutaId, $latitud, $longitud, $creadorId, $proximaVuelta) {
+        $vuelta = DB::transaction(function () use ($conductor, $rutaId, $latitud, $longitud, $creadorId, $proximaVuelta, $paraderoSalidaId) {
             $vehiculo = $conductor->vehiculos()->activos()->first();
 
             return Vuelta::create([
@@ -28,6 +28,7 @@ class VueltaService
                 'vehiculo_id'  => $vehiculo?->id ?? 1,
                 'conductor_id' => $conductor->id,
                 'ruta_id'      => $rutaId,
+                'paradero_salida_id' => $paraderoSalidaId,
                 'created_by'   => $creadorId,
                 'fecha'        => today(),
                 'numero_vuelta' => $proximaVuelta,
@@ -54,13 +55,14 @@ class VueltaService
      * 
      * @return int Duración en minutos
      */
-    public function terminarVuelta(Vuelta $vuelta, ?float $latitud, ?float $longitud): int
+    public function terminarVuelta(Vuelta $vuelta, ?float $latitud, ?float $longitud, ?int $paraderoLlegadaId = null): int
     {
         $vuelta->update([
             'hora_llegada' => now()->format('H:i:s'),
             'estado'       => 'completada',
             'latitud_fin'  => $latitud,
             'longitud_fin' => $longitud,
+            'paradero_llegada_id' => $paraderoLlegadaId ?: $vuelta->paradero_llegada_id,
             'lat_actual'   => null,
             'lng_actual'   => null,
         ]);
