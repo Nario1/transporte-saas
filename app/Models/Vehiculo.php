@@ -16,6 +16,24 @@ class Vehiculo extends Model implements Auditable
 {
     use HasFactory, AuditableWithEmpresa, SoftDeletes;
 
+    protected static function booted()
+    {
+        static::saving(function ($vehiculo) {
+            if ($vehiculo->propietario_id && $vehiculo->isDirty('propietario_id')) {
+                $propietario = $vehiculo->propietario;
+                $count = $propietario ? $propietario->vehiculos()->where('id', '!=', $vehiculo->id)->count() : 0;
+                if ($propietario && $count === 0) {
+                    if ($vehiculo->monto_inicial == 0 && $vehiculo->cuota_1 == 0 && $vehiculo->cuota_2 == 0 && $vehiculo->cuota_3 == 0) {
+                        $vehiculo->monto_inicial = $propietario->monto_inicial;
+                        $vehiculo->cuota_1 = $propietario->cuota_1;
+                        $vehiculo->cuota_2 = $propietario->cuota_2;
+                        $vehiculo->cuota_3 = $propietario->cuota_3;
+                    }
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         'empresa_id', 'propietario_id', 'conductor_id',
         'placa', 'numero_flota',                          // ← número de flota
@@ -23,16 +41,22 @@ class Vehiculo extends Model implements Auditable
         'numero_motor', 'numero_chasis',
         'soat_vence', 'rev_tecnica_vence', 'tarjeta_prop_vence',
         'estado', 'notas',
+        'monto_inicial', 'cuota_1', 'cuota_2', 'cuota_3',
     ];
     protected $casts = [
         'soat_vence'           => 'date',
         'rev_tecnica_vence'    => 'date',
         'tarjeta_prop_vence'   => 'date',
+        'monto_inicial'        => 'float',
+        'cuota_1'              => 'float',
+        'cuota_2'              => 'float',
+        'cuota_3'              => 'float',
     ];
     protected $auditInclude = [
         'placa','numero_flota','conductor_id','propietario_id',
         'estado','soat_vence','rev_tecnica_vence',
         'marca', 'modelo', 'color', 'anio', 'numero_motor', 'numero_chasis',
+        'monto_inicial', 'cuota_1', 'cuota_2', 'cuota_3',
     ];
 
     public function empresa()     { return $this->belongsTo(Empresa::class); }
@@ -235,5 +259,20 @@ class Vehiculo extends Model implements Auditable
             ->filter()
             ->values()
             ->toArray();
+    }
+
+    public function getMontoIngresoTotalAttribute(): float
+    {
+        return (float) (($this->monto_inicial ?? 0) + ($this->cuota_1 ?? 0) + ($this->cuota_2 ?? 0) + ($this->cuota_3 ?? 0));
+    }
+
+    public function getEstadoIngresoAttribute(): string
+    {
+        return $this->monto_ingreso_total >= 600 ? 'PAGADO' : 'DEUDA';
+    }
+
+    public function getMontoIngresoDeudaAttribute(): float
+    {
+        return (float) max(0, 600 - $this->monto_ingreso_total);
     }
 }

@@ -35,6 +35,11 @@ class UpdatePropietarioRequest extends FormRequest
             'cuota_1'        => 'nullable|numeric|min:0|max:600',
             'cuota_2'        => 'nullable|numeric|min:0|max:600',
             'cuota_3'        => 'nullable|numeric|min:0|max:600',
+            'vehiculos'      => 'nullable|array',
+            'vehiculos.*.monto_inicial' => 'nullable|numeric|min:0|max:600',
+            'vehiculos.*.cuota_1'        => 'nullable|numeric|min:0|max:600',
+            'vehiculos.*.cuota_2'        => 'nullable|numeric|min:0|max:600',
+            'vehiculos.*.cuota_3'        => 'nullable|numeric|min:0|max:600',
         ];
     }
 }

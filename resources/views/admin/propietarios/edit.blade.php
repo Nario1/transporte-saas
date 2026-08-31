@@ -114,73 +114,146 @@
                     </div>
 
                     {{-- SECCIÓN 4: Control de Monto de Ingreso --}}
-                    <div class="form-section" style="margin-top: 30px; border-top: 1px dashed var(--border); padding-top: 20px;">
-                        <h4 style="font-weight: 800; font-size: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-hand-holding-dollar" style="color: var(--accent);"></i> Control de Monto de Ingreso (Total Obligado: S/. 600.00)
-                        </h4>
-                        <div class="g-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; display: grid;">
-                            <div class="field">
-                                <label for="monto_inicial">Monto Inicial (S/.)</label>
-                                <input type="number" id="monto_inicial" name="monto_inicial" step="0.01" min="0" max="600" value="{{ old('monto_inicial', $propietario->monto_inicial) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
-                                @error('monto_inicial')
-                                    <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
-                                @enderror
-                            </div>
+                    @if($propietario->vehiculos->count() === 0)
+                        <div class="form-section" style="margin-top: 30px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                            <h4 style="font-weight: 800; font-size: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-hand-holding-dollar" style="color: var(--accent);"></i> Control de Monto de Ingreso (Total Obligado: S/. 600.00)
+                            </h4>
+                            <div class="g-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; display: grid;">
+                                <div class="field">
+                                    <label for="monto_inicial">Monto Inicial (S/.)</label>
+                                    <input type="number" id="monto_inicial" name="monto_inicial" step="0.01" min="0" max="600" value="{{ old('monto_inicial', $propietario->monto_inicial) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
+                                    @error('monto_inicial')
+                                        <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                                    @enderror
+                                </div>
 
-                            <div class="field">
-                                <label for="cuota_1">Cuota 1 (S/.)</label>
-                                <input type="number" id="cuota_1" name="cuota_1" step="0.01" min="0" max="600" value="{{ old('cuota_1', $propietario->cuota_1) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
-                                @error('cuota_1')
-                                    <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
-                                @enderror
-                            </div>
+                                <div class="field">
+                                    <label for="cuota_1">Cuota 1 (S/.)</label>
+                                    <input type="number" id="cuota_1" name="cuota_1" step="0.01" min="0" max="600" value="{{ old('cuota_1', $propietario->cuota_1) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
+                                    @error('cuota_1')
+                                        <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                                    @enderror
+                                </div>
 
-                            <div class="field">
-                                <label for="cuota_2">Cuota 2 (S/.)</label>
-                                <input type="number" id="cuota_2" name="cuota_2" step="0.01" min="0" max="600" value="{{ old('cuota_2', $propietario->cuota_2) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
-                                @error('cuota_2')
-                                    <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
-                                @enderror
-                            </div>
+                                <div class="field">
+                                    <label for="cuota_2">Cuota 2 (S/.)</label>
+                                    <input type="number" id="cuota_2" name="cuota_2" step="0.01" min="0" max="600" value="{{ old('cuota_2', $propietario->cuota_2) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
+                                    @error('cuota_2')
+                                        <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                                    @enderror
+                                </div>
 
-                            <div class="field">
-                                <label for="cuota_3">Cuota 3 (S/.)</label>
-                                <input type="number" id="cuota_3" name="cuota_3" step="0.01" min="0" max="600" value="{{ old('cuota_3', $propietario->cuota_3) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
-                                @error('cuota_3')
-                                    <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
-                                @enderror
+                                <div class="field">
+                                    <label for="cuota_3">Cuota 3 (S/.)</label>
+                                    <input type="number" id="cuota_3" name="cuota_3" step="0.01" min="0" max="600" value="{{ old('cuota_3', $propietario->cuota_3) }}" placeholder="0.00" oninput="calcularTotalIngreso()">
+                                    @error('cuota_3')
+                                        <span style="color: var(--red); font-size: 11px;">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 15px; background: var(--bg); border: 1px solid var(--border); padding: 12px 18px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 800; font-size: 13px;">Total Recaudado: <span id="suma_total" style="color: var(--accent);">S/. 0.00</span> / S/. 600.00</span>
+                                <span id="estado_badge" class="pill" style="font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 99px;">DEUDA</span>
                             </div>
                         </div>
-                        
-                        <div style="margin-top: 15px; background: var(--bg); border: 1px solid var(--border); padding: 12px 18px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 800; font-size: 13px;">Total Recaudado: <span id="suma_total" style="color: var(--accent);">S/. 0.00</span> / S/. 600.00</span>
-                            <span id="estado_badge" class="pill" style="font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 99px;">DEUDA</span>
-                        </div>
-                    </div>
+                    @else
+                        @foreach($propietario->vehiculos as $index => $v)
+                            <div class="form-section vehiculo-ingreso-section" style="margin-top: 30px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                                <h4 style="font-weight: 800; font-size: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-bus" style="color: var(--accent);"></i>
+                                    Control de Monto de Ingreso - Vehículo: <span style="color: var(--accent); font-weight: 800;">{{ $v->placa }}</span> (Total Obligado: S/. 600.00)
+                                </h4>
+                                <div class="g-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; display: grid;">
+                                    <div class="field">
+                                        <label>Monto Inicial (S/.)</label>
+                                        <input type="number" class="monto_inicial_v" name="vehiculos[{{ $v->id }}][monto_inicial]" step="0.01" min="0" max="600" value="{{ old('vehiculos.'.$v->id.'.monto_inicial', $v->monto_inicial) }}" placeholder="0.00" oninput="calcularTotalIngresoV(this)">
+                                    </div>
+
+                                    <div class="field">
+                                        <label>Cuota 1 (S/.)</label>
+                                        <input type="number" class="cuota_1_v" name="vehiculos[{{ $v->id }}][cuota_1]" step="0.01" min="0" max="600" value="{{ old('vehiculos.'.$v->id.'.cuota_1', $v->cuota_1) }}" placeholder="0.00" oninput="calcularTotalIngresoV(this)">
+                                    </div>
+
+                                    <div class="field">
+                                        <label>Cuota 2 (S/.)</label>
+                                        <input type="number" class="cuota_2_v" name="vehiculos[{{ $v->id }}][cuota_2]" step="0.01" min="0" max="600" value="{{ old('vehiculos.'.$v->id.'.cuota_2', $v->cuota_2) }}" placeholder="0.00" oninput="calcularTotalIngresoV(this)">
+                                    </div>
+
+                                    <div class="field">
+                                        <label>Cuota 3 (S/.)</label>
+                                        <input type="number" class="cuota_3_v" name="vehiculos[{{ $v->id }}][cuota_3]" step="0.01" min="0" max="600" value="{{ old('vehiculos.'.$v->id.'.cuota_3', $v->cuota_3) }}" placeholder="0.00" oninput="calcularTotalIngresoV(this)">
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 15px; background: var(--bg); border: 1px solid var(--border); padding: 12px 18px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 800; font-size: 13px;">Total Recaudado: <span class="suma_total_v" style="color: var(--accent);">S/. 0.00</span> / S/. 600.00</span>
+                                    <span class="estado_badge_v pill" style="font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 99px;">DEUDA</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
 
                     @push('scripts')
                     <script>
                         function calcularTotalIngreso() {
-                            const mi = parseFloat(document.getElementById('monto_inicial').value) || 0;
-                            const c1 = parseFloat(document.getElementById('cuota_1').value) || 0;
-                            const c2 = parseFloat(document.getElementById('cuota_2').value) || 0;
-                            const c3 = parseFloat(document.getElementById('cuota_3').value) || 0;
-                            
-                            const total = mi + c1 + c2 + c3;
-                            document.getElementById('suma_total').textContent = 'S/. ' + total.toFixed(2);
-                            
-                            const badge = document.getElementById('estado_badge');
-                            if (total >= 600) {
-                                badge.textContent = 'PAGADO';
-                                badge.style.background = 'var(--green-l)';
-                                badge.style.color = 'var(--green)';
-                            } else {
-                                badge.textContent = 'DEUDA';
-                                badge.style.background = 'var(--red-l)';
-                                badge.style.color = 'var(--red)';
+                            const miEl = document.getElementById('monto_inicial');
+                            if (miEl) {
+                                const mi = parseFloat(miEl.value) || 0;
+                                const c1 = parseFloat(document.getElementById('cuota_1').value) || 0;
+                                const c2 = parseFloat(document.getElementById('cuota_2').value) || 0;
+                                const c3 = parseFloat(document.getElementById('cuota_3').value) || 0;
+                                
+                                const total = mi + c1 + c2 + c3;
+                                document.getElementById('suma_total').textContent = 'S/. ' + total.toFixed(2);
+                                
+                                const badge = document.getElementById('estado_badge');
+                                if (total >= 600) {
+                                    badge.textContent = 'PAGADO';
+                                    badge.style.background = 'var(--green-l)';
+                                    badge.style.color = 'var(--green)';
+                                } else {
+                                    badge.textContent = 'DEUDA';
+                                    badge.style.background = 'var(--red-l)';
+                                    badge.style.color = 'var(--red)';
+                                }
                             }
                         }
-                        document.addEventListener('DOMContentLoaded', calcularTotalIngreso);
+
+                        function calcularTotalIngresoV(input) {
+                            const section = input.closest('.vehiculo-ingreso-section');
+                            if (section) {
+                                const mi = parseFloat(section.querySelector('.monto_inicial_v').value) || 0;
+                                const c1 = parseFloat(section.querySelector('.cuota_1_v').value) || 0;
+                                const c2 = parseFloat(section.querySelector('.cuota_2_v').value) || 0;
+                                const c3 = parseFloat(section.querySelector('.cuota_3_v').value) || 0;
+                                
+                                const total = mi + c1 + c2 + c3;
+                                section.querySelector('.suma_total_v').textContent = 'S/. ' + total.toFixed(2);
+                                
+                                const badge = section.querySelector('.estado_badge_v');
+                                if (total >= 600) {
+                                    badge.textContent = 'PAGADO';
+                                    badge.style.background = 'var(--green-l)';
+                                    badge.style.color = 'var(--green)';
+                                } else {
+                                    badge.textContent = 'DEUDA';
+                                    badge.style.background = 'var(--red-l)';
+                                    badge.style.color = 'var(--red)';
+                                }
+                            }
+                        }
+
+                        document.addEventListener('DOMContentLoaded', function() {
+                            calcularTotalIngreso();
+                            document.querySelectorAll('.vehiculo-ingreso-section').forEach(function(section) {
+                                const input = section.querySelector('.monto_inicial_v');
+                                if (input) {
+                                    calcularTotalIngresoV(input);
+                                }
+                            });
+                        });
                     </script>
                     @endpush
 

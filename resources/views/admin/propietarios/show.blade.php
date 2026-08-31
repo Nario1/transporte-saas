@@ -81,50 +81,101 @@
                 </div>
 
                 {{-- Control de Monto de Ingreso --}}
-                <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div class="card-title">Control de Monto de Ingreso (Total Obligado: S/. 600.00)</div>
-                        @php
-                            $estado = $propietario->estado_ingreso;
-                            $badgeClass = $estado === 'PAGADO' ? 'green' : 'red';
-                        @endphp
-                        <span class="pill {{ $badgeClass }}" style="font-weight: 800; font-size: 11px;">
-                            {{ $estado }}
-                        </span>
-                    </div>
-                    <div class="card-body" style="padding: 0;">
-                        <table class="tbl">
-                            <tbody>
-                                <tr>
-                                    <td style="width: 220px; color: var(--text3); font-weight: 600;">Monto Inicial</td>
-                                    <td style="font-weight: 700;">S/. {{ number_format($propietario->monto_inicial ?? 0, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="color: var(--text3); font-weight: 600;">Cuota 1</td>
-                                    <td>S/. {{ number_format($propietario->cuota_1 ?? 0, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="color: var(--text3); font-weight: 600;">Cuota 2</td>
-                                    <td>S/. {{ number_format($propietario->cuota_2 ?? 0, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="color: var(--text3); font-weight: 600;">Cuota 3</td>
-                                    <td>S/. {{ number_format($propietario->cuota_3 ?? 0, 2) }}</td>
-                                </tr>
-                                <tr style="background: var(--bg); font-weight: 800;">
-                                    <td style="color: var(--text); font-weight: 800;">Total Recaudado</td>
-                                    <td style="color: var(--accent); font-weight: 800;">S/. {{ number_format($propietario->monto_ingreso_total, 2) }}</td>
-                                </tr>
-                                @if($propietario->monto_ingreso_deuda > 0)
-                                    <tr style="background: #fef2f2; color: #b91c1c; font-weight: 800;">
-                                        <td style="font-weight: 800;">Saldo Pendiente (Deuda)</td>
-                                        <td style="font-weight: 800;">S/. {{ number_format($propietario->monto_ingreso_deuda, 2) }}</td>
+                @if($propietario->vehiculos->count() === 0)
+                    <div class="card">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="card-title">Control de Monto de Ingreso (Total Obligado: S/. 600.00)</div>
+                            @php
+                                $estado = $propietario->estado_ingreso;
+                                $badgeClass = $estado === 'PAGADO' ? 'green' : 'red';
+                            @endphp
+                            <span class="pill {{ $badgeClass }}" style="font-weight: 800; font-size: 11px;">
+                                {{ $estado }}
+                            </span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="tbl">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 220px; color: var(--text3); font-weight: 600;">Monto Inicial</td>
+                                        <td style="font-weight: 700;">S/. {{ number_format($propietario->monto_inicial ?? 0, 2) }}</td>
                                     </tr>
-                                @endif
-                            </tbody>
-                        </table>
+                                    <tr>
+                                        <td style="color: var(--text3); font-weight: 600;">Cuota 1</td>
+                                        <td>S/. {{ number_format($propietario->cuota_1 ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: var(--text3); font-weight: 600;">Cuota 2</td>
+                                        <td>S/. {{ number_format($propietario->cuota_2 ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: var(--text3); font-weight: 600;">Cuota 3</td>
+                                        <td>S/. {{ number_format($propietario->cuota_3 ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr style="background: var(--bg); font-weight: 800;">
+                                        <td style="color: var(--text); font-weight: 800;">Total Recaudado</td>
+                                        <td style="color: var(--accent); font-weight: 800;">S/. {{ number_format($propietario->monto_ingreso_total, 2) }}</td>
+                                    </tr>
+                                    @if($propietario->monto_ingreso_deuda > 0)
+                                        <tr style="background: #fef2f2; color: #b91c1c; font-weight: 800;">
+                                            <td style="font-weight: 800;">Saldo Pendiente (Deuda)</td>
+                                            <td style="font-weight: 800;">S/. {{ number_format($propietario->monto_ingreso_deuda, 2) }}</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                @else
+                    @foreach($propietario->vehiculos as $v)
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="card-title">
+                                    Control de Monto de Ingreso - Vehículo: <span style="color: var(--accent); font-weight: 800;">{{ $v->placa }}</span> (Total Obligado: S/. 600.00)
+                                </div>
+                                @php
+                                    $estado = $v->estado_ingreso;
+                                    $badgeClass = $estado === 'PAGADO' ? 'green' : 'red';
+                                @endphp
+                                <span class="pill {{ $badgeClass }}" style="font-weight: 800; font-size: 11px;">
+                                    {{ $estado }}
+                                </span>
+                            </div>
+                            <div class="card-body" style="padding: 0;">
+                                <table class="tbl">
+                                    <tbody>
+                                        <tr>
+                                            <td style="width: 220px; color: var(--text3); font-weight: 600;">Monto Inicial</td>
+                                            <td style="font-weight: 700;">S/. {{ number_format($v->monto_inicial ?? 0, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color: var(--text3); font-weight: 600;">Cuota 1</td>
+                                            <td>S/. {{ number_format($v->cuota_1 ?? 0, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color: var(--text3); font-weight: 600;">Cuota 2</td>
+                                            <td>S/. {{ number_format($v->cuota_2 ?? 0, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color: var(--text3); font-weight: 600;">Cuota 3</td>
+                                            <td>S/. {{ number_format($v->cuota_3 ?? 0, 2) }}</td>
+                                        </tr>
+                                        <tr style="background: var(--bg); font-weight: 800;">
+                                            <td style="color: var(--text); font-weight: 800;">Total Recaudado</td>
+                                            <td style="color: var(--accent); font-weight: 800;">S/. {{ number_format($v->monto_ingreso_total, 2) }}</td>
+                                        </tr>
+                                        @if($v->monto_ingreso_deuda > 0)
+                                            <tr style="background: #fef2f2; color: #b91c1c; font-weight: 800;">
+                                                <td style="font-weight: 800;">Saldo Pendiente (Deuda)</td>
+                                                <td style="font-weight: 800;">S/. {{ number_format($v->monto_ingreso_deuda, 2) }}</td>
+                                            </tr>
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
 
                 {{-- Tabla de Vehículos Asociados --}}
                 <div class="card">

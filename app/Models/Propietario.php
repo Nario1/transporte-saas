@@ -45,16 +45,25 @@ class Propietario extends Model implements Auditable
 
     public function getMontoIngresoTotalAttribute(): float
     {
-        return (float) (($this->monto_inicial ?? 0) + ($this->cuota_1 ?? 0) + ($this->cuota_2 ?? 0) + ($this->cuota_3 ?? 0));
+        if ($this->vehiculos()->count() === 0) {
+            return (float) (($this->monto_inicial ?? 0) + ($this->cuota_1 ?? 0) + ($this->cuota_2 ?? 0) + ($this->cuota_3 ?? 0));
+        }
+        return (float) $this->vehiculos->sum('monto_ingreso_total');
     }
 
     public function getEstadoIngresoAttribute(): string
     {
-        return $this->monto_ingreso_total >= 600 ? 'PAGADO' : 'DEUDA';
+        if ($this->vehiculos()->count() === 0) {
+            return $this->monto_ingreso_total >= 600 ? 'PAGADO' : 'DEUDA';
+        }
+        return $this->monto_ingreso_deuda > 0 ? 'DEUDA' : 'PAGADO';
     }
 
     public function getMontoIngresoDeudaAttribute(): float
     {
-        return (float) max(0, 600 - $this->monto_ingreso_total);
+        if ($this->vehiculos()->count() === 0) {
+            return (float) max(0, 600 - $this->monto_ingreso_total);
+        }
+        return (float) $this->vehiculos->sum('monto_ingreso_deuda');
     }
 }

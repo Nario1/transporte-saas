@@ -124,7 +124,19 @@ class PropietarioController extends Controller
         $data = $request->validated();
 
         try {
-            $propietario->update($data);
+            DB::transaction(function() use ($propietario, $data) {
+                $propietario->update($data);
+
+                if (!empty($data['vehiculos'])) {
+                    foreach ($data['vehiculos'] as $vehiculoId => $vData) {
+                        $vehiculo = $propietario->vehiculos()->find($vehiculoId);
+                        if ($vehiculo) {
+                            $vehiculo->update($vData);
+                        }
+                    }
+                }
+            });
+
             return redirect()->route('propietarios.index')
                 ->with('success', 'Datos actualizados correctamente.');
         } catch (\Exception $e) {

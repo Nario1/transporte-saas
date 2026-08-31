@@ -473,29 +473,61 @@ class ReporteController extends Controller
             foreach ($propietarios as $p) {
                 $pFecha = $p->created_at ? \Carbon\Carbon::parse($p->created_at) : today();
 
-                // Siempre incluir en el reporte de deudas si su creación está en el rango de fechas
-                if ($pFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
-                    $item = new \stdClass();
-                    $item->id = 'ingreso_' . $p->id;
-                    $item->fecha = $pFecha;
-                    $item->monto = $p->monto_ingreso_total;
-                    $item->monto_deuda = $p->monto_ingreso_deuda;
-                    $item->estado = $p->monto_ingreso_deuda > 0 ? 'pendiente' : 'pagado';
-                    $item->tipo_obligacion = 'MONTO DE INGRESO';
-                    $item->concepto = 'Ingreso de Socio: ' . $p->nombre_completo;
-                    $item->vehiculo = $p->vehiculos->first() ?: (object)['numero_flota' => '---', 'placa' => '---'];
-                    $item->conductor = null;
-                    $item->cobrado_at = $p->updated_at ? \Carbon\Carbon::parse($p->updated_at) : today();
-                    $item->created_at = $p->created_at ?? today();
-                    $item->metodo_pago = 'efectivo';
-                    $item->pagoMp = null;
-                    $item->motivo_exoneracion = null;
-                    $item->monto_inicial = $p->monto_inicial;
-                    $item->cuota_1 = $p->cuota_1;
-                    $item->cuota_2 = $p->cuota_2;
-                    $item->cuota_3 = $p->cuota_3;
-                    
-                    $items->push($item);
+                if ($p->vehiculos->count() === 0) {
+                    if ($pFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
+                        $item = new \stdClass();
+                        $item->id = 'ingreso_prop_' . $p->id;
+                        $item->fecha = $pFecha;
+                        $item->monto = $p->monto_ingreso_total;
+                        $item->monto_deuda = $p->monto_ingreso_deuda;
+                        $item->estado = $p->monto_ingreso_deuda > 0 ? 'pendiente' : 'pagado';
+                        $item->tipo_obligacion = 'MONTO DE INGRESO';
+                        $item->concepto = 'Ingreso de Socio: ' . $p->nombre_completo;
+                        $item->vehiculo = (object)['numero_flota' => '---', 'placa' => '---'];
+                        $item->conductor = null;
+                        $item->cobrado_at = $p->updated_at ? \Carbon\Carbon::parse($p->updated_at) : today();
+                        $item->created_at = $p->created_at ?? today();
+                        $item->metodo_pago = 'efectivo';
+                        $item->pagoMp = null;
+                        $item->motivo_exoneracion = null;
+                        $item->monto_inicial = $p->monto_inicial;
+                        $item->cuota_1 = $p->cuota_1;
+                        $item->cuota_2 = $p->cuota_2;
+                        $item->cuota_3 = $p->cuota_3;
+                        
+                        $items->push($item);
+                    }
+                } else {
+                    foreach ($p->vehiculos as $v) {
+                        if ($flota && $v->numero_flota != $flota) {
+                            continue;
+                        }
+
+                        $vFecha = $v->created_at ? \Carbon\Carbon::parse($v->created_at) : $pFecha;
+                        if ($vFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
+                            $item = new \stdClass();
+                            $item->id = 'ingreso_veh_' . $v->id;
+                            $item->fecha = $vFecha;
+                            $item->monto = $v->monto_ingreso_total;
+                            $item->monto_deuda = $v->monto_ingreso_deuda;
+                            $item->estado = $v->monto_ingreso_deuda > 0 ? 'pendiente' : 'pagado';
+                            $item->tipo_obligacion = 'MONTO DE INGRESO';
+                            $item->concepto = 'Ingreso de Socio: ' . $p->nombre_completo;
+                            $item->vehiculo = $v;
+                            $item->conductor = null;
+                            $item->cobrado_at = $v->updated_at ? \Carbon\Carbon::parse($v->updated_at) : today();
+                            $item->created_at = $v->created_at ?? today();
+                            $item->metodo_pago = 'efectivo';
+                            $item->pagoMp = null;
+                            $item->motivo_exoneracion = null;
+                            $item->monto_inicial = $v->monto_inicial;
+                            $item->cuota_1 = $v->cuota_1;
+                            $item->cuota_2 = $v->cuota_2;
+                            $item->cuota_3 = $v->cuota_3;
+                            
+                            $items->push($item);
+                        }
+                    }
                 }
             }
         }
