@@ -57,6 +57,21 @@
         padding: 1px 4px !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
     }
+    #mapa-live-container.fullscreen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 9999 !important;
+        background: var(--bg);
+    }
+    #mapa-live-container.fullscreen #mapa-live {
+        height: 100% !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
 </style>
 @endsection
 
@@ -132,8 +147,14 @@
     </div>
 
     {{-- MAPA INTERACTIVO --}}
-    <div style="position: relative;" class="no-print">
+    <div style="position: relative;" class="no-print" id="mapa-live-container">
         <div id="mapa-live" style="margin-bottom: 20px;"></div>
+        
+        {{-- BOTON FULLSCREEN --}}
+        <button type="button" onclick="toggleFullscreenMap()" id="btn-fullscreen-map" title="Pantalla Completa" 
+                style="position: absolute; top: 10px; left: 50px; z-index: 1000; width: 34px; height: 34px; border-radius: 4px; background: white; border: 2px solid rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #333; box-shadow: none;">
+            <i class="fa-solid fa-expand" style="font-size: 14px;"></i>
+        </button>
         
         {{-- PANEL DE CONTROL DE EDITOR --}}
         <div id="editor-control-panel" style="display: none; position: absolute; top: 20px; right: 20px; z-index: 1000; background: var(--card); padding: 18px; border-radius: 16px; box-shadow: var(--shadow-l); width: 290px; border: 1px solid var(--border);">
@@ -1092,6 +1113,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Detener auto-ajuste de cámara si el usuario mueve el mapa
     map.on('movestart', () => map._manualMove = true);
     setTimeout(() => map._manualMove = false, 30000); // Reactivar cada 30s
+
+    window.toggleFullscreenMap = function() {
+        const container = document.getElementById('mapa-live-container');
+        const btn = document.getElementById('btn-fullscreen-map');
+        const icon = btn.querySelector('i');
+
+        container.classList.toggle('fullscreen');
+
+        if (container.classList.contains('fullscreen')) {
+            icon.className = 'fa-solid fa-compress';
+            btn.title = 'Salir de Pantalla Completa';
+        } else {
+            icon.className = 'fa-solid fa-expand';
+            btn.title = 'Pantalla Completa';
+        }
+
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+    };
 
     // --- INICIO ---
     actualizarDatos();
