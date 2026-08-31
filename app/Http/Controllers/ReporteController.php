@@ -395,6 +395,11 @@ class ReporteController extends Controller
         $propietarioId = $request->input('propietario_id');
         $propietariosList = \App\Models\Propietario::where('empresa_id', $user->empresa_id)->orderBy('nombre')->get();
 
+        $filtrarPorFecha = true;
+        if ($tipo === 'monto_ingreso' && !$request->filled('desde') && !$request->filled('hasta')) {
+            $filtrarPorFecha = false;
+        }
+
         if ($request->has('flota')) {
             $flota = $request->input('flota') ?? '';
         } elseif ($request->has('page') || $tipo === 'monto_ingreso') {
@@ -474,7 +479,7 @@ class ReporteController extends Controller
                 $pFecha = $p->created_at ? \Carbon\Carbon::parse($p->created_at) : today();
 
                 if ($p->vehiculos->count() === 0) {
-                    if ($tipo === 'monto_ingreso' || $pFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
+                    if (!$filtrarPorFecha || $pFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
                         $item = new \stdClass();
                         $item->id = 'ingreso_prop_' . $p->id;
                         $item->fecha = $pFecha;
@@ -504,7 +509,7 @@ class ReporteController extends Controller
                         }
 
                         $vFecha = $v->created_at ? \Carbon\Carbon::parse($v->created_at) : $pFecha;
-                        if ($tipo === 'monto_ingreso' || $vFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
+                        if (!$filtrarPorFecha || $vFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
                             $item = new \stdClass();
                             $item->id = 'ingreso_veh_' . $v->id;
                             $item->fecha = $vFecha;
@@ -576,7 +581,7 @@ class ReporteController extends Controller
         );
         $paginatedItems->withQueryString();
 
-        return view('admin.reportes.deudas', compact('paginatedItems', 'totalDeuda', 'totalCobrado', 'desde', 'hasta', 'flota', 'propietariosList', 'propietarioId'));
+        return view('admin.reportes.deudas', compact('paginatedItems', 'totalDeuda', 'totalCobrado', 'desde', 'hasta', 'flota', 'propietariosList', 'propietarioId', 'filtrarPorFecha'));
     }
 
     // ── Helpers ──────────────────────────────────────────────────

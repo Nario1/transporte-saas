@@ -12,11 +12,11 @@
             <form action="{{ route('reportes.deudas') }}" method="GET" class="card-body g-filters">
                 <div class="field" id="field-desde">
                     <label>Desde:</label>
-                    <input type="date" name="desde" value="{{ $desde->toDateString() }}">
+                    <input type="date" name="desde" value="{{ $filtrarPorFecha && $desde ? $desde->toDateString() : '' }}">
                 </div>
                 <div class="field" id="field-hasta">
                     <label>Hasta:</label>
-                    <input type="date" name="hasta" value="{{ $hasta->toDateString() }}">
+                    <input type="date" name="hasta" value="{{ $filtrarPorFecha && $hasta ? $hasta->toDateString() : '' }}">
                 </div>
                 <div class="field" id="field-flota">
                     <label>N° Flota:</label>
@@ -215,8 +215,8 @@
             if (tipoSelect && tipoSelect.value === 'monto_ingreso') {
                 if (fieldFlota) fieldFlota.style.display = 'none';
                 if (fieldPropietario) fieldPropietario.style.display = 'block';
-                if (fieldDesde) fieldDesde.style.display = 'none';
-                if (fieldHasta) fieldHasta.style.display = 'none';
+                if (fieldDesde) fieldDesde.style.display = 'block';
+                if (fieldHasta) fieldHasta.style.display = 'block';
                 if (fieldDia) fieldDia.style.display = 'none';
             } else {
                 if (fieldFlota) fieldFlota.style.display = 'block';
