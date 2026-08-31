@@ -181,8 +181,7 @@
         <select id="ruta-select" class="form-control" style="padding:10px;" required>
             <option value="">-- Seleccionar Ruta --</option>
             @foreach($rutas as $r)
-                <option value="{{ $r->id }}-ida">{{ $r->nombre }} ({{ $r->origen }} - {{ $r->destino }})</option>
-                <option value="{{ $r->id }}-vuelta">{{ $r->nombre }} ({{ $r->destino }} - {{ $r->origen }})</option>
+                <option value="{{ $r->id }}">{{ $r->nombre }}</option>
             @endforeach
         </select>
     </div>
@@ -575,7 +574,7 @@ async function iniciarVuelta() {
     }
     const body = { 
         verificado_rostro: rostroVerificado, 
-        ruta_id: rutaSelect.split('-')[0], 
+        ruta_id: rutaSelect, 
         ruta_paradero_id: paraderoSelect, 
         latitud: posFinal.lat, 
         longitud: posFinal.lng 
@@ -598,37 +597,29 @@ async function iniciarVuelta() {
 
 // Lógica de llenado dinámico del paradero select
 document.getElementById('ruta-select').addEventListener('change', function() {
-    const rawVal = this.value;
+    const rutaId = this.value;
     const paraderoField = document.getElementById('paradero-field');
     const paraderoSelect = document.getElementById('paradero-select');
     
     // Limpiar opciones previas
     paraderoSelect.innerHTML = '<option value="">-- Seleccionar Paradero --</option>';
     
-    if (!rawVal) {
+    if (!rutaId) {
         paraderoField.style.display = 'none';
         actualizarEstadoBotonIniciar();
         return;
     }
     
-    const parts = rawVal.split('-');
-    const rutaId = parts[0];
-    const sentido = parts[1]; // 'ida' o 'vuelta'
-    
     const rutaObj = routesData.find(r => r.id == rutaId);
     if (rutaObj && rutaObj.paraderos) {
-        let paraderosList = [...rutaObj.paraderos];
-        if (sentido === 'vuelta') {
-            paraderosList.reverse();
-        }
-        
-        paraderosList.forEach(p => {
+        rutaObj.paraderos.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
             
-            let tipoLabel = 'Intermedio';
-            if (p.tipo === 'origen') tipoLabel = 'Origen';
-            if (p.tipo === 'destino') tipoLabel = 'Destino';
+            let tipoLabel = 'I';
+            if (p.tipo === 'origen' || p.tipo === 'destino') {
+                tipoLabel = 'O/ D';
+            }
             
             opt.textContent = `${p.nombre} (${tipoLabel})`;
             
