@@ -96,7 +96,7 @@
                                             {{ $p->nombre }}</div>
                                         <div
                                             style="font-size: 9px; font-weight: 800; color: var(--text3); text-transform: uppercase;">
-                                            {{ $p->tipo }}
+                                            {{ $p->tipo === 'origen' ? 'Origen / Destino' : ($p->tipo === 'destino' ? 'Destino / Origen' : 'Intermedio') }}
                                             {{ $loop->first ? '• PUNTO INICIAL' : ($loop->last ? '• RETORNO FINAL' : '') }}
                                         </div>
                                     </div>
