@@ -80,6 +80,8 @@ class VueltasEnVivoController extends Controller
                 'hora_salida'   => $v->hora_salida,
                 'paradero_salida'=> $v->paraderoSalida?->nombre ?? '—',
                 'paradero_llegada'=> $v->paraderoLlegada?->nombre ?? '—',
+                'paradero_salida_tipo'=> $v->paraderoSalida?->tipo,
+                'paradero_llegada_tipo'=> $v->paraderoLlegada?->tipo,
                 'numero_vuelta' => $v->numero_vuelta,
                 'latitud'       => $v->lat_actual ?? $v->latitud,
                 'longitud'      => $v->lng_actual ?? $v->longitud,

@@ -202,7 +202,9 @@
                             </td>
 
                             <td>
-                                <span class="pill green" style="font-size: 12px; font-weight: 800; padding: 6px 12px;">ACTIVA</span>
+                                <span style="font-size: 13.5px; font-weight: 800; padding: 8px 14px; border-radius: 99px; background: var(--green-l); color: var(--green); display: inline-block; text-align: center;">
+                                    ACTIVA
+                                </span>
                             </td>
 
                             <td>
@@ -467,6 +469,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
 
+            let badgeBg = 'var(--accent-l)';
+            let badgeColor = 'var(--accent)';
+            let badgeLabel = 'COMPLETADA';
+
+            if (isActive) {
+                badgeBg = 'var(--green-l)';
+                badgeColor = 'var(--green)';
+                badgeLabel = 'ACTIVA';
+            } else {
+                if (v.paradero_salida_tipo && v.paradero_llegada_tipo) {
+                    if (v.paradero_salida_tipo === 'intermedio' || v.paradero_llegada_tipo === 'intermedio') {
+                        badgeBg = 'var(--red-l)';
+                        badgeColor = 'var(--red)';
+                        badgeLabel = 'CORTADA';
+                    }
+                }
+            }
+
             html += `
                 <tr id="vuelta-${v.id}" class="vuelta-row ${v.estado}">
                     <td style="padding-left: 24px;">
@@ -494,8 +514,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${htmlDuracion}
                     </td>
                     <td>
-                        <span class="pill ${isActive ? 'green' : 'gray'}" style="font-size: 12px; font-weight: 800; padding: 6px 12px; display: inline-block;">
-                            ${v.estado.toUpperCase()}
+                        <span style="font-size: 13.5px; font-weight: 800; padding: 8px 14px; border-radius: 99px; background: ${badgeBg}; color: ${badgeColor}; display: inline-block; text-align: center;">
+                            ${badgeLabel}
                         </span>
                     </td>
                     <td><span class="pill blue" style="font-size: 12px; font-weight: 800; padding: 6px 12px;">V${v.numero_vuelta}</span></td>
