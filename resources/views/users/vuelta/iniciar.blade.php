@@ -196,10 +196,10 @@
     {{-- Sin campos de lat/lng en el DOM para evitar alteraciones --}}
     <div class="field mb14">
         <label>Ubicación GPS (Automática)</label>
-        <div id="gps-display-text" style="font-size:14px; font-weight:700; color:var(--accent); background:var(--border); padding:10px; border-radius:10px;">
+        <div id="gps-display-text" style="font-size:14px; font-weight:700; color:var(--accent); background:var(--border); padding:10px; border-radius:10px; margin-bottom: 12px;">
             Obteniendo ubicación...
         </div>
-        <div id="geo-validation-msg" style="margin-top:10px; font-size:12.5px; font-weight:800; display:none; padding:10px; border-radius:8px;"></div>
+        <div id="geo-validation-msg" style="display:none; padding:12px; border-radius:8px; background:var(--bg); border:1px solid var(--border); font-size:13px;"></div>
     </div>
 </div>
 
@@ -247,8 +247,9 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 function isPointWithinSegment(latP, lngP, latA, lngA, latB, lngB, toleranceMeters = 30) {
-    if (latA === null || lngA === null || latB === null || lngB === null) {
-        return true; // Si no hay coordenadas, es válido por defecto
+    if (latA === null || lngA === null || latB === null || lngB === null ||
+        isNaN(latA) || isNaN(lngA) || isNaN(latB) || isNaN(lngB)) {
+        return { within: true, distance: 0, tolerance: toleranceMeters };
     }
     
     const latRef = (latA + latB) / 2;
@@ -263,7 +264,8 @@ function isPointWithinSegment(latP, lngP, latA, lngA, latB, lngB, toleranceMeter
     
     const ab2 = (dx * dx) + (dy * dy);
     if (ab2 === 0) {
-        return haversineDistance(latP, lngP, latA, lngA) <= toleranceMeters;
+        const dist = haversineDistance(latP, lngP, latA, lngA);
+        return { within: dist <= toleranceMeters, distance: dist, tolerance: toleranceMeters };
     }
     
     const ap_ab = (dxp * dx) + (dyp * dy);
@@ -273,7 +275,7 @@ function isPointWithinSegment(latP, lngP, latA, lngA, latB, lngB, toleranceMeter
     const lngProj = lngA + t * (lngB - lngA);
     
     const distance = haversineDistance(latP, lngP, latProj, lngProj);
-    return distance <= toleranceMeters;
+    return { within: distance <= toleranceMeters, distance: distance, tolerance: toleranceMeters };
 }
 
 let watchId = null;
@@ -352,58 +354,62 @@ function actualizarEstadoBotonIniciar() {
     let dentroDeRango = true;
     
     if (!tieneRuta) {
-        msgEl.style.display = 'block';
-        msgEl.style.background = '#eff6ff';
-        msgEl.style.color = '#1e40af';
-        msgEl.style.border = '1px solid #dbeafe';
-        msgEl.innerHTML = `<i class="fa-solid fa-info-circle"></i> Selecciona la ruta`;
+        msgEl.style.display = 'none';
         dentroDeRango = false;
     } else if (!tieneParadero) {
-        msgEl.style.display = 'block';
-        msgEl.style.background = '#eff6ff';
-        msgEl.style.color = '#1e40af';
-        msgEl.style.border = '1px solid #dbeafe';
-        msgEl.innerHTML = `<i class="fa-solid fa-info-circle"></i> Selecciona un paradero`;
+        msgEl.style.display = 'none';
         dentroDeRango = false;
     } else if (!tieneGps) {
         msgEl.style.display = 'block';
-        msgEl.style.background = '#fffbeb';
-        msgEl.style.color = '#92400e';
-        msgEl.style.border = '1px solid #fef3c7';
-        msgEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Obteniendo ubicación GPS...`;
+        msgEl.innerHTML = `
+            <div style="font-weight: 700; color: var(--text2); margin-bottom: 6px;"><i class="fa-solid fa-circle-info" style="color: var(--accent);"></i> Estado del Paradero</div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="pill" style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px; color: white; background: var(--orange);">ESPERANDO GPS</span>
+                <span style="font-weight: 700; color: var(--text);">Obteniendo ubicación GPS...</span>
+            </div>
+        `;
         dentroDeRango = false;
     } else {
         const opt = document.getElementById('paradero-select').selectedOptions[0];
         const latAStr = opt.getAttribute('data-lat-a');
         
-        if (latAStr) {
+        if (latAStr && latAStr !== 'null') {
             const latA = parseFloat(latAStr);
             const lngA = parseFloat(opt.getAttribute('data-lng-a'));
             const latB = parseFloat(opt.getAttribute('data-lat-b'));
             const lngB = parseFloat(opt.getAttribute('data-lng-b'));
-            const tolerancia = parseFloat(opt.getAttribute('data-tolerancia'));
+            const tolerancia = parseFloat(opt.getAttribute('data-tolerancia')) || 30;
             
-            dentroDeRango = isPointWithinSegment(gpsActual.lat, gpsActual.lng, latA, lngA, latB, lngB, tolerancia);
+            const check = isPointWithinSegment(gpsActual.lat, gpsActual.lng, latA, lngA, isNaN(latB) ? latA : latB, isNaN(lngB) ? lngA : lngB, tolerancia);
+            dentroDeRango = check.within;
             
+            msgEl.style.display = 'block';
             if (!dentroDeRango) {
-                msgEl.style.display = 'block';
-                msgEl.style.background = '#fef2f2';
-                msgEl.style.color = '#991b1b';
-                msgEl.style.border = '1px solid #fee2e2';
-                msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> No estás dentro de las coordenadas.`;
+                msgEl.innerHTML = `
+                    <div style="font-weight: 700; color: var(--text2); margin-bottom: 6px;"><i class="fa-solid fa-circle-info" style="color: var(--accent);"></i> Estado del Paradero</div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="pill" style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px; color: white; background: #ef4444;">FUERA DE RANGO</span>
+                        <span style="font-weight: 700; color: #ef4444;">Distancia: ${check.distance.toFixed(1)} metros. Acércate más.</span>
+                    </div>
+                `;
             } else {
-                msgEl.style.display = 'block';
-                msgEl.style.background = '#f0fdf4';
-                msgEl.style.color = '#166534';
-                msgEl.style.border = '1px solid #dcfce7';
-                msgEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Ubicación correcta: Estás dentro del tramo del paradero.`;
+                msgEl.innerHTML = `
+                    <div style="font-weight: 700; color: var(--text2); margin-bottom: 6px;"><i class="fa-solid fa-circle-info" style="color: var(--accent);"></i> Estado del Paradero</div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="pill" style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px; color: white; background: #22c55e;">DENTRO DE RANGO</span>
+                        <span style="font-weight: 700; color: #22c55e;">Distancia: ${check.distance.toFixed(1)} metros. ¡Puedes iniciar!</span>
+                    </div>
+                `;
             }
         } else {
             msgEl.style.display = 'block';
-            msgEl.style.background = '#f0fdf4';
-            msgEl.style.color = '#166534';
-            msgEl.style.border = '1px solid #dcfce7';
-            msgEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Este paradero no requiere validación de coordenadas.`;
+            msgEl.innerHTML = `
+                <div style="font-weight: 700; color: var(--text2); margin-bottom: 6px;"><i class="fa-solid fa-circle-info" style="color: var(--accent);"></i> Estado del Paradero</div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span class="pill" style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px; color: white; background: var(--green);">PERMITIDO</span>
+                    <span style="font-weight: 700; color: var(--text);">Este paradero no exige validación de GPS.</span>
+                </div>
+            `;
             dentroDeRango = true;
         }
     }

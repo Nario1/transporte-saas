@@ -123,13 +123,9 @@
         {{-- Panel Informativo de Coordenadas y Distancia --}}
         <div id="paradero-coords-info" style="margin-top: 12px; display: none; padding: 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); font-size: 13px;">
             <div style="font-weight: 700; color: var(--text2); margin-bottom: 6px;"><i class="fa-solid fa-circle-info" style="color: var(--accent);"></i> Estado del Paradero</div>
-            <div class="flex-v" style="gap: 4px; color: var(--text3);">
-                <div><b>Punto A:</b> <span id="info-pto-a">—</span></div>
-                <div><b>Punto B:</b> <span id="info-pto-b">—</span></div>
-                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <span id="info-badge" class="pill" style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px; color: white;">—</span>
-                    <span id="info-dist-text" style="font-weight: 700; color: var(--text);">—</span>
-                </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span id="info-badge" class="pill" style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px; color: white;">—</span>
+                <span id="info-dist-text" style="font-weight: 700; color: var(--text);">—</span>
             </div>
         </div>
     </div>
@@ -196,9 +192,6 @@ window.verificarGPSParaderoSeleccionado = function() {
     infoPanel.style.display = 'block';
 
     if (isNaN(latA) || isNaN(lngA)) {
-        document.getElementById('info-pto-a').textContent = 'No configurado';
-        document.getElementById('info-pto-b').textContent = 'No configurado';
-        
         const badge = document.getElementById('info-badge');
         badge.textContent = 'PERMITIDO';
         badge.style.background = 'var(--green)';
@@ -206,9 +199,6 @@ window.verificarGPSParaderoSeleccionado = function() {
         document.getElementById('info-dist-text').style.color = 'var(--text)';
         return;
     }
-
-    document.getElementById('info-pto-a').textContent = `${latA.toFixed(6)}, ${lngA.toFixed(6)}`;
-    document.getElementById('info-pto-b').textContent = (isNaN(latB) || isNaN(lngB)) ? 'Igual a Punto A' : `${latB.toFixed(6)}, ${lngB.toFixed(6)}`;
 
     if (currentLat === null || currentLng === null) {
         const badge = document.getElementById('info-badge');
@@ -227,12 +217,12 @@ window.verificarGPSParaderoSeleccionado = function() {
     if (check.within) {
         badge.textContent = 'DENTRO DE RANGO';
         badge.style.background = '#22c55e';
-        distText.textContent = `Distancia: ${check.distance.toFixed(1)} metros (Límite: ${check.tolerance}m). ¡Puedes terminar!`;
+        distText.textContent = `Distancia: ${check.distance.toFixed(1)} metros. ¡Puedes terminar!`;
         distText.style.color = '#22c55e';
     } else {
         badge.textContent = 'FUERA DE RANGO';
         badge.style.background = '#ef4444';
-        distText.textContent = `Distancia: ${check.distance.toFixed(1)} metros (Límite: ${check.tolerance}m). Acércate más.`;
+        distText.textContent = `Distancia: ${check.distance.toFixed(1)} metros. Acércate más.`;
         distText.style.color = '#ef4444';
     }
 };
