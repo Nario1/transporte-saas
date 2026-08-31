@@ -487,6 +487,9 @@ class ReporteController extends Controller
                         $item->conductor = null;
                         $item->cobrado_at = null;
                         $item->created_at = $p->created_at ?? today();
+                        $item->metodo_pago = null;
+                        $item->pagoMp = null;
+                        $item->motivo_exoneracion = null;
                         $items->push($item);
                     }
                 }
@@ -506,6 +509,9 @@ class ReporteController extends Controller
                         $item->conductor = null;
                         $item->cobrado_at = $pCobradoAt;
                         $item->created_at = $p->created_at ?? today();
+                        $item->metodo_pago = 'efectivo';
+                        $item->pagoMp = null;
+                        $item->motivo_exoneracion = null;
                         $items->push($item);
                     }
                 }
