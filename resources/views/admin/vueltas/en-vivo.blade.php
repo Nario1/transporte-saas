@@ -323,6 +323,46 @@ document.addEventListener('DOMContentLoaded', function() {
         attribution: '© OpenStreetMap'
     }).addTo(map);
 
+    const rutasTrazados = @json($rutasTrazados);
+    
+    rutasTrazados.forEach((ruta, idx) => {
+        const latlngs = [];
+        ruta.paraderos.forEach(paradero => {
+            if (paradero.latitud_a && paradero.longitud_a) {
+                latlngs.push([paradero.latitud_a, paradero.longitud_a]);
+            }
+        });
+
+        if (latlngs.length >= 2) {
+            const colores = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
+            const color = colores[idx % colores.length];
+
+            const polyline = L.polyline(latlngs, {
+                color: color,
+                weight: 4,
+                opacity: 0.75,
+                dashArray: '4, 8'
+            }).addTo(map);
+
+            polyline.bindTooltip(`Ruta: <b>${ruta.nombre}</b> (${ruta.origen} - ${ruta.destino})`, { sticky: true });
+
+            ruta.paraderos.forEach(paradero => {
+                if (paradero.latitud_a && paradero.longitud_a) {
+                    L.circleMarker([paradero.latitud_a, paradero.longitud_a], {
+                        radius: 5,
+                        fillColor: color,
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    })
+                    .addTo(map)
+                    .bindPopup(`<b>Paradero:</b> ${paradero.nombre}<br><b>Orden:</b> ${paradero.orden} (${paradero.tipo})`);
+                }
+            });
+        }
+    });
+
     let markers = {};
 
     function getIcon(estado, flota) {

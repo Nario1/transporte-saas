@@ -2,6 +2,10 @@
 
 @section('back_url', route('rutas.index'))
 
+@section('extra_css')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+@endsection
+
 @section('content')
     <div class="panel">
         <div class="flex-between" style="margin-bottom: 25px;">
@@ -124,6 +128,16 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Mapa de Ruta --}}
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-map-location-dot" style="margin-right: 5px;"></i> Visualización en Mapa</div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <div id="mapa-ruta" style="height: 250px; border-radius: 0 0 16px 16px; position: relative; z-index: 10;"></div>
+                    </div>
+                </div>
                 
                 <a href="{{ route('rutas.index') }}" class="btn-secondary" style="justify-content: center;">
                     <i class="fa-solid fa-list"></i> Lista de Rutas
@@ -237,6 +251,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     function abrirModalCoordenadas(id, nombre, latA, lngA, latB, lngB, tolerancia) {
         document.getElementById('modalCoordenadasTitulo').textContent = `Coordenadas: ${nombre}`;
@@ -255,5 +270,56 @@
         // Abrir modal
         document.getElementById('modalCoordenadas').classList.add('open');
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const paraderos = @json($ruta->paraderos->sortBy('orden')->values());
+        
+        // Inicializar mapa
+        const defaultCenter = [-12.067, -75.21]; // Huancayo por defecto
+        const map = L.map('mapa-ruta').setView(defaultCenter, 14);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        const latlngs = [];
+        
+        paraderos.forEach((p, idx) => {
+            if (p.latitud_a && p.longitud_a) {
+                const coords = [parseFloat(p.latitud_a), parseFloat(p.longitud_a)];
+                latlngs.push(coords);
+                
+                let color = '#3b82f6';
+                if (p.tipo === 'origen') color = '#22c55e';
+                if (p.tipo === 'destino') color = '#ef4444';
+
+                L.circleMarker(coords, {
+                    radius: 6,
+                    fillColor: color,
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                })
+                .addTo(map)
+                .bindPopup(`<b>Paradero:</b> ${p.nombre}<br><b>Orden:</b> ${p.orden}<br><b>Tipo:</b> ${p.tipo.toUpperCase()}`);
+            }
+        });
+
+        if (latlngs.length >= 2) {
+            L.polyline(latlngs, {
+                color: '#3b82f6',
+                weight: 4,
+                opacity: 0.8,
+                dashArray: '5, 10'
+            }).addTo(map);
+
+            const bounds = L.latLngBounds(latlngs);
+            map.fitBounds(bounds, { padding: [30, 30] });
+        } else if (latlngs.length === 1) {
+            map.setView(latlngs[0], 15);
+        }
+    });
 </script>
 @endpush

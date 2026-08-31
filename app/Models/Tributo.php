@@ -57,6 +57,10 @@ class Tributo extends Model implements Auditable
         for ($i = 0; $i < $diasAtras; $i++) {
             $fecha = today()->subDays($i);
 
+            if ($fecha->isSunday()) {
+                continue;
+            }
+
             foreach ($vehiculos as $vehiculo) {
                 if ($vehiculo->created_at->isAfter($fecha->endOfDay())) {
                     continue;

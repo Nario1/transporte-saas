@@ -31,7 +31,34 @@ class VueltasEnVivoController extends Controller
         $vueltasActivas = $vueltasActivasQuery->paginate(15)->withQueryString();
         $totalConductoresActivos = $vueltasActivas->total();
 
-        return view('admin.vueltas.en-vivo', compact('vueltasActivas', 'totalConductoresActivos'));
+        $rutasTrazados = \App\Models\Ruta::where('empresa_id', $empresaId)
+            ->where('estado', 'activa')
+            ->with(['paraderos' => function ($q) {
+                $q->orderBy('orden');
+            }])
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'nombre' => $r->nombre,
+                    'origen' => $r->origen,
+                    'destino' => $r->destino,
+                    'paraderos' => $r->paraderos->map(function ($p) {
+                        return [
+                            'nombre' => $p->nombre,
+                            'tipo' => $p->tipo,
+                            'orden' => $p->orden,
+                            'latitud_a' => $p->latitud_a,
+                            'longitud_a' => $p->longitud_a,
+                            'latitud_b' => $p->latitud_b,
+                            'longitud_b' => $p->longitud_b,
+                            'tolerancia' => $p->tolerancia,
+                        ];
+                    })->values(),
+                ];
+            })->values();
+
+        return view('admin.vueltas.en-vivo', compact('vueltasActivas', 'totalConductoresActivos', 'rutasTrazados'));
     }
 
     /**
