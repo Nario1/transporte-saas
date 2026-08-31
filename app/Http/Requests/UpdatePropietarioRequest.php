@@ -31,6 +31,10 @@ class UpdatePropietarioRequest extends FormRequest
             'direccion' => 'nullable|string|max:255',
             'activo'    => 'nullable|boolean',
             'notas'     => 'nullable|string',
+            'monto_inicial'  => 'nullable|numeric|min:0|max:600',
+            'cuota_1'        => 'nullable|numeric|min:0|max:600',
+            'cuota_2'        => 'nullable|numeric|min:0|max:600',
+            'cuota_3'        => 'nullable|numeric|min:0|max:600',
         ];
     }
 }

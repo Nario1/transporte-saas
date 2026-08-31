@@ -80,6 +80,7 @@
                             <th>Contacto / Dirección</th>
                             <th style="text-align: center;">Unidades</th>
                             <th style="text-align: center;">Conductor?</th>
+                            <th style="text-align: center;">Monto de Ingreso</th>
                             <th class="col-status">Estado</th>
                             <th class="col-actions">Acciones</th>
                         </tr>
@@ -116,6 +117,16 @@
                                         <span class="pill gray" style="font-size: 10px; opacity: 0.5;">NO</span>
                                     @endif
                                 </td>
+                                <td style="text-align: center;">
+                                    @php
+                                        $estIng = $p->estado_ingreso;
+                                        $badgeBg = $estIng === 'PAGADO' ? 'var(--green-l)' : 'var(--red-l)';
+                                        $badgeColor = $estIng === 'PAGADO' ? 'var(--green)' : 'var(--red)';
+                                    @endphp
+                                    <span style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 99px; background: {{ $badgeBg }}; color: {{ $badgeColor }}; display: inline-block;">
+                                        {{ $estIng }}
+                                    </span>
+                                </td>
                                 <td>
                                     <span class="pill {{ $p->activo ? 'green' : 'red' }}" style="font-size: 11px;">
                                         {{ $p->activo ? 'ACTIVO' : 'INACTIVO' }}
@@ -140,7 +151,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center; padding:60px; color:var(--text3);">
+                                <td colspan="8" style="text-align:center; padding:60px; color:var(--text3);">
                                     <i class="fa-solid fa-user-tie" style="font-size: 40px; opacity: 0.1; display: block; margin-bottom: 15px;"></i>
                                     @if (request()->hasAny(['q', 'activo']))
                                         No se encontraron propietarios con esos filtros.

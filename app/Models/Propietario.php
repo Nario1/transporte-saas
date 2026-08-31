@@ -16,11 +16,18 @@ class Propietario extends Model implements Auditable
     protected $fillable = [
         'empresa_id', 'nombre', 'apellidos', 'dni', 'telefono',
         'telefono_alt', 'email', 'direccion', 'activo', 'notas',
+        'monto_inicial', 'cuota_1', 'cuota_2', 'cuota_3',
     ];
-    protected $casts = ['activo' => 'boolean'];
+    protected $casts = [
+        'activo'        => 'boolean',
+        'monto_inicial' => 'float',
+        'cuota_1'       => 'float',
+        'cuota_2'       => 'float',
+        'cuota_3'       => 'float',
+    ];
 
     // Auditoría: solo campos relevantes
-    protected $auditInclude = ['nombre','apellidos','dni','telefono','activo'];
+    protected $auditInclude = ['nombre','apellidos','dni','telefono','activo','monto_inicial','cuota_1','cuota_2','cuota_3'];
 
     public function empresa()   { return $this->belongsTo(Empresa::class); }
     public function vehiculos() { return $this->hasMany(Vehiculo::class); }
@@ -34,5 +41,20 @@ class Propietario extends Model implements Auditable
     public function getNombreCompletoAttribute(): string
     {
         return trim("{$this->nombre} {$this->apellidos}");
+    }
+
+    public function getMontoIngresoTotalAttribute(): float
+    {
+        return (float) (($this->monto_inicial ?? 0) + ($this->cuota_1 ?? 0) + ($this->cuota_2 ?? 0) + ($this->cuota_3 ?? 0));
+    }
+
+    public function getEstadoIngresoAttribute(): string
+    {
+        return $this->monto_ingreso_total >= 600 ? 'PAGADO' : 'DEUDA';
+    }
+
+    public function getMontoIngresoDeudaAttribute(): float
+    {
+        return (float) max(0, 600 - $this->monto_ingreso_total);
     }
 }

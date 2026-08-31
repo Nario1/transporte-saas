@@ -453,6 +453,58 @@ class ReporteController extends Controller
             $items = $items->concat($sanciones);
         }
 
+        if ($tipo === 'todos' || $tipo === 'monto_ingreso') {
+            $propietariosQuery = \App\Models\Propietario::where('empresa_id', $user->empresa_id);
+
+            if ($flota) {
+                $propietariosQuery->whereHas('vehiculos', function ($vQ) use ($flota) {
+                    $vQ->where('numero_flota', $flota);
+                });
+            }
+
+            $propietarios = $propietariosQuery->with(['vehiculos'])->get();
+            foreach ($propietarios as $p) {
+                $pFecha = $p->created_at ? \Carbon\Carbon::parse($p->created_at) : today();
+
+                // PENDIENTE (Deuda de ingreso)
+                if ($p->monto_ingreso_deuda > 0) {
+                    if ($pFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
+                        $item = new \stdClass();
+                        $item->id = 'ingreso_deuda_' . $p->id;
+                        $item->fecha = $pFecha;
+                        $item->monto = $p->monto_ingreso_deuda;
+                        $item->estado = 'pendiente';
+                        $item->tipo_obligacion = 'MONTO DE INGRESO';
+                        $item->concepto = 'Deuda de Ingreso de Socio: ' . $p->nombre_completo;
+                        $item->vehiculo = $p->vehiculos->first() ?: (object)['numero_flota' => '---', 'placa' => '---'];
+                        $item->conductor = null;
+                        $item->cobrado_at = null;
+                        $item->created_at = $p->created_at ?? today();
+                        $items->push($item);
+                    }
+                }
+
+                // PAGADO (Monto total inicial + cuotas pagado)
+                if ($p->monto_ingreso_total > 0) {
+                    $pCobradoAt = $p->updated_at ? \Carbon\Carbon::parse($p->updated_at) : today();
+                    if ($pCobradoAt->between($desde->startOfDay(), $hasta->endOfDay())) {
+                        $item = new \stdClass();
+                        $item->id = 'ingreso_pagado_' . $p->id;
+                        $item->fecha = $pFecha;
+                        $item->monto = $p->monto_ingreso_total;
+                        $item->estado = 'pagado';
+                        $item->tipo_obligacion = 'MONTO DE INGRESO';
+                        $item->concepto = 'Pago de Ingreso de Socio: ' . $p->nombre_completo . ' (Inicial/Cuotas)';
+                        $item->vehiculo = $p->vehiculos->first() ?: (object)['numero_flota' => '---', 'placa' => '---'];
+                        $item->conductor = null;
+                        $item->cobrado_at = $pCobradoAt;
+                        $item->created_at = $p->created_at ?? today();
+                        $items->push($item);
+                    }
+                }
+            }
+        }
+
         // Ordenar por fecha desc, y cobrado_at desc
         $itemsSorted = $items->sortByDesc(function($item) {
             $timeStr = $item->cobrado_at ? $item->cobrado_at->format('H:i:s') : ($item->created_at ? $item->created_at->format('H:i:s') : '00:00:00');

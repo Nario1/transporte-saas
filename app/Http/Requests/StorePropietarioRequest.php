@@ -30,6 +30,10 @@ class StorePropietarioRequest extends FormRequest
             'email'          => 'nullable|email|max:150',
             'direccion'      => 'nullable|string|max:255',
             'notas'          => 'nullable|string',
+            'monto_inicial'  => 'nullable|numeric|min:0|max:600',
+            'cuota_1'        => 'nullable|numeric|min:0|max:600',
+            'cuota_2'        => 'nullable|numeric|min:0|max:600',
+            'cuota_3'        => 'nullable|numeric|min:0|max:600',
             // Dinámicos socio-conductor
             'es_conductor'              => 'nullable|boolean',
             'tipo_licencia'             => 'exclude_unless:es_conductor,1|required|string|max:10',

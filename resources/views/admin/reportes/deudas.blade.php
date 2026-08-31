@@ -25,6 +25,7 @@
                         <option value="todos" {{ request('tipo') === 'todos' ? 'selected' : '' }}>Todos</option>
                         <option value="tributo" {{ request('tipo') === 'tributo' ? 'selected' : '' }}>Tributos</option>
                         <option value="sancion" {{ request('tipo') === 'sancion' ? 'selected' : '' }}>Sanciones</option>
+                        <option value="monto_ingreso" {{ request('tipo') === 'monto_ingreso' ? 'selected' : '' }}>Monto de Ingreso</option>
                     </select>
                 </div>
                 <div class="field" style="border-left: 1px solid var(--border); padding-left: 20px;">
@@ -82,8 +83,10 @@
                                 <td>
                                     @if($item->tipo_obligacion === 'TRIBUTO')
                                         <span class="pill blue" style="font-size: 9px; font-weight: 800;">TRIBUTO</span>
-                                    @else
+                                    @elseif($item->tipo_obligacion === 'SANCIÓN')
                                         <span class="pill gold" style="font-size: 9px; font-weight: 800;">SANCIÓN</span>
+                                    @else
+                                        <span class="pill purple" style="font-size: 9px; font-weight: 800; background: #faf5ff; color: #7e22ce; display: inline-block;">INGRESO</span>
                                     @endif
                                 </td>
                                 <td>
@@ -92,7 +95,9 @@
                                 </td>
                                 <td style="font-size: 12.5px;">
                                     <div style="font-weight: 600;">{{ $item->concepto }}</div>
-                                    <div style="font-size: 10px; color: var(--text3);">Conductor: {{ $item->conductor->nombre ?? '---' }}</div>
+                                    @if(isset($item->conductor) && $item->conductor)
+                                        <div style="font-size: 10px; color: var(--text3);">Conductor: {{ $item->conductor->nombre ?? '---' }}</div>
+                                    @endif
                                 </td>
                                 <td style="font-weight: 800; color: var(--text);">
                                     S/ {{ number_format($item->monto, 2) }}
