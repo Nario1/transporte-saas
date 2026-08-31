@@ -132,6 +132,20 @@
                     <span class="summary-label" style="font-weight:500; color: var(--text2);">Licencia</span>
                     <span class="pill blue" style="font-weight:700;">{{ $conductor->tipo_licencia }}</span>
                 </div>
+                @if($conductor->licencia_vence)
+                    <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence Licencia</span>
+                        @php
+                            $licVence = $conductor->licencia_vence;
+                            $licDiff = (int) today()->diffInDays($licVence, false);
+                            $licColor = $licVence->isPast() ? 'var(--red)' : ($licDiff <= 15 ? 'var(--orange)' : 'var(--green)');
+                        @endphp
+                        <span style="font-weight:700; color:{{ $licColor }};">
+                            {{ $licVence->format('d/m/Y') }}
+                            @if($licVence->isPast()) (Vencida) @endif
+                        </span>
+                    </div>
+                @endif
                 @if($conductor->carnet_habilitacion_tipo)
                     <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
                         <span class="summary-label" style="font-weight:500; color: var(--text2);">Carnet Habilitación</span>
