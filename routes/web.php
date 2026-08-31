@@ -210,6 +210,7 @@ Route::middleware(['auth', 'empresa.activa', 'admin.configurado'])
         Route::delete('/rutas/{ruta}',   [RutaController::class, 'destroy'])->name('rutas.destroy');
         Route::post('/rutas/{ruta}/paraderos',              [RutaController::class, 'storeParadero'])->name('rutas.paraderos.store');
         Route::delete('/rutas/{ruta}/paraderos/{paradero}', [RutaController::class, 'destroyParadero'])->name('rutas.paraderos.destroy');
+        Route::put('/rutas/{ruta}/paraderos/{paradero}/coordenadas', [RutaController::class, 'updateParaderoCoordenadas'])->name('rutas.paraderos.coordenadas.update');
 
         // Kiosco de control facial en paradero
         Route::get('/rutas/{ruta}/paraderos/{paradero}/kiosco', [ParaderoCheckinController::class, 'index'])->name('rutas.kiosco');

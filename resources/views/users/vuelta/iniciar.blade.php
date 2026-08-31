@@ -186,12 +186,20 @@
         </select>
     </div>
 
+    <div class="field mb14" id="paradero-field" style="display:none;">
+        <label>Punto / Paradero de Inicio</label>
+        <select id="paradero-select" class="form-control" style="padding:10px;" required>
+            <option value="">-- Seleccionar Paradero --</option>
+        </select>
+    </div>
+
     {{-- Sin campos de lat/lng en el DOM para evitar alteraciones --}}
     <div class="field mb14">
         <label>Ubicación GPS (Automática)</label>
         <div id="gps-display-text" style="font-size:14px; font-weight:700; color:var(--accent); background:var(--border); padding:10px; border-radius:10px;">
             Obteniendo ubicación...
         </div>
+        <div id="geo-validation-msg" style="margin-top:10px; font-size:12.5px; font-weight:800; display:none; padding:10px; border-radius:8px;"></div>
     </div>
 </div>
 
@@ -221,10 +229,56 @@ const TIENE_ROSTRO    = {{ $tieneRostro ? 'true' : 'false' }};
 const REQUIERE_FACIAL = {{ $requiereFacial ? 'true' : 'false' }};
 const CSRF            = '{{ csrf_token() }}';
 const INICIAR_URL     = '{{ route("conductor.vuelta.iniciar.post", [], false) }}';
+const routesData      = @json($rutas);
 
 let rostroVerificado  = !REQUIERE_FACIAL; 
 let detTimeoutId      = null;
 let gpsActual = { lat: null, lng: null };
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // metros
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function isPointWithinSegment(latP, lngP, latA, lngA, latB, lngB, toleranceMeters = 30) {
+    if (latA === null || lngA === null || latB === null || lngB === null) {
+        return true; // Si no hay coordenadas, es válido por defecto
+    }
+    
+    const latRef = (latA + latB) / 2;
+    const degToRad = Math.PI / 180;
+    const scaleX = Math.cos(latRef * degToRad);
+    
+    const dy = latB - latA;
+    const dx = (lngB - lngA) * scaleX;
+    
+    const dyp = latP - latA;
+    const dxp = (lngP - lngA) * scaleX;
+    
+    const ab2 = (dx * dx) + (dy * dy);
+    if (ab2 === 0) {
+        return haversineDistance(latP, lngP, latA, lngA) <= toleranceMeters;
+    }
+    
+    const ap_ab = (dxp * dx) + (dyp * dy);
+    const t = ap_ab / ab2;
+    
+    if (t < 0 || t > 1) {
+        return false;
+    }
+    
+    const latProj = latA + t * dy;
+    const lngProj = lngA + t * (lngB - lngA);
+    
+    const distance = haversineDistance(latP, lngP, latProj, lngProj);
+    return distance <= toleranceMeters;
+}
 
 function capturarGPSInterno() {
     const display = document.getElementById('gps-display-text');
@@ -263,12 +317,56 @@ function capturarGPSInterno() {
 
 function actualizarEstadoBotonIniciar() {
     const rutaSelect = document.getElementById('ruta-select').value;
+    const paraderoSelect = document.getElementById('paradero-select').value;
     const btn = document.getElementById('btn-iniciar-vuelta');
+    const msgEl = document.getElementById('geo-validation-msg');
     if (!btn) return;
+    
     const tieneRuta = !!rutaSelect;
+    const tieneParadero = !!paraderoSelect;
     const tieneGps = gpsActual.lat !== null && gpsActual.lng !== null;
     const tieneFacial = rostroVerificado;
-    btn.disabled = !(tieneRuta && tieneGps && tieneFacial);
+    
+    let dentroDeRango = true;
+    
+    if (tieneRuta && tieneParadero && tieneGps) {
+        const opt = document.getElementById('paradero-select').selectedOptions[0];
+        const latAStr = opt.getAttribute('data-lat-a');
+        
+        if (latAStr) {
+            const latA = parseFloat(latAStr);
+            const lngA = parseFloat(opt.getAttribute('data-lng-a'));
+            const latB = parseFloat(opt.getAttribute('data-lat-b'));
+            const lngB = parseFloat(opt.getAttribute('data-lng-b'));
+            const tolerancia = parseFloat(opt.getAttribute('data-tolerancia'));
+            
+            dentroDeRango = isPointWithinSegment(gpsActual.lat, gpsActual.lng, latA, lngA, latB, lngB, tolerancia);
+            
+            if (!dentroDeRango) {
+                msgEl.style.display = 'block';
+                msgEl.style.background = '#fef2f2';
+                msgEl.style.color = '#991b1b';
+                msgEl.style.border = '1px solid #fee2e2';
+                msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Fuera de Rango:</strong> Debes estar físicamente en el tramo de la calle correspondiente a este paradero para poder iniciar la vuelta.`;
+            } else {
+                msgEl.style.display = 'block';
+                msgEl.style.background = '#f0fdf4';
+                msgEl.style.color = '#166534';
+                msgEl.style.border = '1px solid #dcfce7';
+                msgEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> <strong>Ubicación correcta:</strong> Estás dentro del tramo permitido del paradero.`;
+            }
+        } else {
+            msgEl.style.display = 'block';
+            msgEl.style.background = '#fffbeb';
+            msgEl.style.color = '#92400e';
+            msgEl.style.border = '1px solid #fef3c7';
+            msgEl.innerHTML = `<i class="fa-solid fa-info-circle"></i> <strong>Sin coordenadas:</strong> Este paradero no tiene un tramo geográfico configurado. Se permite iniciar libremente.`;
+        }
+    } else {
+        msgEl.style.display = 'none';
+    }
+    
+    btn.disabled = !(tieneRuta && tieneParadero && tieneGps && tieneFacial && dentroDeRango);
 }
 
 async function abrirCamaraVerificacion() {
@@ -413,7 +511,10 @@ async function iniciarVuelta() {
         return;
     }
     const rutaSelect = document.getElementById('ruta-select').value;
+    const paraderoSelect = document.getElementById('paradero-select').value;
     if (!rutaSelect) { alert('Debes seleccionar una ruta antes de iniciar la vuelta.'); return; }
+    if (!paraderoSelect) { alert('Debes seleccionar el paradero de inicio antes de iniciar la vuelta.'); return; }
+    
     document.getElementById('btn-iniciar-vuelta').disabled = true;
     document.getElementById('iniciando-msg').classList.remove('hidden');
     const posFinal = await capturarGPSInterno();
@@ -423,7 +524,13 @@ async function iniciarVuelta() {
         document.getElementById('iniciando-msg').classList.add('hidden');
         return;
     }
-    const body = { verificado_rostro: rostroVerificado, ruta_id: rutaSelect, latitud: posFinal.lat, longitud: posFinal.lng };
+    const body = { 
+        verificado_rostro: rostroVerificado, 
+        ruta_id: rutaSelect, 
+        ruta_paradero_id: paraderoSelect, 
+        latitud: posFinal.lat, 
+        longitud: posFinal.lng 
+    };
     try {
         const resp = await fetch(INICIAR_URL, {
             method: 'POST',
@@ -440,8 +547,50 @@ async function iniciarVuelta() {
     }
 }
 
+// Lógica de llenado dinámico del paradero select
+document.getElementById('ruta-select').addEventListener('change', function() {
+    const rutaId = this.value;
+    const paraderoField = document.getElementById('paradero-field');
+    const paraderoSelect = document.getElementById('paradero-select');
+    
+    // Limpiar opciones previas
+    paraderoSelect.innerHTML = '<option value="">-- Seleccionar Paradero --</option>';
+    
+    if (!rutaId) {
+        paraderoField.style.display = 'none';
+        actualizarEstadoBotonIniciar();
+        return;
+    }
+    
+    const rutaObj = routesData.find(r => r.id == rutaId);
+    if (rutaObj && rutaObj.paraderos) {
+        rutaObj.paraderos.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `${p.nombre} (${p.tipo.toUpperCase()})`;
+            
+            // Guardar coordenadas y tolerancia como atributos de datos
+            if (p.latitud_a !== null && p.longitud_a !== null && p.latitud_b !== null && p.longitud_b !== null) {
+                opt.setAttribute('data-lat-a', p.latitud_a);
+                opt.setAttribute('data-lng-a', p.longitud_a);
+                opt.setAttribute('data-lat-b', p.latitud_b);
+                opt.setAttribute('data-lng-b', p.longitud_b);
+                opt.setAttribute('data-tolerancia', p.tolerancia || 30);
+            }
+            
+            paraderoSelect.appendChild(opt);
+        });
+        paraderoField.style.display = 'block';
+    } else {
+        paraderoField.style.display = 'none';
+    }
+    
+    actualizarEstadoBotonIniciar();
+});
+
+document.getElementById('paradero-select').addEventListener('change', actualizarEstadoBotonIniciar);
+
 capturarGPSInterno();
-document.getElementById('ruta-select').addEventListener('change', actualizarEstadoBotonIniciar);
 if (TIENE_ROSTRO && STORED_EMBED && REQUIERE_FACIAL) { abrirCamaraVerificacion(); } else { actualizarEstadoBotonIniciar(); }
 </script>
 @endsection

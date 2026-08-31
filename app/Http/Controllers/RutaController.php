@@ -163,6 +163,25 @@ class RutaController extends Controller
         return back()->with('success', 'Paradero eliminado.');
     }
 
+    public function updateParaderoCoordenadas(Request $request, Ruta $ruta, RutaParadero $paradero)
+    {
+        $this->verificarEmpresa($ruta);
+
+        abort_if($paradero->ruta_id !== $ruta->id, 403, 'El paradero no pertenece a esta ruta.');
+
+        $data = $request->validate([
+            'latitud_a'  => 'nullable|numeric|between:-90,90',
+            'longitud_a' => 'nullable|numeric|between:-180,180',
+            'latitud_b'  => 'nullable|numeric|between:-90,90',
+            'longitud_b' => 'nullable|numeric|between:-180,180',
+            'tolerancia' => 'required|integer|min:5|max:500',
+        ]);
+
+        $paradero->update($data);
+
+        return back()->with('success', 'Coordenadas del paradero actualizadas correctamente.');
+    }
+
     // ── Helpers ──────────────────────────────────────────────────
 
     private function guardarParaderos(Ruta $ruta, array $paraderos): void

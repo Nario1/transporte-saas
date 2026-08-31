@@ -63,9 +63,9 @@
                                             <div style="font-size: 10px; color: var(--text3); text-transform: uppercase;">{{ $p->tipo }}</div>
                                         </div>
                                         <div class="flex-h" style="gap: 8px;">
-                                            <a href="{{ route('rutas.kiosco', [$ruta->id, $p->id]) }}" class="action-icon show-icon" target="_blank" title="Abrir Kiosco">
-                                                <i class="fa-solid fa-camera"></i>
-                                            </a>
+                                            <button type="button" class="btn-icon-submit" onclick="abrirModalCoordenadas({{ $p->id }}, '{{ addslashes($p->nombre) }}', '{{ $p->latitud_a }}', '{{ $p->longitud_a }}', '{{ $p->latitud_b }}', '{{ $p->longitud_b }}', {{ $p->tolerancia ?? 30 }})" title="Definir Coordenadas Geográficas (Tramo A-B)">
+                                                <i class="fa-solid fa-location-dot action-icon show-icon" style="color: {{ ($p->latitud_a && $p->longitud_a) ? 'var(--green)' : 'var(--accent)' }};"></i>
+                                            </button>
                                             <form action="{{ route('rutas.paraderos.destroy', [$ruta->id, $p->id]) }}" method="POST">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn-icon-submit" onclick="return confirm('¿Quitar paradero?')">
@@ -170,4 +170,90 @@
             </form>
         </div>
     </div>
+
+    {{-- MODAL COORDENADAS PARADERO --}}
+    <div id="modalCoordenadas" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="card-title" id="modalCoordenadasTitulo">Definir Coordenadas del Paradero</div>
+                <button type="button" onclick="document.getElementById('modalCoordenadas').classList.remove('open')"
+                    style="border:none; background:none; cursor:pointer; font-size: 18px;">&times;</button>
+            </div>
+            <form id="formCoordenadas" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <p style="font-size: 12px; color: var(--text3); margin-bottom: 15px;">
+                        Define los límites inicial (A) y final (B) de la calle que corresponden a la zona válida para este paradero.
+                    </p>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+                        
+                        {{-- Punto Inicial A --}}
+                        <div style="grid-column: span 2; font-weight: 700; font-size: 13px; color: var(--accent); margin-bottom: 4px;">
+                            <i class="fa-solid fa-map-pin"></i> LÍMITE INICIAL (PUNTO A)
+                        </div>
+                        <div class="field">
+                            <label>Latitud A</label>
+                            <input type="number" step="any" name="latitud_a" id="input_latitud_a" placeholder="Ej: -12.0654">
+                        </div>
+                        <div class="field">
+                            <label>Longitud A</label>
+                            <input type="number" step="any" name="longitud_a" id="input_longitud_a" placeholder="Ej: -75.2048">
+                        </div>
+
+                        {{-- Punto Final B --}}
+                        <div style="grid-column: span 2; font-weight: 700; font-size: 13px; color: var(--accent); margin-top: 10px; margin-bottom: 4px;">
+                            <i class="fa-solid fa-flag"></i> LÍMITE FINAL (PUNTO B)
+                        </div>
+                        <div class="field">
+                            <label>Latitud B</label>
+                            <input type="number" step="any" name="latitud_b" id="input_latitud_b" placeholder="Ej: -12.0660">
+                        </div>
+                        <div class="field">
+                            <label>Longitud B</label>
+                            <input type="number" step="any" name="longitud_b" id="input_longitud_b" placeholder="Ej: -75.2055">
+                        </div>
+
+                        {{-- Tolerancia --}}
+                        <div style="grid-column: span 2; margin-top: 10px;">
+                            <div class="field">
+                                <label>Tolerancia Lateral (metros)</label>
+                                <input type="number" name="tolerancia" id="input_tolerancia" min="5" max="500" value="30" required>
+                                <small style="display:block; font-size:10.5px; color:var(--text3); margin-top:4px;">
+                                    Distancia máxima perpendicular (lado a lado de la pista) para validar GPS.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="document.getElementById('modalCoordenadas').classList.remove('open')"
+                        class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar Coordenadas</button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
+
+@push('scripts')
+<script>
+    function abrirModalCoordenadas(id, nombre, latA, lngA, latB, lngB, tolerancia) {
+        document.getElementById('modalCoordenadasTitulo').textContent = `Coordenadas: ${nombre}`;
+        
+        // Configurar la URL de acción del formulario
+        const form = document.getElementById('formCoordenadas');
+        form.action = `/admin/rutas/{{ $ruta->id }}/paraderos/${id}/coordenadas`;
+        
+        // Rellenar campos
+        document.getElementById('input_latitud_a').value = latA || '';
+        document.getElementById('input_longitud_a').value = lngA || '';
+        document.getElementById('input_latitud_b').value = latB || '';
+        document.getElementById('input_longitud_b').value = lngB || '';
+        document.getElementById('input_tolerancia').value = tolerancia || 30;
+        
+        // Abrir modal
+        document.getElementById('modalCoordenadas').classList.add('open');
+    }
+</script>
+@endpush

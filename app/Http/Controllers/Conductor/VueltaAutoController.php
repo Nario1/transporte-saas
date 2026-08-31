@@ -60,6 +60,7 @@ class VueltaAutoController extends Controller
             $rutas = $vehiculo->rutas()
                 ->where('vehiculo_rutas.activo', true)
                 ->where('rutas.estado', 'activa')
+                ->with(['paraderos' => fn($q) => $q->orderBy('orden')])
                 ->orderBy('rutas.nombre')
                 ->get();
         }
@@ -81,6 +82,26 @@ class VueltaAutoController extends Controller
 
         if ($conductor->requiere_facial && !$request->verificado_rostro) {
             return response()->json(['ok' => false, 'error' => 'La verificación facial es requerida para poder iniciar la vuelta.'], 422);
+        }
+
+        // Validar tramo geográfico del paradero de inicio
+        $paradero = \App\Models\RutaParadero::findOrFail($request->ruta_paradero_id);
+        if ($paradero->ruta_id != $request->ruta_id) {
+            return response()->json(['ok' => false, 'error' => 'El paradero seleccionado no corresponde a la ruta.'], 422);
+        }
+
+        $dentroDeRango = $this->isPointWithinSegment(
+            $request->latitud,
+            $request->longitud,
+            $paradero->latitud_a,
+            $paradero->longitud_a,
+            $paradero->latitud_b,
+            $paradero->longitud_b,
+            $paradero->tolerancia ?? 30
+        );
+
+        if (!$dentroDeRango) {
+            return response()->json(['ok' => false, 'error' => 'No puedes iniciar la vuelta aquí. Tu GPS indica que estás fuera del tramo de coordenadas permitido para el paradero de inicio.'], 422);
         }
 
         $yaActiva = Vuelta::where('conductor_id', $conductor->id)
@@ -146,6 +167,27 @@ class VueltaAutoController extends Controller
 
         if (! $vuelta) {
             return response()->json(['ok' => false, 'error' => 'No tienes una vuelta activa.'], 422);
+        }
+
+        // Validar tramo geográfico del paradero de destino (Llegada)
+        $paraderoDestino = \App\Models\RutaParadero::where('ruta_id', $vuelta->ruta_id)
+            ->where('tipo', 'destino')
+            ->first();
+
+        if ($paraderoDestino) {
+            $dentroDeRango = $this->isPointWithinSegment(
+                $request->latitud,
+                $request->longitud,
+                $paraderoDestino->latitud_a,
+                $paraderoDestino->longitud_a,
+                $paraderoDestino->latitud_b,
+                $paraderoDestino->longitud_b,
+                $paraderoDestino->tolerancia ?? 30
+            );
+
+            if (!$dentroDeRango) {
+                return response()->json(['ok' => false, 'error' => 'No puedes terminar la vuelta aquí. Tu GPS indica que estás fuera del tramo de coordenadas del paradero final (Llegada).'], 422);
+            }
         }
 
         // Recibir GPS final
@@ -225,5 +267,66 @@ class VueltaAutoController extends Controller
                 'ruta'         => $vuelta->ruta?->nombre,
             ] : null,
         ]);
+    }
+
+    private function isPointWithinSegment($latP, $lngP, $latA, $lngA, $latB, $lngB, $toleranceMeters = 30)
+    {
+        if (is_null($latA) || is_null($lngA) || is_null($latB) || is_null($lngB)) {
+            return true; // Si no hay coordenadas configuradas, permitimos el paso (compatibilidad)
+        }
+
+        $latRef = ($latA + $latB) / 2;
+        $degToRad = pi() / 180;
+        
+        // Escalar longitud por el coseno de la latitud promedio
+        $scaleX = cos($latRef * $degToRad);
+        
+        // Vector AB
+        $dy = $latB - $latA;
+        $dx = ($lngB - $lngA) * $scaleX;
+        
+        // Vector AP
+        $dyp = $latP - $latA;
+        $dxp = ($lngP - $lngA) * $scaleX;
+        
+        // Cuadrado de la longitud de AB
+        $ab2 = ($dx * $dx) + ($dy * $dy);
+        if ($ab2 == 0) {
+            return $this->haversineDistance($latP, $lngP, $latA, $lngA) <= $toleranceMeters;
+        }
+        
+        // Factor de proyección t
+        $ap_ab = ($dxp * $dx) + ($dyp * $dy);
+        $t = $ap_ab / $ab2;
+        
+        // Verificar si la proyección cae dentro del segmento [0, 1]
+        if ($t < 0 || $t > 1) {
+            return false;
+        }
+        
+        // Coordenadas del punto proyectado
+        $latProj = $latA + $t * $dy;
+        $lngProj = $lngA + $t * ($lngB - $lngA);
+        
+        // Distancia desde el punto P al punto proyectado en la calle
+        $distance = $this->haversineDistance($latP, $lngP, $latProj, $lngProj);
+        
+        return $distance <= $toleranceMeters;
+    }
+
+    private function haversineDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // en metros
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
     }
 }

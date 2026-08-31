@@ -21,6 +21,7 @@ class IniciarVueltaAutoRequest extends FormRequest
     {
         return [
             'ruta_id'          => ['required', 'exists:rutas,id'],
+            'ruta_paradero_id' => ['required', 'exists:ruta_paraderos,id'],
             'latitud'          => ['required', 'numeric', 'between:-90,90'],
             'longitud'         => ['required', 'numeric', 'between:-180,180'],
             'verificado_rostro' => ['required', 'boolean'],
