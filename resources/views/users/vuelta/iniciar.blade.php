@@ -276,19 +276,51 @@ function isPointWithinSegment(latP, lngP, latA, lngA, latB, lngB, toleranceMeter
     return distance <= toleranceMeters;
 }
 
+let watchId = null;
+
+function iniciarMonitoreoGPS() {
+    const display = document.getElementById('gps-display-text');
+    if (display) display.textContent = 'Buscando satélites...';
+
+    if (!navigator.geolocation) {
+        if (display) display.textContent = 'GPS no soportado en este navegador';
+        return;
+    }
+
+    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+    if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+    }
+
+    watchId = navigator.geolocation.watchPosition(
+        pos => {
+            gpsActual.lat = pos.coords.latitude;
+            gpsActual.lng = pos.coords.longitude;
+            if (display) display.innerHTML = `<span style="color:var(--green)"><i class="fa-solid fa-location-crosshairs"></i> ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}</span>`;
+            actualizarEstadoBotonIniciar();
+        },
+        err => {
+            console.error("GPS Watch Error:", err);
+            let msg = 'Error de ubicación';
+            if (err.code === 1) msg = 'Permiso de GPS denegado';
+            else if (err.code === 3) msg = 'Buscando señal GPS...';
+            if (display) display.innerHTML = `<span style="color:var(--red)">${msg}</span> <a href="#" onclick="iniciarMonitoreoGPS(); return false;" style="margin-left:10px; text-decoration:underline;">Reintentar</a>`;
+            actualizarEstadoBotonIniciar();
+        },
+        options
+    );
+}
+
 function capturarGPSInterno() {
+    if (gpsActual.lat !== null && gpsActual.lng !== null) {
+        return Promise.resolve(gpsActual);
+    }
+    
     const display = document.getElementById('gps-display-text');
     if (display) display.textContent = 'Buscando satélites...';
 
     return new Promise((resolve) => {
-        if (!navigator.geolocation) {
-            if (display) display.textContent = 'GPS no soportado en este navegador';
-            resolve(null);
-            return;
-        }
-
-        const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
-
         navigator.geolocation.getCurrentPosition(
             pos => {
                 gpsActual.lat = pos.coords.latitude;
@@ -298,15 +330,9 @@ function capturarGPSInterno() {
                 resolve(gpsActual);
             },
             err => {
-                console.error("GPS Error:", err);
-                let msg = 'Error de ubicación';
-                if (err.code === 1) msg = 'Permiso de GPS denegado';
-                else if (err.code === 3) msg = 'Tiempo agotado (reintente)';
-                if (display) display.innerHTML = `<span style="color:var(--red)">${msg}</span> <a href="#" onclick="capturarGPSInterno(); return false;" style="margin-left:10px; text-decoration:underline;">Reintentar</a>`;
-                actualizarEstadoBotonIniciar();
                 resolve(null);
             },
-            options
+            { enableHighAccuracy: true, timeout: 10000 }
         );
     });
 }
@@ -606,7 +632,7 @@ document.getElementById('ruta-select').addEventListener('change', function() {
 
 document.getElementById('paradero-select').addEventListener('change', actualizarEstadoBotonIniciar);
 
-capturarGPSInterno();
+iniciarMonitoreoGPS();
 if (TIENE_ROSTRO && STORED_EMBED && REQUIERE_FACIAL) { abrirCamaraVerificacion(); } else { actualizarEstadoBotonIniciar(); }
 </script>
 @endsection
