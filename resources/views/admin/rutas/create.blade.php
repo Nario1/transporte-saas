@@ -31,7 +31,7 @@
                         </div>
 
                         <div class="field">
-                            <label for="origen">Origen</label>
+                            <label for="origen">Origen / Destino</label>
                             <input type="text" id="origen" name="origen" value="{{ old('origen') }}"
                                 placeholder="Punto de inicio" required>
                             @error('origen')
@@ -40,7 +40,7 @@
                         </div>
 
                         <div class="field">
-                            <label for="destino">Destino</label>
+                            <label for="destino">Destino / Origen</label>
                             <input type="text" id="destino" name="destino" value="{{ old('destino') }}"
                                 placeholder="Punto final" required>
                             @error('destino')
@@ -132,8 +132,8 @@
                 <div class="field" style="gap:0">
                     <select name="paraderos[${paraderoIndex}][tipo]" required>
                         <option value="intermedio">Intermedio</option>
-                        <option value="origen">Origen</option>
-                        <option value="destino">Destino</option>
+                        <option value="origen">Origen / Destino</option>
+                        <option value="destino">Destino / Origen</option>
                     </select>
                 </div>
             </td>

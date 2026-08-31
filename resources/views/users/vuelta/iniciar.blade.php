@@ -329,7 +329,28 @@ function actualizarEstadoBotonIniciar() {
     
     let dentroDeRango = true;
     
-    if (tieneRuta && tieneParadero && tieneGps) {
+    if (!tieneRuta) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#eff6ff';
+        msgEl.style.color = '#1e40af';
+        msgEl.style.border = '1px solid #dbeafe';
+        msgEl.innerHTML = `<i class="fa-solid fa-info-circle"></i> Selecciona la ruta`;
+        dentroDeRango = false;
+    } else if (!tieneParadero) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#eff6ff';
+        msgEl.style.color = '#1e40af';
+        msgEl.style.border = '1px solid #dbeafe';
+        msgEl.innerHTML = `<i class="fa-solid fa-info-circle"></i> Selecciona un paradero`;
+        dentroDeRango = false;
+    } else if (!tieneGps) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#fffbeb';
+        msgEl.style.color = '#92400e';
+        msgEl.style.border = '1px solid #fef3c7';
+        msgEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Obteniendo ubicación GPS...`;
+        dentroDeRango = false;
+    } else {
         const opt = document.getElementById('paradero-select').selectedOptions[0];
         const latAStr = opt.getAttribute('data-lat-a');
         
@@ -347,23 +368,22 @@ function actualizarEstadoBotonIniciar() {
                 msgEl.style.background = '#fef2f2';
                 msgEl.style.color = '#991b1b';
                 msgEl.style.border = '1px solid #fee2e2';
-                msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Fuera de Rango:</strong> Debes estar físicamente en el tramo de la calle correspondiente a este paradero para poder iniciar la vuelta.`;
+                msgEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> No estás dentro de las coordenadas.`;
             } else {
                 msgEl.style.display = 'block';
                 msgEl.style.background = '#f0fdf4';
                 msgEl.style.color = '#166534';
                 msgEl.style.border = '1px solid #dcfce7';
-                msgEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> <strong>Ubicación correcta:</strong> Estás dentro del tramo permitido del paradero.`;
+                msgEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Ubicación correcta: Estás dentro del tramo del paradero.`;
             }
         } else {
             msgEl.style.display = 'block';
-            msgEl.style.background = '#fffbeb';
-            msgEl.style.color = '#92400e';
-            msgEl.style.border = '1px solid #fef3c7';
-            msgEl.innerHTML = `<i class="fa-solid fa-info-circle"></i> <strong>Sin coordenadas:</strong> Este paradero no tiene un tramo geográfico configurado. Se permite iniciar libremente.`;
+            msgEl.style.background = '#f0fdf4';
+            msgEl.style.color = '#166534';
+            msgEl.style.border = '1px solid #dcfce7';
+            msgEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Este paradero no requiere validación de coordenadas.`;
+            dentroDeRango = true;
         }
-    } else {
-        msgEl.style.display = 'none';
     }
     
     btn.disabled = !(tieneRuta && tieneParadero && tieneGps && tieneFacial && dentroDeRango);

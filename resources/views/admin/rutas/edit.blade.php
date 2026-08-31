@@ -44,7 +44,7 @@
                         </div>
 
                         <div class="field">
-                            <label for="origen">Origen</label>
+                            <label for="origen">Origen / Destino</label>
                             <input type="text" id="origen" name="origen" value="{{ old('origen', $ruta->origen) }}"
                                 required>
                             @error('origen')
@@ -53,7 +53,7 @@
                         </div>
 
                         <div class="field">
-                            <label for="destino">Destino</label>
+                            <label for="destino">Destino / Origen</label>
                             <input type="text" id="destino" name="destino" value="{{ old('destino', $ruta->destino) }}"
                                 required>
                             @error('destino')
@@ -130,10 +130,9 @@
                                                         {{ $paradero->tipo == 'intermedio' ? 'selected' : '' }}>Intermedio
                                                     </option>
                                                     <option value="origen"
-                                                        {{ $paradero->tipo == 'origen' ? 'selected' : '' }}>Origen</option>
+                                                        {{ $paradero->tipo == 'origen' ? 'selected' : '' }}>Origen / Destino</option>
                                                     <option value="destino"
-                                                        {{ $paradero->tipo == 'destino' ? 'selected' : '' }}>Destino
-                                                    </option>
+                                                        {{ $paradero->tipo == 'destino' ? 'selected' : '' }}>Destino / Origen</option>
                                                 </select>
                                             </div>
                                         </td>
@@ -179,8 +178,8 @@
                 <div class="field" style="gap:0">
                     <select name="paraderos[${paraderoIndex}][tipo]" required>
                         <option value="intermedio">Intermedio</option>
-                        <option value="origen">Origen</option>
-                        <option value="destino">Destino</option>
+                        <option value="origen">Origen / Destino</option>
+                        <option value="destino">Destino / Origen</option>
                     </select>
                 </div>
             </td>

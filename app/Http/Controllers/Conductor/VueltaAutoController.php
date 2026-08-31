@@ -169,24 +169,24 @@ class VueltaAutoController extends Controller
             return response()->json(['ok' => false, 'error' => 'No tienes una vuelta activa.'], 422);
         }
 
-        // Validar tramo geográfico del paradero de destino (Llegada)
-        $paraderoDestino = \App\Models\RutaParadero::where('ruta_id', $vuelta->ruta_id)
-            ->where('tipo', 'destino')
-            ->first();
+        // Validar tramo geográfico de cualquiera de los paraderos permitidos
+        $paraderos = \App\Models\RutaParadero::where('ruta_id', $vuelta->ruta_id)->get();
+        $tieneCoordenadasAlguno = $paraderos->contains(fn($p) => !is_null($p->latitud_a));
 
-        if ($paraderoDestino) {
-            $dentroDeRango = $this->isPointWithinSegment(
-                $request->latitud,
-                $request->longitud,
-                $paraderoDestino->latitud_a,
-                $paraderoDestino->longitud_a,
-                $paraderoDestino->latitud_b,
-                $paraderoDestino->longitud_b,
-                $paraderoDestino->tolerancia ?? 30
-            );
+        $paraderoFinalNombre = null;
 
-            if (!$dentroDeRango) {
-                return response()->json(['ok' => false, 'error' => 'No puedes terminar la vuelta aquí. Tu GPS indica que estás fuera del tramo de coordenadas del paradero final (Llegada).'], 422);
+        if ($tieneCoordenadasAlguno) {
+            $dentroDeAlguno = false;
+            foreach ($paraderos as $p) {
+                if (!is_null($p->latitud_a) && $this->isPointWithinSegment($request->latitud, $request->longitud, $p->latitud_a, $p->longitud_a, $p->latitud_b, $p->longitud_b, $p->tolerancia ?? 30)) {
+                    $dentroDeAlguno = true;
+                    $paraderoFinalNombre = $p->nombre;
+                    break;
+                }
+            }
+
+            if (!$dentroDeAlguno) {
+                return response()->json(['ok' => false, 'error' => 'No puedes terminar la vuelta aquí. Tu GPS indica que estás fuera del tramo de cualquiera de los paraderos permitidos de la ruta.'], 422);
             }
         }
 
@@ -207,6 +207,7 @@ class VueltaAutoController extends Controller
                 'ok'           => true,
                 'hora_llegada' => $vuelta->hora_llegada,
                 'duracion_min' => $duracion,
+                'paradero'     => $paraderoFinalNombre,
                 'redirect'     => route('conductor.vueltas'),
             ]);
         } catch (\Throwable $e) {

@@ -205,7 +205,15 @@ async function terminarVuelta() {
         });
         const data = await resp.json();
         if (data.ok) {
-            window.location.href = data.redirect;
+            Swal.fire({
+                title: '¡Vuelta Finalizada!',
+                text: data.paradero ? `Has terminado la ruta en el paradero ${data.paradero}.` : 'Has terminado la vuelta correctamente.',
+                icon: 'success',
+                confirmButtonColor: 'var(--green)',
+                confirmButtonText: 'Aceptar'
+            }).then(() => {
+                window.location.href = data.redirect;
+            });
         } else {
             alert('❌ ' + (data.error || 'Error al terminar vuelta'));
             document.getElementById('btn-terminar').disabled = false;

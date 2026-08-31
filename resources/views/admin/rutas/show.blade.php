@@ -60,7 +60,7 @@
                                     <div class="flex-h" style="flex: 1; justify-content: space-between;">
                                         <div>
                                             <div style="font-size: 14px; font-weight: 700;">{{ $p->nombre }}</div>
-                                            <div style="font-size: 10px; color: var(--text3); text-transform: uppercase;">{{ $p->tipo }}</div>
+                                            <div style="font-size: 10px; color: var(--text3); text-transform: uppercase;">{{ $p->tipo === 'origen' ? 'Origen / Destino' : ($p->tipo === 'destino' ? 'Destino / Origen' : 'Intermedio') }}</div>
                                         </div>
                                         <div class="flex-h" style="gap: 8px;">
                                             <button type="button" class="btn-icon-submit" onclick="abrirModalCoordenadas({{ $p->id }}, '{{ addslashes($p->nombre) }}', '{{ $p->latitud_a }}', '{{ $p->longitud_a }}', '{{ $p->latitud_b }}', '{{ $p->longitud_b }}', {{ $p->tolerancia ?? 30 }})" title="Definir Coordenadas Geográficas (Tramo A-B)">
@@ -152,8 +152,8 @@
                             <label>Tipo de Punto</label>
                             <select name="tipo" required>
                                 <option value="intermedio">Intermedio</option>
-                                <option value="origen">Origen</option>
-                                <option value="destino">Destino</option>
+                                <option value="origen">Origen / Destino</option>
+                                <option value="destino">Destino / Origen</option>
                             </select>
                         </div>
                         <div class="field">
