@@ -473,55 +473,29 @@ class ReporteController extends Controller
             foreach ($propietarios as $p) {
                 $pFecha = $p->created_at ? \Carbon\Carbon::parse($p->created_at) : today();
 
-                // PENDIENTE (Deuda de ingreso)
-                if ($p->monto_ingreso_deuda > 0) {
-                    if ($pFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
-                        $item = new \stdClass();
-                        $item->id = 'ingreso_deuda_' . $p->id;
-                        $item->fecha = $pFecha;
-                        $item->monto = $p->monto_ingreso_deuda;
-                        $item->estado = 'pendiente';
-                        $item->tipo_obligacion = 'MONTO DE INGRESO';
-                        $item->concepto = 'Deuda de Ingreso de Socio: ' . $p->nombre_completo;
-                        $item->vehiculo = $p->vehiculos->first() ?: (object)['numero_flota' => '---', 'placa' => '---'];
-                        $item->conductor = null;
-                        $item->cobrado_at = null;
-                        $item->created_at = $p->created_at ?? today();
-                        $item->metodo_pago = null;
-                        $item->pagoMp = null;
-                        $item->motivo_exoneracion = null;
-                        $item->monto_inicial = $p->monto_inicial;
-                        $item->cuota_1 = $p->cuota_1;
-                        $item->cuota_2 = $p->cuota_2;
-                        $item->cuota_3 = $p->cuota_3;
-                        $items->push($item);
-                    }
-                }
-
-                // PAGADO (Monto total inicial + cuotas pagado)
-                if ($p->monto_ingreso_total > 0) {
-                    $pCobradoAt = $p->updated_at ? \Carbon\Carbon::parse($p->updated_at) : today();
-                    if ($pCobradoAt->between($desde->startOfDay(), $hasta->endOfDay())) {
-                        $item = new \stdClass();
-                        $item->id = 'ingreso_pagado_' . $p->id;
-                        $item->fecha = $pFecha;
-                        $item->monto = $p->monto_ingreso_total;
-                        $item->estado = 'pagado';
-                        $item->tipo_obligacion = 'MONTO DE INGRESO';
-                        $item->concepto = 'Pago de Ingreso de Socio: ' . $p->nombre_completo . ' (Inicial/Cuotas)';
-                        $item->vehiculo = $p->vehiculos->first() ?: (object)['numero_flota' => '---', 'placa' => '---'];
-                        $item->conductor = null;
-                        $item->cobrado_at = $pCobradoAt;
-                        $item->created_at = $p->created_at ?? today();
-                        $item->metodo_pago = 'efectivo';
-                        $item->pagoMp = null;
-                        $item->motivo_exoneracion = null;
-                        $item->monto_inicial = $p->monto_inicial;
-                        $item->cuota_1 = $p->cuota_1;
-                        $item->cuota_2 = $p->cuota_2;
-                        $item->cuota_3 = $p->cuota_3;
-                        $items->push($item);
-                    }
+                // Siempre incluir en el reporte de deudas si su creación está en el rango de fechas
+                if ($pFecha->between($desde->startOfDay(), $hasta->endOfDay())) {
+                    $item = new \stdClass();
+                    $item->id = 'ingreso_' . $p->id;
+                    $item->fecha = $pFecha;
+                    $item->monto = $p->monto_ingreso_total;
+                    $item->monto_deuda = $p->monto_ingreso_deuda;
+                    $item->estado = $p->monto_ingreso_deuda > 0 ? 'pendiente' : 'pagado';
+                    $item->tipo_obligacion = 'MONTO DE INGRESO';
+                    $item->concepto = 'Ingreso de Socio: ' . $p->nombre_completo;
+                    $item->vehiculo = $p->vehiculos->first() ?: (object)['numero_flota' => '---', 'placa' => '---'];
+                    $item->conductor = null;
+                    $item->cobrado_at = $p->updated_at ? \Carbon\Carbon::parse($p->updated_at) : today();
+                    $item->created_at = $p->created_at ?? today();
+                    $item->metodo_pago = 'efectivo';
+                    $item->pagoMp = null;
+                    $item->motivo_exoneracion = null;
+                    $item->monto_inicial = $p->monto_inicial;
+                    $item->cuota_1 = $p->cuota_1;
+                    $item->cuota_2 = $p->cuota_2;
+                    $item->cuota_3 = $p->cuota_3;
+                    
+                    $items->push($item);
                 }
             }
         }
@@ -533,15 +507,29 @@ class ReporteController extends Controller
         });
 
         $totalDeuda = $itemsSorted->filter(function($item) use ($desde, $hasta) {
+            if ($item->tipo_obligacion === 'MONTO DE INGRESO') {
+                return false;
+            }
             return $item->estado === 'pendiente' 
                 && $item->fecha->between($desde->startOfDay(), $hasta->endOfDay());
         })->sum('monto');
 
         $totalCobrado = $itemsSorted->filter(function($item) use ($desde, $hasta) {
+            if ($item->tipo_obligacion === 'MONTO DE INGRESO') {
+                return false;
+            }
             return $item->estado === 'pagado' 
                 && $item->cobrado_at 
                 && $item->cobrado_at->between($desde->startOfDay(), $hasta->endOfDay());
         })->sum('monto');
+
+        // Sumar montos de ingresos a los totales
+        foreach ($itemsSorted as $item) {
+            if ($item->tipo_obligacion === 'MONTO DE INGRESO') {
+                $totalCobrado += $item->monto;
+                $totalDeuda += $item->monto_deuda;
+            }
+        }
 
         // Paginación manual
         $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();

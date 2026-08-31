@@ -154,7 +154,21 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($item->estado === 'pagado')
+                                    @if($item->tipo_obligacion === 'MONTO DE INGRESO')
+                                        @if(($item->monto_deuda ?? 0) > 0)
+                                            <div style="font-size: 11px;">
+                                                <span style="color: var(--red); font-weight: 800; font-size: 12.5px;"><i class="fa-solid fa-circle-exclamation"></i> Deuda: S/ {{ number_format($item->monto_deuda, 2) }}</span>
+                                                @if(($item->monto ?? 0) > 0)
+                                                    <div style="font-size: 10px; color: var(--green); font-weight: 600; margin-top: 3px;"><i class="fa-regular fa-clock"></i> Recaudado: S/ {{ number_format($item->monto, 2) }} cobrado</div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div style="font-size: 11px;">
+                                                <div style="font-weight: 600; color: var(--green);"><i class="fa-regular fa-clock"></i> {{ $item->cobrado_at ? $item->cobrado_at->format('d/m/Y h:i A') : '---' }}</div>
+                                                <div style="font-size: 10px; color: var(--text3);">Vía: {{ strtoupper($item->metodo_pago ?? 'EFECTIVO') }}</div>
+                                            </div>
+                                        @endif
+                                    @elseif($item->estado === 'pagado')
                                         <div style="font-size: 11px;">
                                             <div style="font-weight: 600; color: var(--green);"><i class="fa-regular fa-clock"></i> {{ $item->cobrado_at ? $item->cobrado_at->format('d/m/Y h:i A') : '---' }}</div>
                                              @if($item->metodo_pago === 'mercadopago')
