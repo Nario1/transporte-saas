@@ -930,7 +930,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div style="font-weight: 800; font-size: 16px; color: #0f172a;">#${v.flota}</div>
                         <div style="font-size: 12px; color: var(--text3); font-family: monospace;">${v.vehiculo}</div>
                     </td>
-                    <td><div style="font-weight: 600; font-size: 14px;">${v.ruta}</div></td>
+                    <td>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--text);">Ruta: <b>${v.ruta}</b></div>
+                        <div style="font-size: 11.5px; color: var(--text3); font-weight: 700; text-transform: uppercase; margin-top: 3px;">
+                            ${v.ruta_origen || 'A'} » ${v.ruta_destino || 'B'}
+                        </div>
+                    </td>
                     <td>
                         <div class="mono" style="font-weight: 800; font-size: 15px; color: #0f172a;">${v.hora_salida}</div>
                         <div class="text-sub" style="font-size:11px; margin-top:2px;">

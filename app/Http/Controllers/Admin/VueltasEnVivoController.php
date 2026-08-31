@@ -94,7 +94,7 @@ class VueltasEnVivoController extends Controller
             })
             ->get();
 
-        $data = $activas->map(function (Vuelta $v) {
+        $data = $activas->merge($recientes)->map(function (Vuelta $v) {
             $inicio   = \Carbon\Carbon::parse($v->fecha->format('Y-m-d') . ' ' . $v->hora_salida);
             $minutos  = $inicio->diffInMinutes(now());
 
@@ -104,6 +104,8 @@ class VueltasEnVivoController extends Controller
                 'vehiculo'      => $v->vehiculo?->placa ?? '—',
                 'flota'         => $v->vehiculo?->numero_flota ?? '?',
                 'ruta'          => $v->ruta?->nombre ?? 'Sin ruta',
+                'ruta_origen'   => $v->ruta?->origen ?? 'a',
+                'ruta_destino'  => $v->ruta?->destino ?? 'b',
                 'hora_salida'   => $v->hora_salida,
                 'paradero_salida'=> $v->paraderoSalida?->nombre ?? '—',
                 'paradero_llegada'=> $v->paraderoLlegada?->nombre ?? '—',
@@ -117,10 +119,10 @@ class VueltasEnVivoController extends Controller
                 'lat_actual'    => $v->lat_actual,
                 'lng_actual'    => $v->lng_actual,
                 'inicio_ts'     => $inicio->timestamp * 1000,
-                'hora_llegada'  => '—',
+                'hora_llegada'  => $v->hora_llegada ?? '—',
                 'minutos_en_ruta' => $minutos,
                 'estimado_min'  => $v->ruta?->duracion_min ?? 0,
-                'estado'        => 'activa',
+                'estado'        => $v->estado,
                 'tiempo_label'  => $minutos < 60 ? "{$minutos} min" : floor($minutos / 60) . 'h ' . ($minutos % 60) . 'min',
             ];
         });
