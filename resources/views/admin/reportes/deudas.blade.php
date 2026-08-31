@@ -15,9 +15,18 @@
                     <label>Hasta:</label>
                     <input type="date" name="hasta" value="{{ $hasta->toDateString() }}">
                 </div>
-                <div class="field">
+                <div class="field" id="field-flota">
                     <label>N° Flota:</label>
                     <input type="text" name="flota" value="{{ $flota }}" placeholder="Ej: 1" style="font-weight: 800; font-size: 15px;">
+                </div>
+                <div class="field" id="field-propietario" style="display: none;">
+                    <label>Propietario:</label>
+                    <select name="propietario_id" style="font-weight: 800; font-size: 14px; height: 48px; border-radius: 12px; border: 1px solid var(--border); padding: 0 15px; background: white;">
+                        <option value="">-- Todos --</option>
+                        @foreach($propietariosList as $p)
+                            <option value="{{ $p->id }}" {{ ($propietarioId ?? '') == $p->id ? 'selected' : '' }}>{{ $p->nombre_completo }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="field">
                     <label>Tipo de Obligación:</label>
@@ -144,3 +153,28 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const tipoSelect = document.getElementsByName('tipo')[0];
+        const fieldFlota = document.getElementById('field-flota');
+        const fieldPropietario = document.getElementById('field-propietario');
+
+        function toggleFields() {
+            if (tipoSelect && tipoSelect.value === 'monto_ingreso') {
+                if (fieldFlota) fieldFlota.style.display = 'none';
+                if (fieldPropietario) fieldPropietario.style.display = 'block';
+            } else {
+                if (fieldFlota) fieldFlota.style.display = 'block';
+                if (fieldPropietario) fieldPropietario.style.display = 'none';
+            }
+        }
+
+        if (tipoSelect) {
+            tipoSelect.addEventListener('change', toggleFields);
+            toggleFields();
+        }
+    });
+</script>
+@endpush

@@ -391,14 +391,17 @@ class ReporteController extends Controller
         $daysDiff = today()->diffInDays($desde) + 1;
         Tributo::ensureGenerados($user->empresa_id, max(30, $daysDiff));
 
+        $tipo = $request->input('tipo', 'todos');
+        $propietarioId = $request->input('propietario_id');
+        $propietariosList = \App\Models\Propietario::where('empresa_id', $user->empresa_id)->orderBy('nombre')->get();
+
         if ($request->has('flota')) {
             $flota = $request->input('flota') ?? '';
-        } elseif ($request->has('page')) {
+        } elseif ($request->has('page') || $tipo === 'monto_ingreso') {
             $flota = '';
         } else {
             $flota = '1';
         }
-        $tipo = $request->input('tipo', 'todos');
 
         $tributosQuery = Tributo::where('empresa_id', $user->empresa_id)
             ->where(function ($q) use ($desde, $hasta) {
@@ -456,10 +459,14 @@ class ReporteController extends Controller
         if ($tipo === 'todos' || $tipo === 'monto_ingreso') {
             $propietariosQuery = \App\Models\Propietario::where('empresa_id', $user->empresa_id);
 
-            if ($flota) {
+            if ($flota && $tipo !== 'monto_ingreso') {
                 $propietariosQuery->whereHas('vehiculos', function ($vQ) use ($flota) {
                     $vQ->where('numero_flota', $flota);
                 });
+            }
+
+            if ($tipo === 'monto_ingreso' && $propietarioId) {
+                $propietariosQuery->where('id', $propietarioId);
             }
 
             $propietarios = $propietariosQuery->with(['vehiculos'])->get();
@@ -535,7 +542,7 @@ class ReporteController extends Controller
         );
         $paginatedItems->withQueryString();
 
-        return view('admin.reportes.deudas', compact('paginatedItems', 'totalDeuda', 'totalCobrado', 'desde', 'hasta', 'flota'));
+        return view('admin.reportes.deudas', compact('paginatedItems', 'totalDeuda', 'totalCobrado', 'desde', 'hasta', 'flota', 'propietariosList', 'propietarioId'));
     }
 
     // ── Helpers ──────────────────────────────────────────────────
