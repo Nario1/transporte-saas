@@ -18,6 +18,9 @@
     </div>
 
     <div style="margin-top:-20px; padding:0 16px;">
+        <form action="{{ route('conductor.perfil.update') }}" method="POST">
+            @csrf
+            @method('PUT')
 
         {{-- 1. Datos de la Flota --}}
         @if ($vehiculo)
@@ -64,35 +67,15 @@
                     @php $hoy = now(); @endphp
 
                     {{-- SOAT --}}
-                    <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between;">
+                    <div class="summary-row" style="padding:10px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
                         <span class="summary-label" style="font-weight:500; color: var(--text2);">SOAT</span>
-                        @if ($vehiculo->soat_vence)
-                            @php
-                                $colorSoat = $vehiculo->soat_vence->isPast() ? 'var(--red)' : ($vehiculo->soat_vence->diffInDays($hoy) <= 15 ? 'var(--orange)' : 'var(--green)');
-                            @endphp
-                            <span style="font-weight:700; color:{{ $colorSoat }};">
-                                {{ $vehiculo->soat_vence->format('d/m/Y') }}
-                                @if($vehiculo->soat_vence->isPast()) (Vencido) @endif
-                            </span>
-                        @else
-                            <span style="color:var(--text3);">—</span>
-                        @endif
+                        <input type="date" name="soat_vence" value="{{ old('soat_vence', $vehiculo->soat_vence ? $vehiculo->soat_vence->toDateString() : '') }}" style="border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: white;">
                     </div>
 
                     {{-- Rev. Técnica --}}
-                    <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between;">
+                    <div class="summary-row" style="padding:10px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
                         <span class="summary-label" style="font-weight:500; color: var(--text2);">Revisión Técnica</span>
-                        @if ($vehiculo->rev_tecnica_vence)
-                            @php
-                                $colorRev = $vehiculo->rev_tecnica_vence->isPast() ? 'var(--red)' : ($vehiculo->rev_tecnica_vence->diffInDays($hoy) <= 15 ? 'var(--orange)' : 'var(--green)');
-                            @endphp
-                            <span style="font-weight:700; color:{{ $colorRev }};">
-                                {{ $vehiculo->rev_tecnica_vence->format('d/m/Y') }}
-                                @if($vehiculo->rev_tecnica_vence->isPast()) (Vencida) @endif
-                            </span>
-                        @else
-                            <span style="color:var(--text3);">—</span>
-                        @endif
+                        <input type="date" name="rev_tecnica_vence" value="{{ old('rev_tecnica_vence', $vehiculo->rev_tecnica_vence ? $vehiculo->rev_tecnica_vence->toDateString() : '') }}" style="border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: white;">
                     </div>
 
                     {{-- Tarjeta Propiedad --}}
@@ -128,47 +111,25 @@
                     <span class="summary-label" style="font-weight:500; color: var(--text2);">DNI</span>
                     <span class="mono" style="font-weight:600; color:#1e293b;">{{ $conductor->dni ?? '—' }}</span>
                 </div>
-                <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+                <div class="summary-row" style="padding:10px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
                     <span class="summary-label" style="font-weight:500; color: var(--text2);">Licencia</span>
-                    <span class="pill blue" style="font-weight:700;">{{ $conductor->tipo_licencia }}</span>
+                    <input type="text" name="tipo_licencia" value="{{ old('tipo_licencia', $conductor->tipo_licencia) }}" placeholder="Ej: A1" style="border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: white; text-align: right; width: 150px;">
                 </div>
-                @if($conductor->licencia_vence)
-                    <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence Licencia</span>
-                        @php
-                            $licVence = $conductor->licencia_vence;
-                            $licDiff = (int) today()->diffInDays($licVence, false);
-                            $licColor = $licVence->isPast() ? 'var(--red)' : ($licDiff <= 15 ? 'var(--orange)' : 'var(--green)');
-                        @endphp
-                        <span style="font-weight:700; color:{{ $licColor }};">
-                            {{ $licVence->format('d/m/Y') }}
-                            @if($licVence->isPast()) (Vencida) @endif
-                        </span>
-                    </div>
-                @endif
-                @if($conductor->carnet_habilitacion_tipo)
-                    <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Carnet Habilitación</span>
-                        <span style="font-weight:600; color:#1e293b;">{{ $conductor->carnet_habilitacion_tipo }}</span>
-                    </div>
-                @endif
-                @if($conductor->carnet_habilitacion_vence)
-                    <div class="summary-row" style="padding:14px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence Carnet Hab.</span>
-                        @php
-                            $chVence = \Carbon\Carbon::parse($conductor->carnet_habilitacion_vence);
-                            $chDiff = (int) today()->diffInDays($chVence, false);
-                            $chColor = $chVence->isPast() ? 'var(--red)' : ($chDiff <= 15 ? 'var(--orange)' : 'var(--green)');
-                        @endphp
-                        <span style="font-weight:700; color:{{ $chColor }};">
-                            {{ $chVence->format('d/m/Y') }}
-                            @if($chVence->isPast()) (Vencido) @endif
-                        </span>
-                    </div>
-                @endif
-                <div class="summary-row" style="padding:14px 16px; display: flex; justify-content: space-between;">
+                <div class="summary-row" style="padding:10px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                    <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence Licencia</span>
+                    <input type="date" name="licencia_vence" value="{{ old('licencia_vence', $conductor->licencia_vence ? $conductor->licencia_vence->toDateString() : '') }}" style="border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: white;">
+                </div>
+                <div class="summary-row" style="padding:10px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                    <span class="summary-label" style="font-weight:500; color: var(--text2);">Carnet Habilitación</span>
+                    <input type="text" name="carnet_habilitacion_tipo" value="{{ old('carnet_habilitacion_tipo', $conductor->carnet_habilitacion_tipo) }}" placeholder="Ej: A" style="border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: white; text-align: right; width: 150px;">
+                </div>
+                <div class="summary-row" style="padding:10px 16px; border-bottom:1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                    <span class="summary-label" style="font-weight:500; color: var(--text2);">Vence Carnet Hab.</span>
+                    <input type="date" name="carnet_habilitacion_vence" value="{{ old('carnet_habilitacion_vence', $conductor->carnet_habilitacion_vence ? \Carbon\Carbon::parse($conductor->carnet_habilitacion_vence)->toDateString() : '') }}" style="border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: white;">
+                </div>
+                <div class="summary-row" style="padding:10px 16px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
                     <span class="summary-label" style="font-weight:500; color: var(--text2);">Teléfono</span>
-                    <span style="font-weight:600; color:#1e293b;">{{ $conductor->telefono ?? '—' }}</span>
+                    <input type="text" name="telefono" value="{{ old('telefono', $conductor->telefono) }}" placeholder="Ej: 987654321" style="border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: white; text-align: right; width: 150px;">
                 </div>
             </div>
         </div>
@@ -194,10 +155,15 @@
 
         {{-- Acciones --}}
         <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px; margin-bottom:30px;">
+            <button type="submit" class="btn btn-primary btn-block"
+                style="justify-content:center; padding:14px; font-weight:700; border-radius:12px; display: flex; align-items: center; background: #2563eb; color: white; border: none; cursor: pointer;">
+                <i class="fa-solid fa-save" style="margin-right: 5px;"></i> Guardar Cambios de Perfil
+            </button>
             <a href="{{ route('conductor.cambiar-password') }}" class="btn btn-secondary btn-block"
                 style="justify-content:center; padding:14px; font-weight:600; border-radius:12px; display: flex; align-items: center; text-decoration: none;">
                 <i class="fa-solid fa-key" style="margin-right: 5px;"></i> Gestionar Clave
             </a>
+            </form>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="btn btn-danger btn-block"

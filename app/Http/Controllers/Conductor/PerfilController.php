@@ -53,4 +53,46 @@ class PerfilController extends Controller
         return redirect()->route('conductor.dashboard')
             ->with('success', 'Contraseña actualizada correctamente.');
     }
+
+    public function update(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $conductor = $user->conductor;
+
+        if (!$conductor) {
+            return back()->with('error', 'No se encontró el conductor.');
+        }
+
+        $request->validate([
+            'telefono'                   => 'nullable|string|max:20',
+            'tipo_licencia'              => 'nullable|string|max:50',
+            'licencia_vence'             => 'nullable|date',
+            'carnet_habilitacion_tipo'   => 'nullable|string|max:50',
+            'carnet_habilitacion_vence'  => 'nullable|date',
+            'soat_vence'                 => 'nullable|date',
+            'rev_tecnica_vence'          => 'nullable|date',
+        ]);
+
+        // Actualizar conductor
+        $conductor->update([
+            'telefono'                  => $request->input('telefono'),
+            'tipo_licencia'             => $request->input('tipo_licencia'),
+            'licencia_vence'            => $request->input('licencia_vence'),
+            'carnet_habilitacion_tipo'  => $request->input('carnet_habilitacion_tipo'),
+            'carnet_habilitacion_vence' => $request->input('carnet_habilitacion_vence'),
+        ]);
+
+        // Actualizar vehículo
+        $vehiculo = $conductor->vehiculos->first();
+        if ($vehiculo) {
+            $vehiculo->update([
+                'soat_vence'        => $request->input('soat_vence'),
+                'rev_tecnica_vence' => $request->input('rev_tecnica_vence'),
+            ]);
+        }
+
+        return redirect()->route('conductor.perfil')
+            ->with('success', 'Perfil y documentación actualizados correctamente.');
+    }
 }
