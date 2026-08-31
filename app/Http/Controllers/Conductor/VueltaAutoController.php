@@ -300,14 +300,9 @@ class VueltaAutoController extends Controller
             return $this->haversineDistance($latP, $lngP, $latA, $lngA) <= $toleranceMeters;
         }
         
-        // Factor de proyección t
+        // Factor de proyección t constreñido al segmento [0, 1]
         $ap_ab = ($dxp * $dx) + ($dyp * $dy);
-        $t = $ap_ab / $ab2;
-        
-        // Verificar si la proyección cae dentro del segmento [0, 1]
-        if ($t < 0 || $t > 1) {
-            return false;
-        }
+        $t = max(0, min(1, $ap_ab / $ab2));
         
         // Coordenadas del punto proyectado
         $latProj = $latA + $t * $dy;

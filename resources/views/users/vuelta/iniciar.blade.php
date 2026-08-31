@@ -267,11 +267,7 @@ function isPointWithinSegment(latP, lngP, latA, lngA, latB, lngB, toleranceMeter
     }
     
     const ap_ab = (dxp * dx) + (dyp * dy);
-    const t = ap_ab / ab2;
-    
-    if (t < 0 || t > 1) {
-        return false;
-    }
+    const t = Math.max(0, Math.min(1, ap_ab / ab2));
     
     const latProj = latA + t * dy;
     const lngProj = lngA + t * (lngB - lngA);
