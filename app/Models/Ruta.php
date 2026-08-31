@@ -11,7 +11,10 @@ class Ruta extends Model implements Auditable
 {
     use SoftDeletes, AuditableWithEmpresa, \Illuminate\Database\Eloquent\Factories\HasFactory;
 
-    protected $fillable = ['empresa_id','nombre','codigo','origen','destino','estado','duracion_min','descripcion'];
+    protected $fillable = ['empresa_id','nombre','codigo','origen','destino','estado','duracion_min','descripcion','trazado','color'];
+    protected $casts = [
+        'trazado' => 'array',
+    ];
     protected $auditInclude = ['nombre','origen','destino','estado'];
 
     public function empresa()   { return $this->belongsTo(Empresa::class); }

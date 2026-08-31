@@ -38,6 +38,25 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 18px;
     }
+    .route-toggle-card {
+        border: 2px solid transparent;
+        opacity: 0.55;
+    }
+    .route-toggle-card.selected {
+        background: var(--card);
+        opacity: 1;
+        box-shadow: var(--shadow-s);
+        border-color: var(--accent);
+    }
+    .vertex-tooltip {
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+        font-weight: 800 !important;
+        font-size: 9px !important;
+        padding: 1px 4px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    }
 </style>
 @endsection
 
@@ -77,20 +96,27 @@
     </div>
 
     <div class="live-stats-bar no-print" id="stats-por-ruta">
-        @php
-            $vueltasPorRuta = $vueltasActivas->groupBy(function($v) {
-                return $v->ruta?->nombre ?? 'Sin Ruta';
-            });
-        @endphp
-        @forelse($vueltasPorRuta as $nombreRuta => $grupo)
-            <div class="stat-mini-card">
-                <div class="stat-mini-icon" style="background: var(--green-l); color: var(--green);">
-                    <i class="fa-solid fa-bus"></i>
+        @forelse($rutasTrazados as $idx => $ruta)
+            @php
+                $cantActivas = $vueltasActivas->where('ruta_id', $ruta['id'])->count();
+                $coloresPaleta = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
+                $color = $ruta['color'] ?? $coloresPaleta[$idx % count($coloresPaleta)];
+            @endphp
+            <div class="stat-mini-card route-toggle-card selected" 
+                 style="cursor: pointer; border-left: 5px solid {{ $color }}; transition: all 0.2s; position: relative; padding-right: 45px; display: flex; align-items: center; justify-content: space-between; min-width: 170px;">
+                <div onclick="toggleRutaPath({{ $ruta['id'] }})" style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                    <div class="stat-mini-icon" style="background: {{ $color }}20; color: {{ $color }}; width: 32px; height: 32px; font-size: 12px; min-width: 32px; border-radius: 8px;">
+                        <i class="fa-solid fa-route"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 800; line-height: 1.2;">{{ $cantActivas }} <span style="font-size: 9px; color: var(--text3); font-weight: 500;">activas</span></div>
+                        <div style="font-size: 10px; color: var(--text2); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="{{ $ruta['nombre'] }}">{{ $ruta['nombre'] }}</div>
+                    </div>
                 </div>
-                <div>
-                    <div style="font-size: 18px; font-weight: 800;">{{ $grupo->count() }}</div>
-                    <div style="font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase;">{{ $nombreRuta }}</div>
-                </div>
+                <button type="button" onclick="event.stopPropagation(); activarEditorTrazado({{ $ruta['id'] }});" title="Editar trazado de la ruta" 
+                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg2); color: var(--text3); border: 1px solid var(--border); cursor: pointer;">
+                    <i class="fa-solid fa-pencil" style="font-size: 10px;"></i>
+                </button>
             </div>
         @empty
             <div class="stat-mini-card">
@@ -99,14 +125,56 @@
                 </div>
                 <div>
                     <div style="font-size: 18px; font-weight: 800;">0</div>
-                    <div style="font-size: 11px; color: var(--text3); font-weight: 600;">SIN UNIDADES EN RUTA</div>
+                    <div style="font-size: 11px; color: var(--text3); font-weight: 600;">SIN RUTAS CONFIGURADAS</div>
                 </div>
             </div>
         @endforelse
     </div>
 
     {{-- MAPA INTERACTIVO --}}
-    <div id="mapa-live" class="no-print"></div>
+    <div style="position: relative;" class="no-print">
+        <div id="mapa-live" style="margin-bottom: 20px;"></div>
+        
+        {{-- PANEL DE CONTROL DE EDITOR --}}
+        <div id="editor-control-panel" style="display: none; position: absolute; top: 20px; right: 20px; z-index: 1000; background: var(--card); padding: 18px; border-radius: 16px; box-shadow: var(--shadow-l); width: 290px; border: 1px solid var(--border);">
+            <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; color: var(--text);">
+                <i class="fa-solid fa-pencil" style="color: var(--accent); margin-right: 5px;"></i> Editando Ruta:<br>
+                <span id="editor-ruta-nombre" style="color: var(--accent); font-size: 15px; font-weight: 900; display: block; margin-top: 2px;">—</span>
+            </h4>
+            
+            <div style="margin-bottom: 14px;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text3); display: block; margin-bottom: 5px; text-transform: uppercase;">Color de la Ruta:</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="color" id="editor-color-picker" style="border: 0; width: 45px; height: 32px; padding: 0; cursor: pointer; border-radius: 6px; background: none;">
+                    <span style="font-size: 12px; font-weight: 700; font-family: monospace; color: var(--text2);" id="editor-color-hex">#3b82f6</span>
+                </div>
+            </div>
+
+            <div style="font-size: 11px; color: var(--text3); margin-bottom: 15px; padding: 10px; background: var(--bg); border-radius: 8px; line-height: 1.5; border: 1px dashed var(--border);">
+                <i class="fa-solid fa-info-circle" style="color: var(--accent); margin-right: 3px;"></i> <b>Instrucciones:</b><br>
+                • Haz <b>clic</b> en el mapa para agregar puntos.<br>
+                • <b>Arrastra</b> los puntos para reacomodarlos.<br>
+                • Haz <b>doble clic</b> en un punto para eliminarlo.
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn-secondary" onclick="limpiarTrazadoEditor()" style="flex: 1; padding: 10px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                        <i class="fa-solid fa-trash-can"></i> Limpiar
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="autocompletarTrazadoEditor()" style="flex: 1; padding: 10px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;" title="Unir paraderos con líneas rectas">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-unir
+                    </button>
+                </div>
+                <button type="button" class="btn-primary" onclick="guardarTrazadoEditor()" style="width: 100%; padding: 12px; font-size: 12px; font-weight: 800; border-radius: 8px; cursor: pointer;">
+                    <i class="fa-solid fa-save"></i> Guardar Trazado
+                </button>
+                <button type="button" class="btn-secondary" onclick="salirEditor()" style="width: 100%; padding: 12px; font-size: 12px; font-weight: 700; border-radius: 8px; background: var(--red-l); color: var(--red); border-color: transparent; cursor: pointer;">
+                    <i class="fa-solid fa-xmark"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="card" style="border-radius: 18px; overflow: hidden; border: none; box-shadow: var(--shadow-l);">
         <div class="card-header" style="background: var(--bg2); padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
@@ -324,44 +392,285 @@ document.addEventListener('DOMContentLoaded', function() {
     }).addTo(map);
 
     const rutasTrazados = @json($rutasTrazados);
-    
-    rutasTrazados.forEach((ruta, idx) => {
-        const latlngs = [];
-        ruta.paraderos.forEach(paradero => {
-            if (paradero.latitud_a && paradero.longitud_a) {
-                latlngs.push([paradero.latitud_a, paradero.longitud_a]);
+    const visibleRoutes = {};
+    const rutaPolylines = {};
+    const rutaStops = [];
+
+    function renderRutasTrazados() {
+        Object.keys(rutaPolylines).forEach(rId => {
+            if (map.hasLayer(rutaPolylines[rId])) map.removeLayer(rutaPolylines[rId]);
+        });
+        rutaStops.forEach(m => {
+            if (map.hasLayer(m)) map.removeLayer(m);
+        });
+        rutaStops.length = 0;
+
+        rutasTrazados.forEach((ruta, idx) => {
+            if (visibleRoutes[ruta.id] === false) {
+                return;
+            }
+
+            let latlngs = [];
+            if (ruta.trazado && ruta.trazado.length > 0) {
+                latlngs = ruta.trazado.map(coord => [parseFloat(coord[0]), parseFloat(coord[1])]);
+            } else {
+                ruta.paraderos.forEach(paradero => {
+                    if (paradero.latitud_a && paradero.longitud_a) {
+                        latlngs.push([parseFloat(paradero.latitud_a), parseFloat(paradero.longitud_a)]);
+                    }
+                });
+            }
+
+            if (latlngs.length >= 2) {
+                const coloresPaleta = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
+                const color = ruta.color || coloresPaleta[idx % coloresPaleta.length];
+
+                const polyline = L.polyline(latlngs, {
+                    color: color,
+                    weight: 4,
+                    opacity: 0.75,
+                    dashArray: '4, 8'
+                }).addTo(map);
+
+                polyline.bindTooltip(`Ruta: <b>${ruta.nombre}</b> (${ruta.origen} - ${ruta.destino})`, { sticky: true });
+                rutaPolylines[ruta.id] = polyline;
+
+                ruta.paraderos.forEach(paradero => {
+                    if (paradero.latitud_a && paradero.longitud_a) {
+                        const marker = L.circleMarker([paradero.latitud_a, paradero.longitud_a], {
+                            radius: 5,
+                            fillColor: color,
+                            color: '#ffffff',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        })
+                        .addTo(map)
+                        .bindPopup(`<b>Paradero:</b> ${paradero.nombre}<br><b>Orden:</b> ${paradero.orden} (${paradero.tipo})`);
+                        
+                        rutaStops.push(marker);
+                    }
+                });
             }
         });
+    }
 
-        if (latlngs.length >= 2) {
-            const colores = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
-            const color = colores[idx % colores.length];
+    // Dibujar inicialmente
+    renderRutasTrazados();
 
-            const polyline = L.polyline(latlngs, {
-                color: color,
-                weight: 4,
-                opacity: 0.75,
-                dashArray: '4, 8'
-            }).addTo(map);
+    function toggleRutaPath(rutaId) {
+        if (editorMode) return;
+        const visibleIds = Object.keys(visibleRoutes).filter(id => visibleRoutes[id] !== false);
 
-            polyline.bindTooltip(`Ruta: <b>${ruta.nombre}</b> (${ruta.origen} - ${ruta.destino})`, { sticky: true });
+        if (visibleIds.length === 1 && visibleIds[0] == rutaId) {
+            rutasTrazados.forEach(r => visibleRoutes[r.id] = true);
+        } else {
+            rutasTrazados.forEach(r => {
+                visibleRoutes[r.id] = (r.id === rutaId);
+            });
+        }
 
-            ruta.paraderos.forEach(paradero => {
-                if (paradero.latitud_a && paradero.longitud_a) {
-                    L.circleMarker([paradero.latitud_a, paradero.longitud_a], {
-                        radius: 5,
-                        fillColor: color,
-                        color: '#ffffff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    })
-                    .addTo(map)
-                    .bindPopup(`<b>Paradero:</b> ${paradero.nombre}<br><b>Orden:</b> ${paradero.orden} (${paradero.tipo})`);
+        renderRutasTrazados();
+        recalcularYRenderizarStatsPorRuta(todasLasVueltas);
+    }
+
+    // --- VARIABLES DEL EDITOR ---
+    let editorMode = false;
+    let editorRutaId = null;
+    let editorCoordinates = [];
+    let editorMarkers = [];
+    let editorPolyline = null;
+    let editorColor = '#3b82f6';
+
+    function activarEditorTrazado(rutaId) {
+        const ruta = rutasTrazados.find(r => r.id === rutaId);
+        if (!ruta) return;
+
+        editorMode = true;
+        editorRutaId = rutaId;
+        editorColor = ruta.color || '#3b82f6';
+        
+        if (ruta.trazado && ruta.trazado.length > 0) {
+            editorCoordinates = ruta.trazado.map(coord => [parseFloat(coord[0]), parseFloat(coord[1])]);
+        } else {
+            editorCoordinates = [];
+            ruta.paraderos.forEach(p => {
+                if (p.latitud_a && p.longitud_a) {
+                    editorCoordinates.push([parseFloat(p.latitud_a), parseFloat(p.longitud_a)]);
                 }
             });
         }
-    });
+
+        // Limpiar capas del mapa temporales
+        Object.keys(rutaPolylines).forEach(rId => {
+            if (map.hasLayer(rutaPolylines[rId])) map.removeLayer(rutaPolylines[rId]);
+        });
+        rutaStops.forEach(m => {
+            if (map.hasLayer(m)) map.removeLayer(m);
+        });
+
+        if (editorPolyline) map.removeLayer(editorPolyline);
+        editorPolyline = L.polyline(editorCoordinates, {
+            color: editorColor,
+            weight: 5,
+            opacity: 0.9
+        }).addTo(map);
+
+        actualizarVerticeMarkers();
+
+        document.getElementById('editor-ruta-nombre').textContent = ruta.nombre;
+        document.getElementById('editor-color-picker').value = editorColor;
+        document.getElementById('editor-color-hex').textContent = editorColor;
+        document.getElementById('editor-control-panel').style.display = 'block';
+
+        const colorPicker = document.getElementById('editor-color-picker');
+        colorPicker.oninput = function(e) {
+            editorColor = e.target.value;
+            document.getElementById('editor-color-hex').textContent = editorColor;
+            editorPolyline.setStyle({ color: editorColor });
+            editorMarkers.forEach(m => {
+                const el = m.getElement();
+                if (el) {
+                    const circle = el.querySelector('div');
+                    if (circle) circle.style.background = editorColor;
+                }
+            });
+        };
+
+        if (editorCoordinates.length >= 2) {
+            map.fitBounds(editorPolyline.getBounds(), { padding: [40, 40] });
+        }
+
+        map.on('click', onMapClickForEditor);
+    }
+
+    function onMapClickForEditor(e) {
+        if (!editorMode) return;
+        const coords = [e.latlng.lat, e.latlng.lng];
+        editorCoordinates.push(coords);
+        
+        editorPolyline.setLatLngs(editorCoordinates);
+        actualizarVerticeMarkers();
+    }
+
+    function actualizarVerticeMarkers() {
+        editorMarkers.forEach(m => map.removeLayer(m));
+        editorMarkers = [];
+
+        editorCoordinates.forEach((coords, idx) => {
+            const marker = L.marker(coords, {
+                draggable: true,
+                icon: L.divIcon({
+                    html: `<div style="background:${editorColor}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>`,
+                    className: 'vertex-icon',
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                })
+            }).addTo(map);
+
+            marker.bindTooltip((idx + 1).toString(), { permanent: true, direction: 'top', className: 'vertex-tooltip' });
+
+            marker.on('drag', function(e) {
+                editorCoordinates[idx] = [e.target.getLatLng().lat, e.target.getLatLng().lng];
+                editorPolyline.setLatLngs(editorCoordinates);
+            });
+
+            marker.on('dragend', function() {
+                actualizarVerticeMarkers();
+            });
+
+            marker.on('dblclick', function() {
+                editorCoordinates.splice(idx, 1);
+                editorPolyline.setLatLngs(editorCoordinates);
+                actualizarVerticeMarkers();
+            });
+
+            editorMarkers.push(marker);
+        });
+    }
+
+    window.limpiarTrazadoEditor = function() {
+        if (!editorMode) return;
+        editorCoordinates = [];
+        editorPolyline.setLatLngs([]);
+        editorMarkers.forEach(m => map.removeLayer(m));
+        editorMarkers = [];
+    };
+
+    window.autocompletarTrazadoEditor = function() {
+        if (!editorMode) return;
+        const ruta = rutasTrazados.find(r => r.id === editorRutaId);
+        if (!ruta) return;
+
+        editorCoordinates = [];
+        ruta.paraderos.forEach(p => {
+            if (p.latitud_a && p.longitud_a) {
+                editorCoordinates.push([parseFloat(p.latitud_a), parseFloat(p.longitud_a)]);
+            }
+        });
+        editorPolyline.setLatLngs(editorCoordinates);
+        actualizarVerticeMarkers();
+        
+        if (editorCoordinates.length >= 2) {
+            map.fitBounds(editorPolyline.getBounds(), { padding: [40, 40] });
+        }
+    };
+
+    window.guardarTrazadoEditor = async function() {
+        if (!editorMode) return;
+
+        const ruta = rutasTrazados.find(r => r.id === editorRutaId);
+        if (!ruta) return;
+
+        const saveUrl = `/admin/rutas/${editorRutaId}/trazado`;
+
+        try {
+            const response = await fetch(saveUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF
+                },
+                body: JSON.stringify({
+                    trazado: editorCoordinates,
+                    color: editorColor
+                })
+            });
+
+            const resData = await response.json();
+            if (resData.success) {
+                ruta.trazado = [...editorCoordinates];
+                ruta.color = editorColor;
+
+                alert('Trazado guardado correctamente.');
+                salirEditor();
+            } else {
+                alert('Error al guardar el trazado: ' + (resData.error || 'Intente nuevamente.'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error de conexión al guardar el trazado.');
+        }
+    };
+
+    window.salirEditor = function() {
+        editorMode = false;
+        editorRutaId = null;
+        editorCoordinates = [];
+        editorMarkers.forEach(m => map.removeLayer(m));
+        editorMarkers = [];
+        
+        if (editorPolyline) {
+            map.removeLayer(editorPolyline);
+            editorPolyline = null;
+        }
+
+        map.off('click', onMapClickForEditor);
+
+        document.getElementById('editor-control-panel').style.display = 'none';
+
+        renderRutasTrazados();
+    };
 
     let markers = {};
 
@@ -410,9 +719,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         let htmlStats = '';
-        const rutas = Object.keys(conteoPorRuta);
         
-        if (rutas.length === 0) {
+        if (rutasTrazados.length === 0) {
             htmlStats = `
                 <div class="stat-mini-card">
                     <div class="stat-mini-icon" style="background: var(--gray-l); color: var(--text3);">
@@ -420,21 +728,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div>
                         <div style="font-size: 18px; font-weight: 800;">0</div>
-                        <div style="font-size: 11px; color: var(--text3); font-weight: 600;">SIN UNIDADES EN RUTA</div>
+                        <div style="font-size: 11px; color: var(--text3); font-weight: 600;">SIN RUTAS CONFIGURADAS</div>
                     </div>
                 </div>
             `;
         } else {
-            rutas.forEach(nombreRuta => {
+            rutasTrazados.forEach((ruta, idx) => {
+                const cantActivas = conteoPorRuta[ruta.nombre] || 0;
+                const coloresPaleta = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
+                const color = ruta.color || coloresPaleta[idx % coloresPaleta.length];
+                
+                const isVisible = visibleRoutes[ruta.id] !== false;
+                
                 htmlStats += `
-                    <div class="stat-mini-card">
-                        <div class="stat-mini-icon" style="background: var(--green-l); color: var(--green);">
-                            <i class="fa-solid fa-bus"></i>
+                    <div class="stat-mini-card route-toggle-card ${isVisible ? 'selected' : ''}" 
+                         style="cursor: pointer; border-left: 5px solid ${color}; transition: all 0.2s; position: relative; padding-right: 45px; display: flex; align-items: center; justify-content: space-between; min-width: 170px;">
+                        <div onclick="toggleRutaPath(${ruta.id})" style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                            <div class="stat-mini-icon" style="background: ${color}20; color: ${color}; width: 32px; height: 32px; font-size: 12px; min-width: 32px; border-radius: 8px;">
+                                <i class="fa-solid fa-route"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 15px; font-weight: 800; line-height: 1.2;">${cantActivas} <span style="font-size: 9px; color: var(--text3); font-weight: 500;">activas</span></div>
+                                <div style="font-size: 10px; color: var(--text2); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="${ruta.nombre}">${ruta.nombre}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div style="font-size: 18px; font-weight: 800;">${conteoPorRuta[nombreRuta]}</div>
-                            <div style="font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase;">${nombreRuta}</div>
-                        </div>
+                        <button type="button" onclick="event.stopPropagation(); activarEditorTrazado(${ruta.id});" title="Editar trazado de la ruta" 
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg2); color: var(--text3); border: 1px solid var(--border); cursor: pointer;">
+                            <i class="fa-solid fa-pencil" style="font-size: 10px;"></i>
+                        </button>
                     </div>
                 `;
             });

@@ -226,9 +226,9 @@ Route::middleware(['auth', 'empresa.activa', 'admin.configurado'])
         Route::post('/vueltas/{vuelta}/completar', [VueltaController::class, 'completar'])->name('vueltas.completar');
         Route::delete('/vueltas/{vuelta}', [VueltaController::class, 'destroy'])->name('vueltas.destroy');
 
-        // MÓDULO 3 — Dashboard Vueltas en Tiempo Real
         Route::get('/vueltas/en-vivo',          [VueltasEnVivoController::class, 'index'])->name('vueltas.en-vivo');
         Route::get('/api/vueltas-activas', [VueltasEnVivoController::class, 'activas'])->name('vueltas.api.activas');
+        Route::post('/rutas/{ruta}/trazado',    [VueltasEnVivoController::class, 'guardarTrazado'])->name('rutas.trazado.guardar');
     });
 
     Route::middleware('permission:gestionar alertas')->group(function () {

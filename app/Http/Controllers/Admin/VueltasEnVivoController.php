@@ -131,4 +131,26 @@ class VueltasEnVivoController extends Controller
             'hora'          => now()->format('H:i:s'),
         ]);
     }
+
+    public function guardarTrazado(\App\Models\Ruta $ruta, Request $request)
+    {
+        if ($ruta->empresa_id !== auth()->user()->empresa_id) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
+        $request->validate([
+            'trazado' => 'nullable|array',
+            'color'   => 'nullable|string|max:10',
+        ]);
+
+        $ruta->update([
+            'trazado' => $request->input('trazado'),
+            'color'   => $request->input('color'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trazado y color de ruta actualizados con éxito.',
+        ]);
+    }
 }

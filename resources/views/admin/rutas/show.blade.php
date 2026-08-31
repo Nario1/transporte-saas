@@ -307,15 +307,25 @@
             }
         });
 
-        if (latlngs.length >= 2) {
-            L.polyline(latlngs, {
-                color: '#3b82f6',
+        const customTrazado = @json(is_string($ruta->trazado) ? json_decode($ruta->trazado, true) : $ruta->trazado);
+        const customColor = '{{ $ruta->color ?? "#3b82f6" }}';
+
+        let lineCoords = [];
+        if (customTrazado && customTrazado.length > 0) {
+            lineCoords = customTrazado.map(coord => [parseFloat(coord[0]), parseFloat(coord[1])]);
+        } else {
+            lineCoords = latlngs;
+        }
+
+        if (lineCoords.length >= 2) {
+            L.polyline(lineCoords, {
+                color: customColor,
                 weight: 4,
                 opacity: 0.8,
                 dashArray: '5, 10'
             }).addTo(map);
 
-            const bounds = L.latLngBounds(latlngs);
+            const bounds = L.latLngBounds(lineCoords);
             map.fitBounds(bounds, { padding: [30, 30] });
         } else if (latlngs.length === 1) {
             map.setView(latlngs[0], 15);
