@@ -512,9 +512,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (editorPolyline) map.removeLayer(editorPolyline);
         editorPolyline = L.polyline(editorCoordinates, {
             color: editorColor,
-            weight: 5,
-            opacity: 0.9
+            weight: 8, // Grosor mayor en modo edición para facilitar clics
+            opacity: 0.9,
+            interactive: true
         }).addTo(map);
+
+        // Click sobre la línea para insertar un vértice
+        editorPolyline.on('click', function(e) {
+            if (!editorMode) return;
+            L.DomEvent.stopPropagation(e);
+
+            const clickLatLng = e.latlng;
+            const segmentIdx = getClosestSegmentIndex(clickLatLng, editorCoordinates);
+            
+            if (segmentIdx !== -1) {
+                const newPoint = [clickLatLng.lat, clickLatLng.lng];
+                editorCoordinates.splice(segmentIdx + 1, 0, newPoint);
+                
+                editorPolyline.setLatLngs(editorCoordinates);
+                actualizarVerticeMarkers();
+            }
+        });
 
         actualizarVerticeMarkers();
 
@@ -551,6 +569,39 @@ document.addEventListener('DOMContentLoaded', function() {
         
         editorPolyline.setLatLngs(editorCoordinates);
         actualizarVerticeMarkers();
+    }
+
+    // --- AYUDANTES GEOMÉTRICOS PARA SEGMENTOS (ESTILO VECTORIAL) ---
+    function getClosestSegmentIndex(clickLatLng, points) {
+        const lat = clickLatLng.lat;
+        const lng = clickLatLng.lng;
+        let minDistance = Infinity;
+        let closestIndex = -1;
+
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = points[i];
+            const p2 = points[i + 1];
+
+            const dist = distToSegment([lat, lng], p1, p2);
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestIndex = i;
+            }
+        }
+
+        return closestIndex;
+    }
+
+    function distToSegment(p, v, w) {
+        const l2 = dist2(v, w);
+        if (l2 === 0) return dist2(p, v);
+        let t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return Math.sqrt(dist2(p, [v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1])]));
+    }
+
+    function dist2(v, w) {
+        return Math.pow(v[0] - w[0], 2) + Math.pow(v[1] - w[1], 2);
     }
 
     function actualizarVerticeMarkers() {
