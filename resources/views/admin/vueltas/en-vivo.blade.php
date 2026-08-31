@@ -458,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dibujar inicialmente
     renderRutasTrazados();
 
-    function toggleRutaPath(rutaId) {
+    window.toggleRutaPath = function(rutaId) {
         if (editorMode) return;
         const visibleIds = Object.keys(visibleRoutes).filter(id => visibleRoutes[id] !== false);
 
@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let editorPolyline = null;
     let editorColor = '#3b82f6';
 
-    function activarEditorTrazado(rutaId) {
+    window.activarEditorTrazado = function(rutaId) {
         const ruta = rutasTrazados.find(r => r.id === rutaId);
         if (!ruta) return;
 
