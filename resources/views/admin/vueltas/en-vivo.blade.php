@@ -111,24 +111,32 @@
     </div>
 
     <div class="live-stats-bar no-print" id="stats-por-ruta">
-        @forelse($rutasTrazados as $idx => $ruta)
+        @php
+            $rutasAgrupadas = collect($rutasTrazados)->groupBy('nombre');
+            $idx = 0;
+        @endphp
+        @forelse($rutasAgrupadas as $nombreRuta => $grupoRutas)
             @php
-                $cantActivas = $vueltasActivas->where('ruta_id', $ruta['id'])->count();
+                $ids = $grupoRutas->pluck('id')->toArray();
+                $cantActivas = $vueltasActivas->whereIn('ruta_id', $ids)->count();
                 $coloresPaleta = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
-                $color = $ruta['color'] ?? $coloresPaleta[$idx % count($coloresPaleta)];
+                $color = $grupoRutas->first()['color'] ?? $coloresPaleta[$idx % count($coloresPaleta)];
+                $tramos = $grupoRutas->map(fn($r) => "{$r['origen']}-{$r['destino']}")->unique()->join(' | ');
+                $nombreCompleto = "{$nombreRuta} ({$tramos})";
+                $idx++;
             @endphp
             <div class="stat-mini-card route-toggle-card selected" 
                  style="cursor: pointer; border-left: 5px solid {{ $color }}; transition: all 0.2s; position: relative; padding-right: 45px; display: flex; align-items: center; justify-content: space-between; min-width: 170px;">
-                <div onclick="toggleRutaPath({{ $ruta['id'] }})" style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                <div onclick="toggleRutaPathGroup([{{ implode(',', $ids) }}])" style="flex: 1; display: flex; align-items: center; gap: 10px;">
                     <div class="stat-mini-icon" style="background: {{ $color }}20; color: {{ $color }}; width: 32px; height: 32px; font-size: 12px; min-width: 32px; border-radius: 8px;">
                         <i class="fa-solid fa-route"></i>
                     </div>
                     <div>
                         <div style="font-size: 15px; font-weight: 800; line-height: 1.2;">{{ $cantActivas }} <span style="font-size: 9px; color: var(--text3); font-weight: 500;">activas</span></div>
-                        <div style="font-size: 10px; color: var(--text2); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="{{ $ruta['nombre'] }}">{{ $ruta['nombre'] }}</div>
+                        <div style="font-size: 10px; color: var(--text2); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="{{ $nombreCompleto }}">{{ $nombreCompleto }}</div>
                     </div>
                 </div>
-                <button type="button" onclick="event.stopPropagation(); activarEditorTrazado({{ $ruta['id'] }});" title="Editar trazado de la ruta" 
+                <button type="button" onclick="event.stopPropagation(); activarEditorGrupo('{{ addslashes($nombreRuta) }}', '{{ json_encode($grupoRutas->toArray()) }}');" title="Editar trazado de la ruta" 
                         style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg2); color: var(--text3); border: 1px solid var(--border); cursor: pointer;">
                     <i class="fa-solid fa-pencil" style="font-size: 10px;"></i>
                 </button>
@@ -479,21 +487,64 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dibujar inicialmente
     renderRutasTrazados();
 
-    window.toggleRutaPath = function(rutaId) {
+    window.toggleRutaPathGroup = function(rutaIds) {
         if (editorMode) return;
+        
         const visibleIds = Object.keys(visibleRoutes).filter(id => visibleRoutes[id] !== false);
+        const esAislamientoDeEsteGrupo = visibleIds.length === rutaIds.length && rutaIds.every(id => visibleIds.includes(id.toString()));
 
-        if (visibleIds.length === 1 && visibleIds[0] == rutaId) {
+        if (esAislamientoDeEsteGrupo) {
             rutasTrazados.forEach(r => visibleRoutes[r.id] = true);
         } else {
             rutasTrazados.forEach(r => {
-                visibleRoutes[r.id] = (r.id === rutaId);
+                visibleRoutes[r.id] = rutaIds.includes(r.id);
             });
         }
 
         renderRutasTrazados();
         recalcularYRenderizarStatsPorRuta(todasLasVueltas);
-    }
+    };
+
+    window.activarEditorGrupo = function(nombreGrupo, rutasJson) {
+        let rutas;
+        try {
+            rutas = typeof rutasJson === 'string' ? JSON.parse(rutasJson) : rutasJson;
+        } catch(e) {
+            console.error("Error parsing routes JSON", e);
+            return;
+        }
+
+        if (rutas.length === 1) {
+            activarEditorTrazado(rutas[0].id);
+            return;
+        }
+        
+        const inputOptions = {};
+        rutas.forEach(r => {
+            inputOptions[r.id] = `${r.origen} - ${r.destino}`;
+        });
+        
+        Swal.fire({
+            title: `Editar Ruta: ${nombreGrupo}`,
+            text: 'Selecciona la dirección del recorrido que deseas trazar:',
+            input: 'select',
+            inputOptions: inputOptions,
+            inputPlaceholder: 'Selecciona una dirección',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--accent)',
+            confirmButtonText: 'Confirmar',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Debes seleccionar una opción';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                activarEditorTrazado(parseInt(result.value));
+            }
+        });
+    };
 
     // --- VARIABLES DEL EDITOR ---
     let editorMode = false;
@@ -805,31 +856,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         } else {
-            rutasTrazados.forEach((ruta, idx) => {
-                const cantActivas = conteoPorRuta[ruta.nombre] || 0;
-                const coloresPaleta = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
-                const color = ruta.color || coloresPaleta[idx % coloresPaleta.length];
+            // Agrupar por nombre
+            const grupos = {};
+            rutasTrazados.forEach(r => {
+                if (!grupos[r.nombre]) {
+                    grupos[r.nombre] = [];
+                }
+                grupos[r.nombre].push(r);
+            });
+            
+            let idx = 0;
+            Object.keys(grupos).forEach(nombreRuta => {
+                const grupoRutas = grupos[nombreRuta];
+                const ids = grupoRutas.map(r => r.id);
+                const cantActivas = conteoPorRuta[nombreRuta] || 0;
                 
-                const isVisible = visibleRoutes[ruta.id] !== false;
+                const coloresPaleta = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
+                const color = grupoRutas[0].color || coloresPaleta[idx % coloresPaleta.length];
+                
+                const isVisible = ids.every(id => visibleRoutes[id] !== false);
+                
+                const tramosUnicos = [...new Set(grupoRutas.map(r => `${r.origen}-${r.destino}`))].join(' | ');
+                const nombreCompleto = `${nombreRuta} (${tramosUnicos})`;
                 
                 htmlStats += `
                     <div class="stat-mini-card route-toggle-card ${isVisible ? 'selected' : ''}" 
                          style="cursor: pointer; border-left: 5px solid ${color}; transition: all 0.2s; position: relative; padding-right: 45px; display: flex; align-items: center; justify-content: space-between; min-width: 170px;">
-                        <div onclick="toggleRutaPath(${ruta.id})" style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                        <div onclick="toggleRutaPathGroup([${ids.join(',')}])" style="flex: 1; display: flex; align-items: center; gap: 10px;">
                             <div class="stat-mini-icon" style="background: ${color}20; color: ${color}; width: 32px; height: 32px; font-size: 12px; min-width: 32px; border-radius: 8px;">
                                 <i class="fa-solid fa-route"></i>
                             </div>
                             <div>
                                 <div style="font-size: 15px; font-weight: 800; line-height: 1.2;">${cantActivas} <span style="font-size: 9px; color: var(--text3); font-weight: 500;">activas</span></div>
-                                <div style="font-size: 10px; color: var(--text2); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="${ruta.nombre}">${ruta.nombre}</div>
+                                <div style="font-size: 10px; color: var(--text2); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="${nombreCompleto}">${nombreCompleto}</div>
                             </div>
                         </div>
-                        <button type="button" onclick="event.stopPropagation(); activarEditorTrazado(${ruta.id});" title="Editar trazado de la ruta" 
+                        <button type="button" onclick="event.stopPropagation(); activarEditorGrupo('${nombreRuta.replace(/'/g, "\\'")}', '${JSON.stringify(grupoRutas).replace(/'/g, "\\'")}');" title="Editar trazado de la ruta" 
                                 style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg2); color: var(--text3); border: 1px solid var(--border); cursor: pointer;">
                             <i class="fa-solid fa-pencil" style="font-size: 10px;"></i>
                         </button>
                     </div>
                 `;
+                idx++;
             });
         }
         

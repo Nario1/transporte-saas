@@ -69,7 +69,6 @@ class VueltasEnVivoController extends Controller
         $empresaId = auth()->user()->empresa_id;
         $flota = request('flota');
 
-        // Vueltas Activas
         $activas = Vuelta::with(['conductor', 'vehiculo', 'ruta', 'paraderoSalida', 'paraderoLlegada'])
             ->where('empresa_id', $empresaId)
             ->where('estado', 'activa')
@@ -81,20 +80,7 @@ class VueltasEnVivoController extends Controller
             })
             ->get();
 
-        // Vueltas Terminadas Recientemente (últimos 30 min)
-        $recientes = Vuelta::with(['conductor', 'vehiculo', 'ruta', 'paraderoSalida', 'paraderoLlegada'])
-            ->where('empresa_id', $empresaId)
-            ->where('estado', 'completada')
-            ->whereDate('fecha', today())
-            ->where('updated_at', '>=', now()->subMinutes(30))
-            ->when($flota, function ($q) use ($flota) {
-                return $q->whereHas('vehiculo', function ($vQ) use ($flota) {
-                    $vQ->where('numero_flota', $flota);
-                });
-            })
-            ->get();
-
-        $data = $activas->merge($recientes)->map(function (Vuelta $v) {
+        $data = $activas->map(function (Vuelta $v) {
             $inicio   = \Carbon\Carbon::parse($v->fecha->format('Y-m-d') . ' ' . $v->hora_salida);
             $minutos  = $inicio->diffInMinutes(now());
 
@@ -119,10 +105,10 @@ class VueltasEnVivoController extends Controller
                 'lat_actual'    => $v->lat_actual,
                 'lng_actual'    => $v->lng_actual,
                 'inicio_ts'     => $inicio->timestamp * 1000,
-                'hora_llegada'  => $v->hora_llegada ?? '—',
+                'hora_llegada'  => '—',
                 'minutos_en_ruta' => $minutos,
                 'estimado_min'  => $v->ruta?->duracion_min ?? 0,
-                'estado'        => $v->estado,
+                'estado'        => 'activa',
                 'tiempo_label'  => $minutos < 60 ? "{$minutos} min" : floor($minutos / 60) . 'h ' . ($minutos % 60) . 'min',
             ];
         });
