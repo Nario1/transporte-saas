@@ -60,6 +60,7 @@ Route::middleware(['auth', 'empresa.activa', 'role:conductor', 'forzar.password'
     ->prefix('conductor')
     ->name('conductor.')
     ->group(function () {
+        Route::get('/dashboard', [ConductorDashboard::class, 'index'])->name('dashboard');
         Route::get('/perfil',    [ConductorPerfil::class,    'index'])->name('perfil');
         Route::put('/perfil',    [ConductorPerfil::class,    'update'])->name('perfil.update');
 
