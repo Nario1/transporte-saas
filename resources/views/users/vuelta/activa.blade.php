@@ -98,6 +98,23 @@
     </div>
 </div>
 
+{{-- Selector de Paradero de Llegada --}}
+<div class="card" style="margin-bottom: 16px;">
+    <div class="card-header" style="padding: 14px 16px; border-bottom: 1px solid #f8fafc;">
+        <span class="card-title" style="font-size:14px; color:#64748b; font-weight: 700;"><i class="fa-solid fa-location-dot" style="color: var(--red); margin-right: 5px;"></i> ¿Dónde terminarás la vuelta?</span>
+    </div>
+    <div class="card-body" style="padding: 16px;">
+        <div class="field" style="margin: 0;">
+            <select id="paradero_llegada_id" name="paradero_llegada_id" style="width: 100%; height: 48px; border-radius: 10px; border: 1px solid var(--border); padding: 0 12px; font-weight: 700; font-size: 14px; color: var(--text); background: white;">
+                <option value="" disabled selected>-- Selecciona el paradero de llegada --</option>
+                @foreach($paraderosLlegada as $p)
+                    <option value="{{ $p->id }}">{{ $p->nombre }} ({{ strtoupper($p->tipo) }})</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+</div>
+
 {{-- Botón terminar --}}
 <button class="btn-terminar" id="btn-terminar" onclick="confirmarTerminar()">
     <i class="fa-solid fa-flag-checkered"></i> Terminar Vuelta
@@ -139,12 +156,27 @@ actualizarCronometro();
 let terminando = false;
 
 function confirmarTerminar() {
+    const selectEl = document.getElementById('paradero_llegada_id');
+    const paraderoLlegadaId = selectEl.value;
+    if (!paraderoLlegadaId) {
+        Swal.fire({
+            title: 'Paradero Requerido',
+            text: 'Debes seleccionar el paradero en el que vas a terminar tu vuelta.',
+            icon: 'warning',
+            confirmButtonColor: 'var(--accent)',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
     const tiempoActual = document.getElementById('cronometro').textContent;
+    const paraderoNombre = selectEl.options[selectEl.selectedIndex].text;
+    
     terminando = true; // Detener polling temporalmente durante la confirmación
     
     Swal.fire({
         title: '¿Finalizar Vuelta?',
-        html: `El tiempo transcurrido es <b style="font-family:monospace; font-size:1.2em;">${tiempoActual}</b>.<br><br>¿Estás seguro que deseas terminar la vuelta ahora?`,
+        html: `El tiempo transcurrido es <b style="font-family:monospace; font-size:1.2em;">${tiempoActual}</b>.<br>Paradero de destino: <b>${paraderoNombre}</b>.<br><br>¿Estás seguro que deseas terminar la vuelta ahora?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: 'var(--red)',
@@ -157,14 +189,14 @@ function confirmarTerminar() {
         if (result.isConfirmed) {
             // Detener cronómetro visualmente de inmediato
             if (cronometroIntervalId) clearInterval(cronometroIntervalId);
-            terminarVuelta();
+            terminarVuelta(paraderoLlegadaId);
         } else {
             terminando = false; // Reanudar polling si cancela
         }
     });
 }
 
-async function terminarVuelta() {
+async function terminarVuelta(paraderoLlegadaId) {
     document.getElementById('btn-terminar').disabled = true;
     document.getElementById('terminando-msg').classList.remove('hidden');
 
@@ -201,7 +233,11 @@ async function terminarVuelta() {
         const resp = await fetch(TERMINAR_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ latitud: lat, longitud: lng })
+            body: JSON.stringify({ 
+                latitud: lat, 
+                longitud: lng, 
+                paradero_llegada_id: paraderoLlegadaId 
+            })
         });
         const data = await resp.json();
         if (data.ok) {

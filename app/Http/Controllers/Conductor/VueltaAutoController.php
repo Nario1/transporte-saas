@@ -151,7 +151,12 @@ class VueltaAutoController extends Controller
                 ->with('info', 'No tienes una vuelta activa.');
         }
 
-        return view('users.vuelta.activa', compact('vuelta', 'conductor'));
+        $paraderosLlegada = \App\Models\RutaParadero::where('ruta_id', $vuelta->ruta_id)
+            ->where('id', '!=', $vuelta->paradero_salida_id)
+            ->orderBy('orden')
+            ->get();
+
+        return view('users.vuelta.activa', compact('vuelta', 'conductor', 'paraderosLlegada'));
     }
 
     /**
@@ -170,26 +175,35 @@ class VueltaAutoController extends Controller
             return response()->json(['ok' => false, 'error' => 'No tienes una vuelta activa.'], 422);
         }
 
-        // Validar tramo geográfico de cualquiera de los paraderos permitidos
-        $paraderos = \App\Models\RutaParadero::where('ruta_id', $vuelta->ruta_id)->get();
-        $tieneCoordenadasAlguno = $paraderos->contains(fn($p) => !is_null($p->latitud_a));
+        $request->validate([
+            'latitud'             => 'required|numeric',
+            'longitud'            => 'required|numeric',
+            'paradero_llegada_id' => 'required|exists:ruta_paraderos,id',
+        ]);
 
-        $paraderoFinalNombre = null;
-        $paraderoFinalId = null;
+        $paraderoLlegadaId = $request->input('paradero_llegada_id');
+        $p = \App\Models\RutaParadero::findOrFail($paraderoLlegadaId);
 
-        if ($tieneCoordenadasAlguno) {
-            $dentroDeAlguno = false;
-            foreach ($paraderos as $p) {
-                if (!is_null($p->latitud_a) && $this->isPointWithinSegment($request->latitud, $request->longitud, $p->latitud_a, $p->longitud_a, $p->latitud_b, $p->longitud_b, $p->tolerancia ?? 30)) {
-                    $dentroDeAlguno = true;
-                    $paraderoFinalNombre = $p->nombre;
-                    $paraderoFinalId = $p->id;
-                    break;
-                }
-            }
+        if ($p->ruta_id != $vuelta->ruta_id) {
+            return response()->json(['ok' => false, 'error' => 'El paradero seleccionado no corresponde a la ruta de esta vuelta.'], 422);
+        }
+        if ($p->id == $vuelta->paradero_salida_id) {
+            return response()->json(['ok' => false, 'error' => 'No puedes terminar la vuelta en el mismo paradero de salida.'], 422);
+        }
 
-            if (!$dentroDeAlguno) {
-                return response()->json(['ok' => false, 'error' => 'No puedes terminar la vuelta aquí. Tu GPS indica que estás fuera del tramo de cualquiera de los paraderos permitidos de la ruta.'], 422);
+        if (!is_null($p->latitud_a)) {
+            $dentroDeRango = $this->isPointWithinSegment(
+                $request->latitud,
+                $request->longitud,
+                $p->latitud_a,
+                $p->longitud_a,
+                $p->latitud_b,
+                $p->longitud_b,
+                $p->tolerancia ?? 30
+            );
+
+            if (!$dentroDeRango) {
+                return response()->json(['ok' => false, 'error' => 'No puedes terminar la vuelta aquí. Tu GPS indica que estás fuera del tramo de coordenadas permitido para el paradero de llegada seleccionado: ' . $p->nombre], 422);
             }
         }
 
@@ -202,7 +216,7 @@ class VueltaAutoController extends Controller
                 $vuelta,
                 $request->latitud,
                 $request->longitud,
-                $paraderoFinalId
+                $paraderoLlegadaId
             );
 
             session()->flash('success', '¡Vuelta completada con éxito!');
@@ -211,7 +225,7 @@ class VueltaAutoController extends Controller
                 'ok'           => true,
                 'hora_llegada' => $vuelta->hora_llegada,
                 'duracion_min' => $duracion,
-                'paradero'     => $paraderoFinalNombre,
+                'paradero'     => $p->nombre,
                 'redirect'     => route('conductor.vueltas'),
             ]);
         } catch (\Throwable $e) {
