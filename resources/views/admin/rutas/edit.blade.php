@@ -119,6 +119,7 @@
                                     <tr>
                                         <td>
                                             <div class="field" style="gap:0">
+                                                <input type="hidden" name="paraderos[{{ $index }}][id]" value="{{ $paradero->id }}">
                                                 <input type="text" name="paraderos[{{ $index }}][nombre]"
                                                     value="{{ $paradero->nombre }}" required>
                                             </div>

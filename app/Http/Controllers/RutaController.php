@@ -93,9 +93,30 @@ class RutaController extends Controller
 
         $ruta->update($data);
 
-        // Reemplazar paraderos: eliminar los anteriores y crear los nuevos
-        $ruta->paraderos()->delete();
-        $this->guardarParaderos($ruta, $paraderos);
+        // Obtener los IDs de paraderos enviados desde el formulario
+        $submittedIds = collect($paraderos)->pluck('id')->filter()->toArray();
+
+        // Eliminar del sistema los paraderos que ya no vienen (fueron removidos por el usuario)
+        $ruta->paraderos()->whereNotIn('id', $submittedIds)->delete();
+
+        // Actualizar o crear los paraderos restantes respetando sus coordenadas
+        foreach ($paraderos as $orden => $pData) {
+            if (!empty($pData['id'])) {
+                // Actualizar paradero existente sin alterar sus coordenadas
+                $ruta->paraderos()->where('id', $pData['id'])->update([
+                    'nombre' => $pData['nombre'],
+                    'tipo'   => $pData['tipo'],
+                    'orden'  => $orden + 1,
+                ]);
+            } else {
+                // Crear nuevo paradero
+                $ruta->paraderos()->create([
+                    'nombre' => $pData['nombre'],
+                    'tipo'   => $pData['tipo'],
+                    'orden'  => $orden + 1,
+                ]);
+            }
+        }
 
         return redirect()->route('rutas.index')
             ->with('success', "Ruta {$ruta->nombre} actualizada correctamente.");
